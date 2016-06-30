@@ -5,8 +5,22 @@
  *
  */
 #include <linux/time.h>
+#include <linux/timekeeping.h>
 #ifndef _ETL_STATE_MACHINE_H_
 #define _ETL_STATE_MACHINE_H_
+
+// Enable to calcurate speed of ETL message exchange
+#define ETL_SPEED_CHECK
+
+// Debug print control
+#define ETL_DEBUG_PRINT_ENABLE
+
+
+#ifdef ETL_DEBUG_PRINT_ENABLE
+#define ETD_DEBUG(fmt, args...) printk( KERN_DEBUG "ETL:" fmt, ## args )
+#else
+#define ETD_DEBUG(fmt, args...) /* no message */
+#endif
 
 // State definition
 #define ETL_STATE_IDLE 0
@@ -18,44 +32,57 @@
 
 // Message sent on the MAC dst addr
 #define ETL_MESSAGE_HELLO_U  0x0000
-#define ETL_MESSAGE_HELLO_L  0x0
+#define ETL_MESSAGE_HELLO_L  0x0000
 #define ETL_MESSAGE_EVENT_U  0x0001
 #define ETL_MESSAGE_NOP_U	 0x0002
+// When MSB of upper address is set, this is message only, no packet to upper layer
+#define ETL_MESSAGE_ONLY_U	 0x8000
+#define ETL_MESSAGE_MASK     0x7fff
 
 // Error type bits
-#define ETL_ERROR_FLAG_SEQUENCE 1
-#define ETL_ERROR_FLAG_LINKDONW 2
-#define ETL_ERROR_FLAG_TIMEOUT  4
+#define ETL_ERROR_FLAG_SEQUENCE 0x0001
+#define ETL_ERROR_FLAG_LINKDONW 0x0002
+#define ETL_ERROR_FLAG_TIMEOUT  0x0004
+#define ETL_ERROR_SAME_ADDRESS	0x0008
+#define ETL_ERROR_UNKOWN_CMD	0x0010
+#define ETL_ERROR_UNKOWN_STATE	0x0020
+#define ETL_ERROR_UNEXPECTED_LU	0x0040
 
 // The data structre represents the internal state of ETL
 typedef struct etl_state {
-  uint32_t event_i_know ;			// last received event number 
-  uint32_t event_i_sent ;			// last event number sent
-  uint32_t event_send_next ;		// next event number sent
-  uint32_t current_state ;			// 0: idle  1: H 2: W 3:S 4:R
-  struct timeval update_time ;		// last updated time in microsecond resolution
-  uint32_t error_flag ;				// individual bit indicate the error type as 1: sequence error, 2: link down 4: timeout
-  uint32_t error_count ;			// Count multiple error, cleared in got_error_state()
-  struct timeval error_time	; 		// the time the last error detected in microsecond resorution
+  __u32 event_i_know ;			// last received event number 
+  __u32 event_i_sent ;			// last event number sent
+  __u32 event_send_next ;		// next event number sent
+  __u32 current_state ;			// 0: idle  1: H 2: W 3:S 4:R
+  struct timespec update_time ;		// last updated time in microsecond resolution
+  __u32 error_flag ;				// first error flag 
+  __u32 p_error_flag ;				// when more than 1 error is detected, those error bits or ored to this flag
+  __u32 error_count ;				// Count multiple error, cleared in got_error_state()
+  struct timespec error_time	; 		// the time the first error detected in microsecond resorution
+#ifdef ETL_SPEED_CHECK
+  struct timespec interval_time	; 		// the last interval time between S <-> R transition
+  struct timespec max_interval_time	; 	// the max interval time
+  struct timespec min_interval_time	; 	// the min interval time
+#endif
 } etl_state_t ;
 
-//void etl_state_update( uint32_t state ) ;
 // My Mac address must be set at the beginning of operation
-void etl_set_my_adder( uint16_t u_addr, uint32_t l_addr ) ; 
-// On Hello message, this should be called with MAC source address on the packet
-void etl_hello_received( uint16_t u_addr, uint32_t l_addr ) ; 
-// On other message, this should be called with the massage (MAC destination addr)
-void etl_received( uint16_t u_addr, uint32_t l_addr ) ; 
+void etl_set_my_adder( __u16 u_addr, __u32 l_addr ) ; 
+// On Received message, this should be called with the massage (MAC source & destination addr)
+void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 
 // On sending ethernet packet, this function should be called to get the destination MAC address for message
-void etl_next_send( uint16_t *u_addr, uint32_t *l_addr ) ; 
+void etl_next_send( __u16 *u_addr, __u32 *l_addr ) ; 
 // On receiving error (link down, timeout), this functon should be called to report to the state machine
-void etl_state_error( uint32_t error_flag ) ;
+void etl_state_error( __u32 error_flag ) ;
 // quick refrence to get the current state. It will return error when error is reported until the error state is read via etl_read_error_state
-uint32_t get_etl_state() ;
+__u32 get_etl_state(void) ;
+// On Link-Up, this function should be called
+void etl_link_up(void) ;
+
 
 // returns the pointer to the etl_state that shows current state
-etl_state_t* etl_read_current_state() ;
+etl_state_t* etl_read_current_state(void) ;
 // returns the pointer to the etl_state that the state when error is detected.
-etl_state_t* etl_read_error_state() ;
+etl_state_t* etl_read_error_state(void) ;
 
 #endif
