@@ -7,6 +7,9 @@
 #include <linux/time.h>
 #include <linux/ktime.h>
 #include <linux/timekeeping.h>
+#include <linux/spinlock.h>
+#include <linux/spinlock_types.h>
+
 #ifndef _ETL_STATE_MACHINE_H_
 #define _ETL_STATE_MACHINE_H_
 
@@ -67,23 +70,43 @@ typedef struct etl_state {
 #endif
 } etl_state_t ;
 
+/// The data structure represent the state machine
+typedef struct etl_state_machine {
+  etl_state_t state ;
+  etl_state_t error_state ;
+  spinlock_t state_lock ;
+
+  etl_state_t return_state ;
+
+  __u16 my_u_addr ;
+  __u32 my_l_addr ;
+  __u8 my_addr_valid ;
+
+  __u16 hello_u_addr ;
+  __u32 hello_l_addr ;
+  __u8 hello_addr_valid;
+} etl_state_machine_t ;
+
+/// initialize the state machine structure
+void etl_state_machine_init( etl_state_machine_t *mcn ) ;
+
 // My Mac address must be set at the beginning of operation
-void etl_set_my_adder( __u16 u_addr, __u32 l_addr ) ; 
+void etl_set_my_adder( etl_state_machine_t *mcn, __u16 u_addr, __u32 l_addr ) ; 
 // On Received message, this should be called with the massage (MAC source & destination addr)
-void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 
+void etl_received( etl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 
 // On sending ethernet packet, this function should be called to get the destination MAC address for message
-void etl_next_send( __u16 *u_addr, __u32 *l_addr ) ; 
+void etl_next_send( etl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ; 
 // On receiving error (link down, timeout), this functon should be called to report to the state machine
-void etl_state_error( __u32 error_flag ) ;
+void etl_state_error( etl_state_machine_t *mcn, __u32 error_flag ) ;
 // quick refrence to get the current state. It will return error when error is reported until the error state is read via etl_read_error_state
-__u32 get_etl_state(void) ;
+__u32 get_etl_state(etl_state_machine_t *mcn) ;
 // On Link-Up, this function should be called
-void etl_link_up(void) ;
+void etl_link_up(etl_state_machine_t *mcn) ;
 
 
 // returns the pointer to the etl_state that shows current state
-etl_state_t* etl_read_current_state(void) ;
+etl_state_t* etl_read_current_state(etl_state_machine_t *mcn) ;
 // returns the pointer to the etl_state that the state when error is detected.
-etl_state_t* etl_read_error_state(void) ;
+etl_state_t* etl_read_error_state(etl_state_machine_t *mcn) ;
 
 #endif
