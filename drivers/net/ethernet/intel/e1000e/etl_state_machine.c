@@ -9,7 +9,7 @@
 #include <linux/spinlock_types.h>
 #include <linux/string.h>
 #include "etl_state_machine.h"
- 
+
 // declare spin lock in unlocked state
 static DEFINE_SPINLOCK(state_lock) ;
 
@@ -66,7 +66,7 @@ static void set_error( __u32 error_flag )
   		error_state.error_flag = error_flag ;
 	  	memcpy( &error_state.update_time, &current_state.update_time, sizeof(struct timeval)) ;		
 		ts = current_kernel_time();
-		memcpy( &error_state.error_time, &ts, sizeof(timespec) ) ; 
+		memcpy( &error_state.error_time, &ts, sizeof(struct timespec) ) ; 
 	}
   	else{
   		error_state.p_error_flag |= error_flag ;
@@ -75,50 +75,50 @@ static void set_error( __u32 error_flag )
 
 }
 
-static void clear_intervals()
+static void clear_intervals(void)
 {
 #ifdef ETL_SPEED_CHECK
-	memset( &current_state.interval_time, 0, sizeof(timespec)) ;
-	memset( &current_state.max_interval_time, 0, sizeof(timespec)) ;
-	memset( &current_state.min_interval_time, 0, sizeof(timespec)) ;
+	memset( &current_state.interval_time, 0, sizeof(struct timespec)) ;
+	memset( &current_state.max_interval_time, 0, sizeof(struct timespec)) ;
+	memset( &current_state.min_interval_time, 0, sizeof(struct timespec)) ;
 #endif
 }
 
 
-static void calc_intervals()
+static void calc_intervals(void)
 {
 #ifdef ETL_SPEED_CHECK
 	struct timespec ts ;
-	if( current_state.update_time.tv_sec > 0 || current_state.update_time.tv_usec > 0 ) {
+	if( current_state.update_time.tv_sec > 0 || current_state.update_time.tv_nsec > 0 ) {
 		ts = current_kernel_time();
 		current_state.interval_time.tv_sec = ts.tv_sec - current_state.update_time.tv_sec ;
-		if( ts.tv_usec > current_state.update_time.tv_usec ) {
-			current_state.interval_time.tv_usec = ts.tv_usec - current_state.update_time.tv_usec ;
+		if( ts.tv_nsec > current_state.update_time.tv_nsec ) {
+			current_state.interval_time.tv_nsec = ts.tv_nsec - current_state.update_time.tv_nsec ;
 		}
 		else {
 			current_state.interval_time.tv_sec -= 1 ;
-			current_state.interval_time.tv_usec = 1000000 + ts.tv_usec - current_state.update_time.tv_usec ;
+			current_state.interval_time.tv_nsec = 1000000000 + ts.tv_nsec - current_state.update_time.tv_nsec ;
 		}
 		if( current_state.max_interval_time.tv_sec < current_state.interval_time.tv_sec ||
 		   ( current_state.max_interval_time.tv_sec == current_state.interval_time.tv_sec && 
-		   	 current_state.max_interval_time.tv_usec < current_state.interval_time.tv_usec) )
+		   	 current_state.max_interval_time.tv_nsec < current_state.interval_time.tv_nsec) )
 		{
 			current_state.max_interval_time.tv_sec = current_state.interval_time.tv_sec ;
-			current_state.max_interval_time.tv_usec = current_state.interval_time.tv_usec ;
+			current_state.max_interval_time.tv_nsec = current_state.interval_time.tv_nsec ;
 		}
-		if( (current_state.min_interval_time.tv_sec == 0 && current_state.min_interval_time.tv_usec == 0 ) ||
+		if( (current_state.min_interval_time.tv_sec == 0 && current_state.min_interval_time.tv_nsec == 0 ) ||
 			current_state.min_interval_time.tv_sec > current_state.interval_time.tv_sec ||
 			( current_state.min_interval_time.tv_sec == current_state.interval_time.tv_sec && 
-		   	 current_state.min_interval_time.tv_usec > current_state.interval_time.tv_usec) )
+		   	 current_state.min_interval_time.tv_nsec > current_state.interval_time.tv_nsec) )
 		{
 			current_state.min_interval_time.tv_sec = current_state.interval_time.tv_sec ;
-			current_state.min_interval_time.tv_usec = current_state.interval_time.tv_usec ;
+			current_state.min_interval_time.tv_nsec = current_state.interval_time.tv_nsec ;
 		}
 	}
 #endif
 }
 
-__u32 get_etl_state() 
+__u32 get_etl_state(void) 
 {
 	__u16 ret ;
 
@@ -137,11 +137,11 @@ __u32 get_etl_state()
 
 }
 
-void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 
+void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) 
 {
 	struct timespec ts ;
 
-	if( u_daddr & ETL_MESSAGE_MASK == ETL_MESSAGE_NOP_U) {
+	if( (u_daddr & ETL_MESSAGE_MASK) == ETL_MESSAGE_NOP_U) {
 		return ;
 	}
 	if( my_addr_valid == 0 ) {
@@ -183,7 +183,7 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 				if( my_u_addr > u_saddr || (my_u_addr == u_saddr && my_l_addr > l_saddr ) ) {
 					current_state.event_i_sent = current_state.event_i_know = current_state.event_send_next = 0 ;
 					current_state.current_state = ETL_STATE_SEND ;		
-					memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+					memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					clear_intervals() ; 
 				}
 				else if( my_u_addr == u_saddr && my_l_addr == l_saddr ) {
@@ -191,12 +191,12 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 					ETL_DEBUG( "hello message with same address received @ %ld sec", ts.tv_sec ) ;
 					set_error( ETL_ERROR_SAME_ADDRESS ) ;
 					current_state.current_state = ETL_STATE_IDLE ;		
-					memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+					memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 				}
 				else {
 					current_state.event_i_sent = current_state.event_i_know = current_state.event_send_next = 0 ;
 					current_state.current_state = ETL_STATE_RECEIVE ;			
-					memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+					memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					clear_intervals() ; 
 				}			// case we received before sending hello, which seems sequence error
 			}
@@ -205,7 +205,7 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 				ETL_DEBUG( "non-hello message %d received on hello state @ %ld sec", u_saddr, ts.tv_sec ) ;			
 				set_error( ETL_ERROR_FLAG_SEQUENCE ) ;
 				current_state.current_state = ETL_STATE_HELLO ;		
-				memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;			
+				memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;			
 			}		
 		}
 		break ;
@@ -215,41 +215,41 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 				) {
 				set_error( ETL_ERROR_FLAG_SEQUENCE ) ;
 				current_state.current_state = ETL_STATE_HELLO ;
-				memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+				memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 			}
 		}
 		break ;
 		case ETL_STATE_RECEIVE:
 		{
-			if( u_addr == ETL_MESSAGE_EVENT_U ) {
+			if( u_daddr == ETL_MESSAGE_EVENT_U ) {
 				if( current_state.event_i_know == 0 && current_state.event_i_sent == 0 && current_state.event_send_next == 0 )
 				{
 					// fresh out of Hello handshake
-					if( l_addr == 0 ) {
-						current_state.event_i_know = l_addr ;
-						current_state.event_send_next = l_addr + 1 ;
+					if( l_daddr == 0 ) {
+						current_state.event_i_know = l_daddr ;
+						current_state.event_send_next = l_daddr + 1 ;
 						current_state.current_state = ETL_STATE_SEND ;
 						calc_intervals() ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					}
 					else {
 						set_error( ETL_ERROR_FLAG_SEQUENCE ) ;
 						current_state.current_state = ETL_STATE_HELLO ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					}
 
 				}
 				else {
-					if( current_state.event_i_sent + 1 != l_addr ) {
+					if( current_state.event_i_sent + 1 != l_daddr ) {
 						set_error( ETL_ERROR_FLAG_SEQUENCE ) ;
 						current_state.current_state = ETL_STATE_HELLO ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					}
 					else {
-						current_state.event_i_know = l_addr ;
-						current_state.event_send_next = l_addr + 1 ;
+						current_state.event_i_know = l_daddr ;
+						current_state.event_send_next = l_daddr + 1 ;
 						current_state.current_state = ETL_STATE_SEND ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					}
 				}
 			}
@@ -259,7 +259,7 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 				hello_l_addr = l_saddr ;
 				hello_addr_valid = 1 ;
 				current_state.current_state = ETL_STATE_HELLO ;
-				memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+				memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 			}
 
 		}
@@ -268,7 +268,7 @@ void etl_received(  __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr )
 		{
 			set_error( ETL_ERROR_UNKOWN_STATE ) ;
 			current_state.current_state = ETL_STATE_IDLE ;		
-			memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;			
+			memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;			
 		}
 		break ;
 	}
@@ -307,7 +307,7 @@ void etl_next_send( __u16 *u_addr, __u32 *l_addr )
 					if( my_u_addr > hello_u_addr || (my_u_addr == hello_u_addr && my_l_addr > hello_l_addr ) ) {
 						current_state.current_state = ETL_STATE_SEND ;			
 						current_state.event_i_sent = current_state.event_i_know = current_state.event_send_next = 0 ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 						clear_intervals() ; 
 					}
 					else if( my_u_addr == hello_u_addr && my_l_addr == hello_l_addr ) {
@@ -315,12 +315,12 @@ void etl_next_send( __u16 *u_addr, __u32 *l_addr )
 						ETL_DEBUG( "hello message with same address received @ %ld sec", ts.tv_sec ) ;
 						set_error( ETL_ERROR_SAME_ADDRESS ) ;
 						current_state.current_state = ETL_STATE_IDLE ;		
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 					}
 					else {
 						current_state.current_state = ETL_STATE_RECEIVE ;			
 						current_state.event_i_sent = current_state.event_i_know = current_state.event_send_next = 0 ;
-						memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+						memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 						clear_intervals() ; 
 					}
 					hello_addr_valid = 0 ;	
@@ -328,7 +328,7 @@ void etl_next_send( __u16 *u_addr, __u32 *l_addr )
 			}
 			else {
 				current_state.current_state = ETL_STATE_WAIT ;
-				memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+				memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 			}
 		}
 		break ;
@@ -347,7 +347,7 @@ void etl_next_send( __u16 *u_addr, __u32 *l_addr )
 			*l_addr = current_state.event_i_sent ;
 			current_state.current_state = ETL_STATE_RECEIVE ;			
 			calc_intervals() ;
-			memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;
+			memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
 
 		}
 		break ;
@@ -377,7 +377,7 @@ void etl_state_error( __u32 error_flag )
 	spin_unlock( &state_lock ) ;
 }
 
-etl_state_t* etl_read_current_state() 
+etl_state_t* etl_read_current_state(void) 
 {
 	spin_lock( &state_lock ) ;
 
@@ -387,7 +387,7 @@ etl_state_t* etl_read_current_state()
 	return &return_state ;
 }
 
-etl_state_t* etl_read_error_state() 
+etl_state_t* etl_read_error_state(void) 
 {
 	spin_lock( &state_lock ) ;
 	
@@ -398,7 +398,7 @@ etl_state_t* etl_read_error_state()
 	return &return_state ;
 }
 
-void etl_link_up() 
+void etl_link_up(void) 
 {
 	struct timespec ts ;
 
@@ -409,13 +409,13 @@ void etl_link_up()
 	if( current_state.current_state == ETL_STATE_IDLE ) {
 		ETL_DEBUG( "Link UP !! @ %ld sec", ts.tv_sec ) ;
 		current_state.current_state = ETL_STATE_HELLO ;
-		memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;		
+		memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	else {
 		ETL_DEBUG( "Unexpected Link UP on state %d @ %ld sec", current_state.current_state, ts.tv_sec ) ;
 		set_error( ETL_ERROR_UNEXPECTED_LU ) ;
 		current_state.current_state = ETL_STATE_HELLO ;
-		memcpy( &current_state.update_time, &ts, sizeof(timespec)) ;		
+		memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	spin_unlock( &state_lock ) ;		
 }

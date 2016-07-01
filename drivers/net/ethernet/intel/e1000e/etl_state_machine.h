@@ -5,6 +5,7 @@
  *
  */
 #include <linux/time.h>
+#include <linux/ktime.h>
 #include <linux/timekeeping.h>
 #ifndef _ETL_STATE_MACHINE_H_
 #define _ETL_STATE_MACHINE_H_
@@ -17,9 +18,9 @@
 
 
 #ifdef ETL_DEBUG_PRINT_ENABLE
-#define ETD_DEBUG(fmt, args...) printk( KERN_DEBUG "ETL:" fmt, ## args )
+#define ETL_DEBUG(fmt, args...) printk( KERN_DEBUG "ETL:" fmt, ## args )
 #else
-#define ETD_DEBUG(fmt, args...) /* no message */
+#define ETL_DEBUG(fmt, args...) /* no message */
 #endif
 
 // State definition
