@@ -64,7 +64,7 @@ static void set_error( __u32 error_flag )
 	  	error_state.event_i_sent = current_state.event_i_sent ;
 	  	error_state.current_state = current_state.current_state ;
   		error_state.error_flag = error_flag ;
-	  	memcpy( &error_state.update_time, &current_state.update_time, sizeof(struct timeval)) ;		
+	  	memcpy( &error_state.update_time, &current_state.update_time, sizeof(struct timespec)) ;		
 		ts = current_kernel_time();
 		memcpy( &error_state.error_time, &ts, sizeof(struct timespec) ) ; 
 	}
