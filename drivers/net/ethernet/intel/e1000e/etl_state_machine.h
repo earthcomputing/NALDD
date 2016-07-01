@@ -72,7 +72,7 @@ typedef struct etl_state {
 
 /// The data structure represent the state machine
 typedef struct etl_state_machine {
-  etl_state_t state ;
+  etl_state_t current_state ;
   etl_state_t error_state ;
   spinlock_t state_lock ;
 

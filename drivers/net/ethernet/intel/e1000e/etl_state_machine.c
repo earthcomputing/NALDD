@@ -8,37 +8,6 @@
 #include <linux/string.h>
 #include "etl_state_machine.h"
 
-// declare spin lock in unlocked state
-static DEFINE_SPINLOCK(state_lock) ;
-
-static etl_state_t current_state =
-  { .current_state = 0, 
-  	.error_flag = 0,
-  	.error_count = 0,
-  	// when following 3 members are all zero, it means fresh out of Hello handshake
-  	.event_i_sent = 0,
-  	.event_i_know = 0,
-  	.event_send_next = 0,
-#ifdef ETL_SPEED_CHECK
-    .interval_time = {0,0},			// the last interval time between S <-> R transition
-    .max_interval_time = {0,0}, 	// the max interval time
-    .min_interval_time	= {0,0}  	// the min interval time
-#endif
-  };
-static etl_state_t error_state =
-  { .current_state = 0,
-  	.error_flag = 0,
-  	.error_count = 0 
-  };
-
-static etl_state_t return_state ;
-static __u16 my_u_addr ;
-static __u32 my_l_addr ;
-static __u8 my_addr_valid = 0 ;
-
-static __u16 hello_u_addr ;
-static __u32 hello_l_addr ;
-static __u8 hello_addr_valid = 0;
 
 void etl_state_machine_init( etl_state_machine_t *mcn )
 {
@@ -48,11 +17,14 @@ void etl_state_machine_init( etl_state_machine_t *mcn )
   	// when following 3 members are all zero, it means fresh out of Hello handshake
   	mcn->current_state.event_i_sent = 0;
   	mcn->current_state.event_i_know = 0;
-  	mcn->event_send_next = 0;
+  	mcn->current_state.event_send_next = 0;
 #ifdef ETL_SPEED_CHECK
-    mcn->current_state.interval_time = {0,0};			// the last interval time between S <-> R transition
-    mcn->current_state.max_interval_time = {0,0}; 	// the max interval time
-    mcn->current_state.min_interval_time	= {0,0};  	// the min interval time
+    mcn->current_state.interval_time.tv_sec = 0;			// the last interval time between S <-> R transition
+    mcn->current_state.interval_time.tv_nsec = 0;			// the last interval time between S <-> R transition
+    mcn->current_state.max_interval_time.tv_sec = 0; 	// the max interval time
+    mcn->current_state.max_interval_time.tv_nsec = 0; 	// the max interval time
+    mcn->current_state.min_interval_time.tv_sec = 0;  	// the min interval time
+    mcn->current_state.min_interval_time.tv_nsec = 0;  	// the min interval time
 #endif
 
 	mcn->error_state.current_state = 0 ;
@@ -167,7 +139,7 @@ void etl_received( etl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16
 	if( (u_daddr & ETL_MESSAGE_MASK) == ETL_MESSAGE_NOP_U) {
 		return ;
 	}
-	if( my_addr_valid == 0 ) {
+	if( mcn->my_addr_valid == 0 ) {
 			// say error here
 		ETL_DEBUG( "message received without my address set" ) ;
 		return ;		
@@ -207,7 +179,7 @@ void etl_received( etl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16
 					mcn->current_state.event_i_sent = mcn->current_state.event_i_know = mcn->current_state.event_send_next = 0 ;
 					mcn->current_state.current_state = ETL_STATE_SEND ;		
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-					clear_intervals() ; 
+					clear_intervals( mcn ) ; 
 				}
 				else if( mcn->my_u_addr == u_saddr && mcn->my_l_addr == l_saddr ) {
 					// say error as Alan's 1990s problem again
@@ -238,7 +210,7 @@ void etl_received( etl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16
 				) {
 				set_error( mcn, ETL_ERROR_FLAG_SEQUENCE ) ;
 				mcn->current_state.current_state = ETL_STATE_HELLO ;
-				memcpy( &current_state.update_time, &ts, sizeof(struct timespec)) ;
+				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 			}
 		}
 		break ;
@@ -306,7 +278,7 @@ void etl_next_send( etl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 
 	ts = current_kernel_time();
 
-	switch( current_state.current_state ) {
+	switch( mcn->current_state.current_state ) {
 
 		case ETL_STATE_IDLE:
 		{
@@ -415,7 +387,7 @@ etl_state_t* etl_read_error_state( etl_state_machine_t *mcn )
 	spin_lock( &mcn->state_lock ) ;
 	
   	memcpy( &mcn->return_state, &mcn->error_state, sizeof(etl_state_t)) ;
-  	error_state.error_count = 0 ;
+  	mcn->error_state.error_count = 0 ;
 
 	spin_unlock( &mcn->state_lock ) ;	
 	return &mcn->return_state ;
@@ -435,7 +407,7 @@ void etl_link_up( etl_state_machine_t *mcn )
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	else {
-		ETL_DEBUG( "Unexpected Link UP on state %d @ %ld sec", current_state.current_state, ts.tv_sec ) ;
+		ETL_DEBUG( "Unexpected Link UP on state %d @ %ld sec", mcn->current_state.current_state, ts.tv_sec ) ;
 		set_error( mcn, ETL_ERROR_UNEXPECTED_LU ) ;
 		mcn->current_state.current_state = ETL_STATE_HELLO ;
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
