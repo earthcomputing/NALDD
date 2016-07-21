@@ -7562,6 +7562,9 @@ static void __exit e1000_exit_module(void)
 }
 module_exit(e1000_exit_module);
 
+// AK: including ENTL device code
+#include "entl_device.c"
+
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver");
 MODULE_LICENSE("GPL");
