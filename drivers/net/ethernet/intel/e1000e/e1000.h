@@ -43,6 +43,8 @@
 #include <linux/pm_qos.h>
 #include "hw.h"
 
+#include "entl_device.h"
+
 struct e1000_info;
 
 #define e_dbg(format, arg...) \
@@ -215,6 +217,11 @@ struct e1000_adapter {
 	struct work_struct watchdog_task;
 
 	const struct e1000_info *ei;
+
+	// AK: ENTL device structure
+	entl_device_t entl_dev ;
+	// AK: this lock is used to protect tx_ring
+	spinlock_t tx_ring_lock ;
 
 	unsigned long active_vlans[BITS_TO_LONGS(VLAN_N_VID)];
 	u32 bd_number;
