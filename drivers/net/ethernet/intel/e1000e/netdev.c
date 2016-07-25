@@ -44,6 +44,8 @@
 #include <linux/aer.h>
 #include <linux/prefetch.h>
 
+#define _IN_NETDEV_C_
+
 #include "e1000.h"
 
 #define DRV_EXTRAVERSION "-k"
@@ -5809,7 +5811,7 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	tso = e1000_tso(tx_ring, skb, protocol);
 	if (tso < 0) {
 		// AK: don't forget to unlock before returning
-		spin_unlock_irqsave( &adapter->tx_ring_lock, flags ) ;
+		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 		dev_kfree_skb_any(skb);
 		return NETDEV_TX_OK;
 	}
@@ -5873,7 +5875,7 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 		tx_ring->next_to_use = first;
 	}
 	// AK: don't forget to unlock before returning
-    spin_unlock_irqsave( &adapter->tx_ring_lock, flags ) ;    	
+    spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;    	
 	return NETDEV_TX_OK;
 }
 
@@ -6157,6 +6159,10 @@ static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		return e1000e_hwtstamp_set(netdev, ifr);
 	case SIOCGHWTSTAMP:
 		return e1000e_hwtstamp_get(netdev, ifr);
+	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
+	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
+	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
+		return entl_do_ioctl(netdev, ifr, cmd);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -7543,7 +7549,7 @@ static int __init e1000_init_module(void)
 		e1000e_driver_version);
 	pr_info("Copyright(c) 1999 - 2015 Intel Corporation.\n");
 
-	pr_info("Earth Computing ENTL extention \n",
+	pr_info("Earth Computing ENTL extention \n" ) ;
 	pr_info("Copyright(c) 2016 Earth Computing.\n");
 
 	return pci_register_driver(&e1000_driver);

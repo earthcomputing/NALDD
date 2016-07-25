@@ -280,7 +280,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 		}
 		break ;
 	}
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 
 	return retval ;
 }
@@ -336,10 +336,10 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 		}
 		break ;
 		default:
-		break
+		break ;
 	}
 
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	return ret ;
 }
 
@@ -434,13 +434,12 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 
 void entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) 
 {
-	struct timespec ts ;
 	unsigned long flags ;
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
-	entl_get_next( mcm, u_addr, l_addr ) ;
+	entl_get_next( mcn, u_addr, l_addr ) ;
 
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 
 }
 
@@ -451,7 +450,7 @@ void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag )
 
  	set_error( mcn, error_flag ) ;
 
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 }
 
 void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st ) 
@@ -461,7 +460,7 @@ void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st )
 
   	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
 
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 }
 
 void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st ) 
@@ -472,7 +471,7 @@ void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st )
   	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
   	mcn->error_state.error_count = 0 ;
 
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 }
 
 void entl_link_up( entl_state_machine_t *mcn ) 
@@ -495,6 +494,6 @@ void entl_link_up( entl_state_machine_t *mcn )
 		mcn->current_state.current_state = ENTL_STATE_HELLO ;
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
-	spin_unlock_irqsave( &mcn->state_lock, flags ) ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 }
 
