@@ -484,15 +484,15 @@ void entl_link_up( entl_state_machine_t *mcn )
 	ts = current_kernel_time();
 
 	if( mcn->current_state.current_state == ENTL_STATE_IDLE ) {
-		ENTL_DEBUG( "Link UP !! @ %ld sec", ts.tv_sec ) ;
+		ENTL_DEBUG( "Link UP !! @ %ld sec\n", ts.tv_sec ) ;
 		mcn->current_state.current_state = ENTL_STATE_HELLO ;
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	else {
-		ENTL_DEBUG( "Unexpected Link UP on state %d @ %ld sec", mcn->current_state.current_state, ts.tv_sec ) ;
-		set_error( mcn, ENTL_ERROR_UNEXPECTED_LU ) ;
-		mcn->current_state.current_state = ENTL_STATE_HELLO ;
-		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
+		ENTL_DEBUG( "Unexpected Link UP on state %d @ %ld sec ignored\n", mcn->current_state.current_state, ts.tv_sec ) ;
+		//set_error( mcn, ENTL_ERROR_UNEXPECTED_LU ) ;
+		//mcn->current_state.current_state = ENTL_STATE_HELLO ;
+		//memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 }
