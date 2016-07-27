@@ -5123,6 +5123,9 @@ static void e1000_watchdog_task(struct work_struct *work)
 		return;
 
 	link = e1000e_has_link(adapter);
+
+	//ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
+	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
 		pm_runtime_resume(netdev->dev.parent);
@@ -5295,7 +5298,10 @@ link_up:
 	}
 
 	// AK: tell ENTL state machine 
-	entl_device_link_up( &adapter->entl_dev ) ;
+	if( link ) {
+	    ENTL_DEBUG( "e1000_watchdog_task calling entl_device_link_up\n" ) ;
+		entl_device_link_up( &adapter->entl_dev ) ;
+	}
 
 	e1000e_update_adaptive(&adapter->hw);
 
@@ -7549,7 +7555,7 @@ static int __init e1000_init_module(void)
 		e1000e_driver_version);
 	pr_info("Copyright(c) 1999 - 2015 Intel Corporation.\n");
 
-	pr_info("Earth Computing ENTL extention \n" ) ;
+	pr_info("Earth Computing ENTL extension \n" ) ;
 	pr_info("Copyright(c) 2016 Earth Computing.\n");
 
 	return pci_register_driver(&e1000_driver);

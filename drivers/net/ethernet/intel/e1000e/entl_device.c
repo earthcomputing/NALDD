@@ -139,6 +139,7 @@ static void entl_watchdog_task(struct work_struct *work)
 		struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
     	struct e1000_ring *tx_ring = adapter->tx_ring ;
 		entl_state_t st ;
+		ENTL_DEBUG("ENTL entl_watchdog_task sending hello\n" );
 		entl_read_current_state( &dev->stm, &st ) ;
 		if (test_bit(__E1000_DOWN, &adapter->state)) goto restart_watchdog ;
 		if( e1000_desc_unused(tx_ring) < 3 ) goto restart_watchdog ; 
@@ -154,6 +155,10 @@ static void entl_watchdog_task(struct work_struct *work)
 	    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    		if( result == 0 ) {
 	    			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_HELLO ;
+					ENTL_DEBUG("ENTL entl_watchdog_task hello packet sent\n" );
+	    		}
+	    		else {
+					ENTL_DEBUG("ENTL entl_watchdog_task hello packet failed with %d \n", result );	    			
 	    		}
  			}
 		}
@@ -163,6 +168,7 @@ static void entl_watchdog_task(struct work_struct *work)
 		int result ;
 		struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
     	struct e1000_ring *tx_ring = adapter->tx_ring ;		
+		ENTL_DEBUG("ENTL entl_watchdog_task sending retry\n" );
 		if (test_bit(__E1000_DOWN, &adapter->state)) goto restart_watchdog ;
 		if( e1000_desc_unused(tx_ring) < 3 ) goto restart_watchdog ; 
 		spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
@@ -170,6 +176,10 @@ static void entl_watchdog_task(struct work_struct *work)
 	    spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    if( result == 0 ) {
     		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_RETRY ;
+			ENTL_DEBUG("ENTL entl_watchdog_task retry packet sent\n" );
+	    }
+	    else {
+			ENTL_DEBUG("ENTL entl_watchdog_task retry packet failed with %d \n", result );	    			
 	    }
 	}
 	restart_watchdog:
@@ -192,6 +202,7 @@ static void entl_device_init( entl_device_t *dev )
 	dev->watchdog_timer.function = entl_watchdog;
 	dev->watchdog_timer.data = (unsigned long)dev;
 	INIT_WORK(&dev->watchdog_task, entl_watchdog_task);
+	ENTL_DEBUG("ENTL entl_device_init done\n" );
 
 }
 
