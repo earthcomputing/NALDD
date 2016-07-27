@@ -6156,6 +6156,9 @@ static int e1000e_hwtstamp_get(struct net_device *netdev, struct ifreq *ifr)
 
 static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
+
+	ENTL_DEBUG( "e1000_ioctl called with cmd %d\n", cmd) ;
+	
 	switch (cmd) {
 	case SIOCGMIIPHY:
 	case SIOCGMIIREG:

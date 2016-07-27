@@ -224,23 +224,24 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	entl_device_t *dev = &adapter->entl_dev ;
-	struct entl_ioctl_data *data = (struct entl_ioctl_data *) &ifr->ifr_ifru;
-	entl_state_t st ;
+  	struct entl_ioctl_data entl_data ;
+
 	switch( cmd )
 	{
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 		ENTL_DEBUG("ENTL ioctl reading current state\n" );
-		entl_read_current_state( &dev->stm, &st ) ;
-		copy_to_user(&data->state, &st, sizeof(entl_state_t));
+		entl_read_current_state( &dev->stm, &entl_data.state ) ;
+		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		break;		
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 		ENTL_DEBUG("ENTL ioctl reading error state\n" );
-		entl_read_error_state( &dev->stm, &st ) ;
-		copy_to_user(&data->state, &st, sizeof(entl_state_t));
+		entl_read_error_state( &dev->stm, &entl_data.state ) ;
+		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		break;
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
-		ENTL_DEBUG("ENTL ioctl user_pid %d is set\n", data->pid );
-		dev->user_pid = data->pid ;
+		copy_from_user(&entl_data, ifr->ifr_data, sizeof(struct entl_ioctl_data) ) ;
+		ENTL_DEBUG("ENTL ioctl user_pid %d is set\n", entl_data.pid );
+		dev->user_pid = entl_data.pid ;
 		break;
 	default:
 		ENTL_DEBUG("ENTL ioctl error: undefined cmd %d\n", cmd);
