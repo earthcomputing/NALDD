@@ -22,7 +22,9 @@
 
 #define MY_DEVICE "enp6s0"
 
-static void entl_rd_current( )
+static void entl_rd_current( ) {
+
+}
 
 
 int main( int argc, char *argv[] ) {
@@ -39,7 +41,7 @@ int main( int argc, char *argv[] ) {
 	memset(&paifr, 0, sizeof(paifr));
 	strncpy(paifr.ifr_name, MY_DEVICE, sizeof(paifr.ifr_name));
 
-	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1) {
+	if (ioctl(sock, SIOCGIFFLAGS, &paifr) == -1) {
 		printf( "SIOCGIFFLAGS failed on %s\n",paifr.ifr_name );
 	}
 	else {
