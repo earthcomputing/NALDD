@@ -6171,6 +6171,8 @@ static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
+	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
+	case SIOCDEVPRIVATE_ENTL_DO_INIT:
 		return entl_do_ioctl(netdev, ifr, cmd);
 	default:
 		return -EOPNOTSUPP;

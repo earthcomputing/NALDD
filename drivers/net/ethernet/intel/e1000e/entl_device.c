@@ -118,6 +118,8 @@ static void entl_watchdog(unsigned long data)
 static void entl_watchdog_task(struct work_struct *work)
 {
 	unsigned long wakeup = 1 * HZ ;  // one second
+		      
+	// ENTL_DEBUG("entl_watchdog_task wakes up\n");
 
 	entl_device_t *dev = container_of(work, entl_device_t, watchdog_task); // get the struct pointer from a member
 	if( (dev->flag & ENTL_DEVICE_FLAG_SIGNAL) && dev->user_pid ) {
@@ -243,6 +245,15 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		ENTL_DEBUG("ENTL ioctl user_pid %d is set\n", entl_data.pid );
 		dev->user_pid = entl_data.pid ;
 		break;
+	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
+		ENTL_DEBUG("ENTL ioctl generating signal to user\n" );
+		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer		
+		break ;		
+	case SIOCDEVPRIVATE_ENTL_DO_INIT:
+		ENTL_DEBUG("ENTL ioctl initialize the device\n" );
+		ENTL_DEBUG("  not implemented yet..\n" );
+		break ;
 	default:
 		ENTL_DEBUG("ENTL ioctl error: undefined cmd %d\n", cmd);
 		break;

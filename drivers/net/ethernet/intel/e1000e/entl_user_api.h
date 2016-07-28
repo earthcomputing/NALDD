@@ -64,6 +64,11 @@ typedef struct entl_state {
 #define SIOCDEVPRIVATE_ENTL_RD_ERROR			0x89F1
 #define SIOCDEVPRIVATE_ENTL_SET_SIGRCVR		0x89F2
 
+// For testing purpose, extra ioctls are created
+#define SIOCDEVPRIVATE_ENTL_GEN_SIGNAL      0x89F3
+#define SIOCDEVPRIVATE_ENTL_DO_INIT   0x89F4
+
+
 /* This structure is used in all SIOCDEVPRIVATE_ENTL_xxx ioctl calls */
 struct entl_ioctl_data {
 	int				pid;    // set own uid for signal
