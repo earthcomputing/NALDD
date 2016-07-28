@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "entl_user_api.h"
 
@@ -80,6 +81,7 @@ int main( int argc, char *argv[] ) {
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_GEN_SIGNAL successed on %s\n",ifr.ifr_name );
 		//dump_state( &entl_data.state ) ;
+		printf( "sleeping 10..\n") ;
 		sleep(10) ;
 	}
 
