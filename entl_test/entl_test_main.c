@@ -57,7 +57,11 @@ static void entl_error_sig_handler( int signum ) {
 
 int main( int argc, char *argv[] ) {
 
-  	printf( "ENTL driver test.. \n" ) ;
+	if( argc != 1 ) {
+		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
+		return 0 ;
+	}
+  	printf( "ENTL driver test on %s.. \n" argv[1] ) ;
 
 	// Creating socet
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -67,7 +71,7 @@ int main( int argc, char *argv[] ) {
 
 	// Try ioctl with interface name 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, MY_DEVICE, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
 
 	// Set my handler here
 	signal(SIGUSR1, entl_error_sig_handler);
@@ -118,21 +122,24 @@ int main( int argc, char *argv[] ) {
 		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
 	}
 
-	printf( "sleeping 30 sec\n" ) ;
+    while( 1 ) {
+    	printf( "sleeping 5 sec\n" ) ;
 	
-	sleep(30) ;
+		sleep(5) ;
 
-  	// Set parm pinter to ifr
-	memset(&entl_data, 0, sizeof(entl_data));
-  	ifr.ifr_data = (char *)&entl_data ;
+  		// Set parm pinter to ifr
+		memset(&entl_data, 0, sizeof(entl_data));
+  		ifr.ifr_data = (char *)&entl_data ;
 
-  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
-		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
-	}
-	else {
-		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
-		dump_state( &entl_data.state ) ;
-	}
+  		// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+		if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
+			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
+		}
+		else {
+			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
+			dump_state( &entl_data.state ) ;
+		}
+    }
+
     
 }

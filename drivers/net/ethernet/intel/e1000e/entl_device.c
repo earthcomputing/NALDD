@@ -211,8 +211,10 @@ static void entl_device_init( entl_device_t *dev )
 static void entl_device_link_up( entl_device_t *dev ) 
 {
 	entl_link_up( &dev->stm ) ;
-	dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
-	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
+	if( dev->stm.current_state.current_state ==  ENTL_STATE_HELLO) {
+		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL | ENTL_DEVICE_FLAG_HELLO ;
+		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
+	}
 }
 
 static void entl_device_link_down( entl_device_t *dev ) 
