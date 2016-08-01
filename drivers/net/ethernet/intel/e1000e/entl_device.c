@@ -359,7 +359,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 
 }
 
-**
+/**
  * entl_e1000e_set_rx_mode - ENTL versin, always set Promiscuous mode
  * @netdev: network interface device structure
  *
@@ -396,7 +396,7 @@ static void entl_e1000e_set_rx_mode(struct net_device *netdev)
 			adapter->mng_vlan_id = E1000_MNG_VLAN_NONE;
 		//}
 	}
-                                                                                                              -> e1000_vlan_rx_kill_vid
+    
 	ew32(RCTL, rctl);
 
 	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)  // this flag is set on prove function
