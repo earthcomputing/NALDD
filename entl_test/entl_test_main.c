@@ -15,12 +15,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "entl_user_api.h"
 
 #define MY_ADDR "192.168.99.1"
 
 #define MY_DEVICE "enp6s0"
+
+static int sock;
+static struct entl_ioctl_data entl_data ;
+static struct ifreq ifr;
 
 static void dump_state( entl_state_t *st )
 {
@@ -33,6 +38,9 @@ static void dump_state( entl_state_t *st )
 static void entl_error_sig_handler( int signum ) {
   if( signum == SIGUSR1 ) {
     printf( "entl_error_sig_handler got SIGUSR1 signal!!!\n") ;
+  	// Set parm pinter to ifr
+	memset(&entl_data, 0, sizeof(entl_data));
+  	ifr.ifr_data = (char *)&entl_data ;
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_ERROR failed on %s\n",ifr.ifr_name );
@@ -48,9 +56,6 @@ static void entl_error_sig_handler( int signum ) {
 }
 
 int main( int argc, char *argv[] ) {
-	int sock;
-  	struct entl_ioctl_data entl_data ;
-  	struct ifreq ifr;
 
   	printf( "ENTL driver test.. \n" ) ;
 
