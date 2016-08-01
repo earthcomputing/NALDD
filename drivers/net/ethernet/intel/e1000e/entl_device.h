@@ -58,6 +58,9 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 /// process the packet for transmit. 
 static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
 
+/// entl version of e1000_configure - configure the hardware for Rx and Tx
+static void entl_e1000_configure(struct e1000_adapter *adapter) ;
+
 #endif    /* _IN_NETDEV_C_ */
 
 
