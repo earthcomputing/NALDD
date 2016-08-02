@@ -141,9 +141,9 @@ static void entl_watchdog_task(struct work_struct *work)
 		int t ;
 		struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
     	struct e1000_ring *tx_ring = adapter->tx_ring ;
-		entl_state_t st ;
+		//entl_state_t st ;
 		ENTL_DEBUG("ENTL entl_watchdog_task trying to send hello\n" );
-		entl_read_current_state( &dev->stm, &st ) ;
+		//entl_read_current_state( &dev->stm, &st ) ;
 		if (test_bit(__E1000_DOWN, &adapter->state)) {
 			ENTL_DEBUG("ENTL entl_watchdog_task got __E1000_DOWN\n" );
 			goto restart_watchdog ;
@@ -152,7 +152,7 @@ static void entl_watchdog_task(struct work_struct *work)
 			ENTL_DEBUG("ENTL entl_watchdog_task got t = %d\n", t );
 			goto restart_watchdog ; 
 		}
-		if( st.current_state == ENTL_STATE_HELLO ) {
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO ) {
 			__u16 u_addr ;
 			__u32 l_addr ;
 			if( entl_get_hello(&dev->stm, &u_addr, &l_addr) ){
@@ -175,7 +175,7 @@ static void entl_watchdog_task(struct work_struct *work)
  			}
 		}
 		else {
-			 ENTL_DEBUG("ENTL entl_watchdog_task not hello state but %d\n", st.current_state);
+			 ENTL_DEBUG("ENTL entl_watchdog_task not hello state but %d\n", dev->stm.current_state.current_state );
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
@@ -428,8 +428,6 @@ static void entl_e1000e_set_rx_mode(struct net_device *netdev)
  * entl_e1000_setup_rctl - ENTL version of configure the receive control registers
  * @adapter: Board private structure
  **/
-//#define PAGE_USE_COUNT(S) (((S) >> PAGE_SHIFT) + \
-//			   (((S) & (PAGE_SIZE - 1)) ? 1 : 0))
 static void entl_e1000_setup_rctl(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;

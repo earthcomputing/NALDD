@@ -29,17 +29,17 @@ static struct ifreq ifr;
 
 static void dump_state( char *type, entl_state_t *st, int flag )
 {
-	printf( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld \n", 
-		type, st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec
+	printf( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld.%ld \n", 
+		type, st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec, st->update_time.tv_nsec
 	) ;
 	if( st->error_flag ) {
-		printf( "  Error time: %ld.%ld\n" st->error_time.tv_sec, st->error_time.tv_usec ) ;
+		printf( "  Error time: %ld.%ld\n", st->error_time.tv_sec, st->error_time.tv_nsec ) ;
 	}
 #ifdef ENTL_SPEED_CHECK
 	if( flag ) {
-		printf( "  interval_time    : %ld.%ld\n" st->interval_time.tv_sec, st->interval_time.tv_usec ) ;
-		printf( "  max_interval_time: %ld.%ld\n" st->max_interval_time.tv_sec, st->max_interval_time.tv_usec ) ;
-		printf( "  min_interval_time: %ld.%ld\n" st->min_interval_time.tv_sec, st->min_interval_time.tv_usec ) ;
+		printf( "  interval_time    : %ld.%ld\n", st->interval_time.tv_sec, st->interval_time.tv_nsec ) ;
+		printf( "  max_interval_time: %ld.%ld\n", st->max_interval_time.tv_sec, st->max_interval_time.tv_nsec ) ;
+		printf( "  min_interval_time: %ld.%ld\n", st->min_interval_time.tv_sec, st->min_interval_time.tv_nsec ) ;
 	}
 #endif
 }
@@ -156,7 +156,7 @@ int main( int argc, char *argv[] ) {
 		}
 		else {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
-			printf( "  Link state : %s\n", entl_data.link_state? "UP", "DOWN" ) ;
+			printf( "  Link state : %s\n", entl_data.link_state? "UP" : "DOWN" ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 		}
     }
