@@ -138,13 +138,20 @@ static void entl_watchdog_task(struct work_struct *work)
 		}
 	}
 	if( dev->flag & ENTL_DEVICE_FLAG_HELLO ) {
+		int t ;
 		struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
     	struct e1000_ring *tx_ring = adapter->tx_ring ;
 		entl_state_t st ;
-		ENTL_DEBUG("ENTL entl_watchdog_task sending hello\n" );
+		ENTL_DEBUG("ENTL entl_watchdog_task trying to send hello\n" );
 		entl_read_current_state( &dev->stm, &st ) ;
-		if (test_bit(__E1000_DOWN, &adapter->state)) goto restart_watchdog ;
-		if( e1000_desc_unused(tx_ring) < 3 ) goto restart_watchdog ; 
+		if (test_bit(__E1000_DOWN, &adapter->state)) {
+			ENTL_DEBUG("ENTL entl_watchdog_task got __E1000_DOWN\n" );
+			goto restart_watchdog ;
+		}
+		if( (t = e1000_desc_unused(tx_ring) ) < 3 ) {
+			ENTL_DEBUG("ENTL entl_watchdog_task got t = %d\n", t );
+			goto restart_watchdog ; 
+		}
 		if( st.current_state == ENTL_STATE_HELLO ) {
 			__u16 u_addr ;
 			__u32 l_addr ;
@@ -163,6 +170,12 @@ static void entl_watchdog_task(struct work_struct *work)
 					ENTL_DEBUG("ENTL entl_watchdog_task hello packet failed with %d \n", result );	    			
 	    		}
  			}
+ 			else {
+ 				ENTL_DEBUG("ENTL entl_watchdog_task hello state lost\n" );
+ 			}
+		}
+		else {
+			 ENTL_DEBUG("ENTL entl_watchdog_task not hello state but %d\n", st.current_state);
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
