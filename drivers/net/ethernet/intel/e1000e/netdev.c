@@ -7232,6 +7232,9 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto err_eeprom;
 	}
 
+	// AK: Setting MAC address for Hello handling
+	entl_e1000_set_my_addr( &adapter->entl_dev, netdev->dev_addr ) ;
+
 	init_timer(&adapter->watchdog_timer);
 	adapter->watchdog_timer.function = e1000_watchdog;
 	adapter->watchdog_timer.data = (unsigned long)adapter;

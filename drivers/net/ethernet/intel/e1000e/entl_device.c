@@ -302,9 +302,9 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
     u32 d_l_addr;	
 
     s_u_addr = (u16)eth->h_source[0] << 8 | eth->h_source[1] ;
-    s_l_addr = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 0 | (u32)eth->h_source[5] ;
+    s_l_addr = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 8 | (u32)eth->h_source[5] ;
     d_u_addr = (u16)eth->h_dest[0] << 8 | eth->h_dest[1] ;
-    d_l_addr = (u32)eth->h_dest[2] << 24 | (u32)eth->h_dest[3] << 16 | (u32)eth->h_dest[4] << 0 | (u32)eth->h_dest[5] ;
+    d_l_addr = (u32)eth->h_dest[2] << 24 | (u32)eth->h_dest[3] << 16 | (u32)eth->h_dest[4] << 8 | (u32)eth->h_dest[5] ;
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
 
@@ -750,6 +750,21 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 
 	// this function is set in configure rx
 	adapter->alloc_rx_buf(rx_ring, e1000_desc_unused(rx_ring), GFP_KERNEL);
+
+}
+
+
+static void entl_e1000_set_my_addr( entl_device_t *dev, const u8 *addr ) 
+{
+	u16 u_addr;
+	u32 l_addr;
+
+	ENTL_DEBUG("entl_e1000_set_my_addr set %d.%d.%d.%d.%d.%d\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+
+		
+    u_addr = (u16)addr[0] << 8 | addr[1] ;
+    l_addr = (u32)addr[2] << 24 | (u32)addr[3] << 16 | (u32)addr[4] << 8 | (u32)addr[5] ;
+    entl_set_my_adder( &dev->stm, u_addr, l_addr ) ;
 
 }
 
