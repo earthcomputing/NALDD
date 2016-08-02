@@ -247,12 +247,16 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	{
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 		ENTL_DEBUG("ENTL ioctl reading current state\n" );
+		entl_data.link_state = test_bit(__E1000_DOWN, &adapter->state) ? 0 : 1 ;
 		entl_read_current_state( &dev->stm, &entl_data.state ) ;
+		entl_read_error_state( &dev->stm, &entl_data.error_state ) ;
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		break;		
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 		ENTL_DEBUG("ENTL ioctl reading error state\n" );
+		entl_data.link_state = test_bit(__E1000_DOWN, &adapter->state) ? 0 : 1 ;
 		entl_read_error_state( &dev->stm, &entl_data.state ) ;
+		entl_read_error_state( &dev->stm, &entl_data.error_state ) ;
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		break;
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:

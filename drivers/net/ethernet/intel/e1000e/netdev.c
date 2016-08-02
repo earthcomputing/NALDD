@@ -5291,6 +5291,7 @@ link_up:
 		schedule_work(&adapter->reset_task);
 
 		// AK: tell ENTL state machine 
+	    ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_down\n", adapter->netdev->name ) ;
 		entl_device_link_down( &adapter->entl_dev ) ;
 
 		/* return immediately since reset is imminent */
@@ -5299,7 +5300,7 @@ link_up:
 
 	// AK: tell ENTL state machine 
 	if( link ) {
-	    ENTL_DEBUG( "e1000_watchdog_task calling entl_device_link_up\n" ) ;
+	    ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_up\n", adapter->netdev->name ) ;
 		entl_device_link_up( &adapter->entl_dev ) ;
 	}
 

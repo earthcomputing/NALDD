@@ -27,11 +27,21 @@ static int sock;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 
-static void dump_state( entl_state_t *st )
+static void dump_state( char *type, entl_state_t *st, int flag )
 {
-	printf( "event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld \n", 
-		st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec
+	printf( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld \n", 
+		type, st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec
 	) ;
+	if( st->error_flag ) {
+		printf( "  Error time: %ld.%ld\n" st->error_time.tv_sec, st->error_time.tv_usec ) ;
+	}
+#ifdef ENTL_SPEED_CHECK
+	if( flag ) {
+		printf( "  interval_time    : %ld.%ld\n" st->interval_time.tv_sec, st->interval_time.tv_usec ) ;
+		printf( "  max_interval_time: %ld.%ld\n" st->max_interval_time.tv_sec, st->max_interval_time.tv_usec ) ;
+		printf( "  min_interval_time: %ld.%ld\n" st->min_interval_time.tv_sec, st->min_interval_time.tv_usec ) ;
+	}
+#endif
 }
 
 // the signal handler
@@ -47,7 +57,16 @@ static void entl_error_sig_handler( int signum ) {
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_ERROR successed on %s\n",ifr.ifr_name );
-		dump_state( &entl_data.state ) ;
+		if( entl_data.link_state ) {
+			printf( "  Link Up!\n " ) ;
+			dump_state( "current", &entl_data.state, 1 ) ;
+			dump_state( "error", &entl_data.error_state, 0 ) ;
+		}
+		else {
+			printf( "  Link Down!\n " ) ;
+			dump_state( "current", &entl_data.state, 1 ) ;
+			dump_state( "error", &entl_data.error_state, 0 ) ;
+		}
 	}
   }
   else {
@@ -111,7 +130,7 @@ int main( int argc, char *argv[] ) {
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
-		dump_state( &entl_data.state ) ;
+		dump_state( "current", &entl_data.state, 1 ) ;
 	}
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
@@ -137,7 +156,8 @@ int main( int argc, char *argv[] ) {
 		}
 		else {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
-			dump_state( &entl_data.state ) ;
+			printf( "  Link state : %s\n", entl_data.link_state? "UP", "DOWN" ) ;
+			dump_state( "current", &entl_data.state, 1 ) ;
 		}
     }
 

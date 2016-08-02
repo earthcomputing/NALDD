@@ -72,7 +72,9 @@ typedef struct entl_state {
 /* This structure is used in all SIOCDEVPRIVATE_ENTL_xxx ioctl calls */
 struct entl_ioctl_data {
 	int				pid;    // set own uid for signal
-	entl_state_t		state ;
+  int       link_state ; // 0: down, 1: up
+  entl_state_t    state ;
+  entl_state_t    error_state ;
 };
 
 #endif
