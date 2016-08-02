@@ -64,6 +64,9 @@ void entl_set_my_adder( entl_state_machine_t *mcn, __u16 u_addr, __u32 l_addr ) 
 // Check if we need to send hello now
 int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 
+// resend hello 
+int entl_retry_hello( entl_state_machine_t *mcn ) ;
+
 // On Received message, this should be called with the massage (MAC source & destination addr)
 //   return value: 0 : no msg to send  1 : need to send  -1 : sequence error and need to send hello
 int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 

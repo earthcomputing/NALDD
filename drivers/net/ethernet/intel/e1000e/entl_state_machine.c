@@ -159,7 +159,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 		case ENTL_STATE_IDLE:
 		{
 			// say something here as receive something on idle state
-			ENTL_DEBUG( "message received @ %ld sec on Idle state!", ts.tv_sec ) ;
+			ENTL_DEBUG( "message %x received @ %ld sec on Idle state!", u_daddr, ts.tv_sec ) ;
 		}
 		break ;
 		case ENTL_STATE_HELLO:
@@ -341,6 +341,31 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	return ret ;
+}
+
+// retry from hello 
+int entl_retry_hello( entl_state_machine_t *mcn ) 
+{
+	struct timespec ts ;
+	int ret = 0 ;
+	unsigned long flags ;
+	spin_lock_irqsave( &mcn->state_lock, flags ) ;
+
+	ts = current_kernel_time();
+	switch( mcn->current_state.current_state ) {
+		case ENTL_STATE_WAIT:
+		{
+			ENTL_DEBUG( "entl_retry_hello move state to hello @ %ld sec", ts.tv_sec ) ;			
+			mcn->current_state.current_state = ENTL_STATE_HELLO ;
+			ret = 1 ;
+		}
+		break ;
+		default:
+		break ;
+	}
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	return ret ;
+
 }
 
 static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )

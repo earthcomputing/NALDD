@@ -14,7 +14,8 @@
 #define ENTL_DEVICE_FLAG_HELLO 1
 #define ENTL_DEVICE_FLAG_SIGNAL 2
 #define ENTL_DEVICE_FLAG_RETRY 4
-#define ENTL_DEVICE_FLAG_FATAL 8
+#define ENTL_DEVICE_FLAG_WAITING 8
+#define ENTL_DEVICE_FLAG_FATAL 0x8000
 
 typedef struct entl_device {
 	entl_state_machine_t stm ;              /// the state machine structure

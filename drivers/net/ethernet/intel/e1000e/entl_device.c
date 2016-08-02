@@ -122,6 +122,10 @@ static void entl_watchdog_task(struct work_struct *work)
 	// ENTL_DEBUG("entl_watchdog_task wakes up\n");
 
 	entl_device_t *dev = container_of(work, entl_device_t, watchdog_task); // get the struct pointer from a member
+	if( !dev->flag ) {
+		dev->flag |= ENTL_DEVICE_FLAG_WAITING ;
+		goto restart_watchdog ;
+	}
 	if( (dev->flag & ENTL_DEVICE_FLAG_SIGNAL) && dev->user_pid ) {
 		struct siginfo info;
 		struct task_struct *t;
@@ -196,6 +200,14 @@ static void entl_watchdog_task(struct work_struct *work)
 	    else {
 			ENTL_DEBUG("ENTL entl_watchdog_task retry packet failed with %d \n", result );	    			
 	    }
+	}
+	else if( dev->flag & ENTL_DEVICE_FLAG_WAITING )
+	{
+		if( entl_retry_hello(&dev->stm ) ) {
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
+			dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
+			ENTL_DEBUG("ENTL entl_watchdog_task retry hello sending\n" );
+		}
 	}
 	restart_watchdog:
 	mod_timer(&dev->watchdog_timer, round_jiffies(jiffies + wakeup));
