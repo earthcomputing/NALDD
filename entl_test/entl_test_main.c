@@ -57,11 +57,11 @@ static void entl_error_sig_handler( int signum ) {
 
 int main( int argc, char *argv[] ) {
 
-	if( argc != 1 ) {
+	if( argc != 2 ) {
 		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
 		return 0 ;
 	}
-  	printf( "ENTL driver test on %s.. \n" argv[1] ) ;
+  	printf( "ENTL driver test on %s.. \n", argv[1] ) ;
 
 	// Creating socet
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
