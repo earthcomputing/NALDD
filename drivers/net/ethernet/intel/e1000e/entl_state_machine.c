@@ -41,6 +41,8 @@ void entl_state_machine_init( entl_state_machine_t *mcn )
 
 void entl_set_my_adder( entl_state_machine_t *mcn, __u16 u_addr, __u32 l_addr ) 
 {
+	ENTL_DEBUG( "%s set my address %04x %08x\n", mcn->name, u_addr, l_addr ) ;
+
 	spin_lock( &mcn->state_lock ) ;
 
 	mcn->my_u_addr = u_addr ;
@@ -142,6 +144,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 	unsigned long flags ;
 
 	if( (u_daddr & ENTL_MESSAGE_MASK) == ENTL_MESSAGE_NOP_U) {
+		ENTL_DEBUG( "%s nop message received \n", mcn->name ) ;
 		return retval ;
 	}
 	if( mcn->my_addr_valid == 0 ) {
@@ -290,6 +293,9 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 	}
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 
+	ENTL_DEBUG( "%s entl_received Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
+
+
 	return retval ;
 }
 
@@ -348,6 +354,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 	}
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_get_hello Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 	return ret ;
 }
 
@@ -372,6 +379,7 @@ int entl_retry_hello( entl_state_machine_t *mcn )
 		break ;
 	}
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_retry_hello Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 	return ret ;
 
 }
@@ -468,50 +476,63 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 void entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) 
 {
 	unsigned long flags ;
+	struct timespec ts ;
+	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
 	entl_get_next( mcn, u_addr, l_addr ) ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_next_send Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 
 }
 
 void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag ) 
 {
 	unsigned long flags ;
+	struct timespec ts ;
+	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
  	set_error( mcn, error_flag ) ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_state_error Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
 void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st ) 
 {
 	unsigned long flags ;
+	struct timespec ts ;
+	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
   	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_read_current_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
 void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st ) 
 {
 	unsigned long flags ;
+	struct timespec ts ;
+	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 	
   	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
   	mcn->error_state.error_count = 0 ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_read_error_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
 void entl_link_up( entl_state_machine_t *mcn ) 
 {
-	struct timespec ts ;
-
 	unsigned long flags ;
+	struct timespec ts ;
+	ts = current_kernel_time();
+
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
 	ts = current_kernel_time();
@@ -528,5 +549,6 @@ void entl_link_up( entl_state_machine_t *mcn )
 		//memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+	ENTL_DEBUG( "%s entl_link_up Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
