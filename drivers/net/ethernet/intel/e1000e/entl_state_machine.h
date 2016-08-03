@@ -36,6 +36,8 @@
 #define ENTL_TEST_MASK        0x7f00
 #define ENTL_MESSAGE_MASK     0x00ff
 
+#define ENTL_DEVICE_NAME_LEN 15
+
 /// The data structure represent the state machine
 typedef struct entl_state_machine {
   entl_state_t current_state ;   // this is the current ENTL state
@@ -53,6 +55,9 @@ typedef struct entl_state_machine {
   __u16 hello_u_addr ;          // When Hello message is received before send, the src addr is kept in here to be processed
   __u32 hello_l_addr ;          // When Hello message is received before send, the src addr is kept in here to be processed
   __u8 hello_addr_valid;        // valid flag for hello address
+
+  char name[ENTL_DEVICE_NAME_LEN] ;
+
 } entl_state_machine_t ;
 
 /// initialize the state machine structure

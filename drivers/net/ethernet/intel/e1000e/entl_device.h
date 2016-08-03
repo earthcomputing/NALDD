@@ -32,6 +32,7 @@ typedef struct entl_device {
     __u16 u_addr; 
     __u32 l_addr;	
 
+    char name[ENTL_DEVICE_NAME_LEN] ;
 } entl_device_t ;
 
 // entl_device.c is also included in the netdev.c code so all functions are declared static here
