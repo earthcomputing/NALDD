@@ -146,7 +146,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 	}
 	if( mcn->my_addr_valid == 0 ) {
 			// say error here
-		ENTL_DEBUG( "message received without my address set" ) ;
+		ENTL_DEBUG( "%s message received without my address set\n", mcn->name ) ;
 		return retval ;		
 	}
 
@@ -159,7 +159,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 		case ENTL_STATE_IDLE:
 		{
 			// say something here as receive something on idle state
-			ENTL_DEBUG( "message %x received @ %ld sec on Idle state!", u_daddr, ts.tv_sec ) ;
+			ENTL_DEBUG( "%s message %x received @ %ld sec on Idle state!\n", mcn->name, u_daddr, ts.tv_sec ) ;
 		}
 		break ;
 		case ENTL_STATE_HELLO:
@@ -169,11 +169,11 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				mcn->hello_u_addr = u_saddr ;
 				mcn->hello_l_addr = l_saddr ;
 				mcn->hello_addr_valid = 1 ;
-				ENTL_DEBUG( "Hello message %d received on hello state @ %ld sec", u_saddr, ts.tv_sec ) ;
+				ENTL_DEBUG( "%s Hello message %d received on hello state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;
 			}
 			else {
 				// Received non hello message on Hello state
-				ENTL_DEBUG( "non-hello message %d received on hello state @ %ld sec", u_saddr, ts.tv_sec ) ;
+				ENTL_DEBUG( "%s non-hello message %d received on hello state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;
 			}			
 		}
 		break ;
@@ -187,11 +187,11 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					clear_intervals( mcn ) ; 
 					retval = 1 ;
-					ENTL_DEBUG( "Hello message %d received on wait state -> Send state @ %ld sec", u_saddr, ts.tv_sec ) ;
+					ENTL_DEBUG( "%s Hello message %d received on wait state -> Send state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;
 			}
 				else if( mcn->my_u_addr == u_saddr && mcn->my_l_addr == l_saddr ) {
 					// say error as Alan's 1990s problem again
-					ENTL_DEBUG( "hello message with same address received @ %ld sec", ts.tv_sec ) ;
+					ENTL_DEBUG( "%s hello message with same address received @ %ld sec\n", mcn->name, ts.tv_sec ) ;
 					set_error( mcn, ENTL_ERROR_SAME_ADDRESS ) ;
 					mcn->current_state.current_state = ENTL_STATE_IDLE ;		
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
@@ -201,12 +201,12 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					mcn->current_state.current_state = ENTL_STATE_RECEIVE ;			
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					clear_intervals( mcn ) ; 
-					ENTL_DEBUG( "Hello message %d received on wait state -> Receive state @ %ld sec", u_saddr, ts.tv_sec ) ;
+					ENTL_DEBUG( "%s Hello message %d received on wait state -> Receive state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;
 				}			// case we received before sending hello, which seems sequence error
 			}
 			else {
 				// Received non hello message on Wait state
-				ENTL_DEBUG( "non-hello message %d received on hello state @ %ld sec", u_saddr, ts.tv_sec ) ;			
+				ENTL_DEBUG( "%s non-hello message %d received on hello state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;			
 				set_error( mcn, ENTL_ERROR_FLAG_SEQUENCE ) ;
 				mcn->current_state.current_state = ENTL_STATE_HELLO ;		
 				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
@@ -238,14 +238,14 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 						calc_intervals( mcn ) ;
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 						retval = 1 ;
-						ENTL_DEBUG( "ETL message %d received on Recive -> Send @ %ld sec", l_daddr, ts.tv_sec ) ;			
+						ENTL_DEBUG( "%s ETL message %d received on Recive -> Send @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 					}
 					else {
 						set_error( mcn, ENTL_ERROR_FLAG_SEQUENCE ) ;
 						mcn->current_state.current_state = ENTL_STATE_HELLO ;
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 						retval = -1 ;
-						ENTL_DEBUG( "Wrong ETL message %d received on Recive -> Hello @ %ld sec", l_daddr, ts.tv_sec ) ;			
+						ENTL_DEBUG( "%s Wrong ETL message %d received on Recive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 					}
 
 				}
@@ -255,7 +255,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 						mcn->current_state.current_state = ENTL_STATE_HELLO ;
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 						retval = -1 ;
-						ENTL_DEBUG( "Wrong ETL message %d received on Recive -> Hello @ %ld sec", l_daddr, ts.tv_sec ) ;			
+						ENTL_DEBUG( "%s Wrong ETL message %d received on Recive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 					}
 					else {
 						mcn->current_state.event_i_know = l_daddr ;
@@ -263,7 +263,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 						mcn->current_state.current_state = ENTL_STATE_SEND ;
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 						retval = 1 ;
-						ENTL_DEBUG( "ETL message %d received on Recive -> Send @ %ld sec", l_daddr, ts.tv_sec ) ;			
+						ENTL_DEBUG( "%s ETL message %d received on Recive -> Send @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
 				}
 			}
@@ -275,13 +275,13 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				mcn->current_state.current_state = ENTL_STATE_HELLO ;
 				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 				retval = -1 ;
-				ENTL_DEBUG( "Hello message received on Recive -> Hello @ %ld sec", ts.tv_sec ) ;			
+				ENTL_DEBUG( "%s Hello message received on Recive -> Hello @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 			}
 		}
 		break ;
 		default:
 		{
-			ENTL_DEBUG( "Statemachine on wrong state %d on %ld sec", mcn->current_state.current_state, ts.tv_sec ) ;			
+			ENTL_DEBUG( "%s Statemachine on wrong state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 			set_error( mcn, ENTL_ERROR_UNKOWN_STATE ) ;
 			mcn->current_state.current_state = ENTL_STATE_IDLE ;		
 			memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;			
@@ -312,7 +312,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 				// case peer hello is already received
 				if( mcn->my_addr_valid == 0 ) {
 					// say error here
-					ENTL_DEBUG( "My address is not set on Hello message request @ %ld sec", ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s My address is not set on Hello message request @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 				}
 				else {
 					if( mcn->my_u_addr > mcn->hello_u_addr || (mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr > mcn->hello_l_addr ) ) {
@@ -323,7 +323,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 					}
 					else if( mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr == mcn->hello_l_addr ) {
 						// say error as Alan's 1990s problem again
-						ENTL_DEBUG( "hello message with same address received @ %ld sec", ts.tv_sec ) ;
+						ENTL_DEBUG( "%s hello message with same address received @ %ld sec\n", mcn->name, ts.tv_sec ) ;
 						set_error( mcn, ENTL_ERROR_SAME_ADDRESS ) ;
 						mcn->current_state.current_state = ENTL_STATE_IDLE ;		
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
@@ -363,7 +363,7 @@ int entl_retry_hello( entl_state_machine_t *mcn )
 	switch( mcn->current_state.current_state ) {
 		case ENTL_STATE_WAIT:
 		{
-			ENTL_DEBUG( "entl_retry_hello move state to hello @ %ld sec", ts.tv_sec ) ;			
+			ENTL_DEBUG( "%s entl_retry_hello move state to hello @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 			mcn->current_state.current_state = ENTL_STATE_HELLO ;
 			ret = 1 ;
 		}
@@ -387,7 +387,7 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 		case ENTL_STATE_IDLE:
 		{
 			// say something here as attempt to send something on idle state
-			ENTL_DEBUG( "Message requested on Idle state @ %ld sec", ts.tv_sec ) ;			
+			ENTL_DEBUG( "%s Message requested on Idle state @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 			*l_addr = 0 ;
 			*u_addr = ENTL_MESSAGE_NOP_U ;
 		}
@@ -400,7 +400,7 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 				// case peer hello is already received
 				if( mcn->my_addr_valid == 0 ) {
 					// say error here
-					ENTL_DEBUG( "My address is not set on Hello message request @ %ld sec", ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s My address is not set on Hello message request @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 				}
 				else {
 					if( mcn->my_u_addr > mcn->hello_u_addr || (mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr > mcn->hello_l_addr ) ) {
@@ -411,7 +411,7 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 					}
 					else if( mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr == mcn->hello_l_addr ) {
 						// say error as Alan's 1990s problem again
-						ENTL_DEBUG( "hello message with same address received @ %ld sec", ts.tv_sec ) ;
+						ENTL_DEBUG( "%s hello message with same address received @ %ld sec\n", mcn->name, ts.tv_sec ) ;
 						set_error( mcn, ENTL_ERROR_SAME_ADDRESS ) ;
 						mcn->current_state.current_state = ENTL_STATE_IDLE ;		
 						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
@@ -517,7 +517,7 @@ void entl_link_up( entl_state_machine_t *mcn )
 	ts = current_kernel_time();
 
 	if( mcn->current_state.current_state == ENTL_STATE_IDLE ) {
-		ENTL_DEBUG( "Link UP !! @ %ld sec\n", ts.tv_sec ) ;
+		ENTL_DEBUG( "%s Link UP !! @ %ld sec\n", mcn->name, ts.tv_sec ) ;
 		mcn->current_state.current_state = ENTL_STATE_HELLO ;
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	}
