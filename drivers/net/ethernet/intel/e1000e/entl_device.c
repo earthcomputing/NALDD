@@ -179,7 +179,7 @@ static void entl_watchdog_task(struct work_struct *work)
  			}
 		}
 		else {
-			 ENTL_DEBUG("ENTL %s entl_watchdog_task not hello state but %d\n", dev->stm.current_state.current_state );
+			 ENTL_DEBUG("ENTL %s entl_watchdog_task not hello state but %d\n", dev->name, dev->stm.current_state.current_state );
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
