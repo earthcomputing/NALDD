@@ -218,18 +218,6 @@ static void entl_device_init( entl_device_t *dev )
 	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
 	struct net_device *netdev = adapter->netdev;
 
-	if ( netdev ) {
-		strlcpy(dev->name, netdev->name, sizeof(dev->name));
-	}
-	else {
-		strlcpy(dev->name, "unknown", sizeof(dev->name));
-	}
-
-	// initialize the state machine
-	entl_state_machine_init( &dev->stm ) ;
-	strlcpy(dev->stm.name, dev->name, sizeof(dev->stm.name));
-
-
 	dev->user_pid = 0 ;
 	dev->flag = 0 ;
 
@@ -752,6 +740,8 @@ static void entl_e1000_configure_rx(struct e1000_adapter *adapter)
 static void entl_e1000_configure(struct e1000_adapter *adapter) 
 {
 	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct net_device *netdev = adapter->netdev;
+	entl_device_t *dev = adapter->entl_dev ;
 
 	entl_e1000e_set_rx_mode(adapter->netdev);  // entl version always set Promiscuous mode
 
@@ -773,6 +763,17 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 
 	// this function is set in configure rx
 	adapter->alloc_rx_buf(rx_ring, e1000_desc_unused(rx_ring), GFP_KERNEL);
+
+	if ( netdev ) {
+		strlcpy(dev->name, netdev->name, sizeof(dev->name));
+	}
+	else {
+		strlcpy(dev->name, "unknown", sizeof(dev->name));
+	}
+
+	// initialize the state machine
+	entl_state_machine_init( &dev->stm ) ;
+	strlcpy(dev->stm.name, dev->name, sizeof(dev->stm.name));
 
 }
 
