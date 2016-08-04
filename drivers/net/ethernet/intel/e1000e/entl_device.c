@@ -318,7 +318,11 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
 
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
+
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
 
     if( result == 1 ) {
     	// need to send message
@@ -363,6 +367,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 	unsigned char d_addr[ETH_ALEN] ;
 	struct ethhdr *eth = (struct ethhdr *)skb->data ;
 
+
 	if( skb_is_gso(skb) ) {
 		// MSS packet can't be used for ENTL message (will use a header over multiple packets)
 		u_addr = ENTL_MESSAGE_NOP_U ;
@@ -374,6 +379,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet\n", dev->name );
 	}
 	else {
 		entl_next_send( &dev->stm, &u_addr, &l_addr ) ;
@@ -384,6 +390,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet\n", dev->name );
 	}
 
 }

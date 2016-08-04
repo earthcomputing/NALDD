@@ -149,8 +149,8 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 	}
 	if( mcn->my_addr_valid == 0 ) {
 			// say error here
-		ENTL_DEBUG( "%s message received without my address set\n", mcn->name ) ;
-		return retval ;		
+		ENTL_DEBUG( "%s message received without my address set %04x %08x\n", mcn->name, mcn->my_u_addr, mcn->my_l_addr ) ;
+		//return retval ;		
 	}
 
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
@@ -469,7 +469,7 @@ static void entl_get_next( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_ad
 			*l_addr = 0 ;
 			*u_addr = ENTL_MESSAGE_NOP_U ;
 		}
-		break ;
+		break ; 
 	}
 }
 
