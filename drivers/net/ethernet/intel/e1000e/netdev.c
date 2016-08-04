@@ -1234,6 +1234,8 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 	unsigned int total_tx_bytes = 0, total_tx_packets = 0;
 	unsigned int bytes_compl = 0, pkts_compl = 0;
 
+ 	ENTL_DEBUG("e1000_clean_tx_irq %s called\n", adapter->netdev->name );
+
 	i = tx_ring->next_to_clean;
 	eop = tx_ring->buffer_info[i].next_to_watch;
 	eop_desc = E1000_TX_DESC(*tx_ring, eop);
@@ -1272,6 +1274,8 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 	}
 
 	tx_ring->next_to_clean = i;
+
+ 	ENTL_DEBUG("e1000_clean_tx_irq %s %d entry cleanend\n", adapter->netdev->name, i );
 
 	netdev_completed_queue(netdev, pkts_compl, bytes_compl);
 
@@ -2704,6 +2708,8 @@ static int e1000e_poll(struct napi_struct *napi, int weight)
  	ENTL_DEBUG("e1000e_poll %s called\n", adapter->netdev->name );
 
 	adapter->clean_rx(adapter->rx_ring, &work_done, weight);
+
+ 	ENTL_DEBUG("e1000e_poll %s clean_rx done %d work\n", adapter->netdev->name, work_done );
 
 	if (!tx_cleaned)
 		work_done = weight;
