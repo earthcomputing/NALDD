@@ -1971,6 +1971,8 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 
+	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx called\n", netdev->name );
+
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
 	 */
@@ -2699,6 +2701,8 @@ static int e1000e_poll(struct napi_struct *napi, int weight)
 	    (adapter->rx_ring->ims_val & adapter->tx_ring->ims_val))
 		tx_cleaned = e1000_clean_tx_irq(adapter->tx_ring);
 
+ 	ENTL_DEBUG("e1000e_poll %s called\n", adapter->netdev->name );
+
 	adapter->clean_rx(adapter->rx_ring, &work_done, weight);
 
 	if (!tx_cleaned)
@@ -2710,6 +2714,7 @@ static int e1000e_poll(struct napi_struct *napi, int weight)
 			e1000_set_itr(adapter);
 		napi_complete_done(napi, work_done);
 		if (!test_bit(__E1000_DOWN, &adapter->state)) {
+ 			ENTL_DEBUG("e1000e_poll %s enabling rx interrupt\n", adapter->netdev->name );
 			if (adapter->msix_entries)
 				ew32(IMS, adapter->rx_ring->ims_val);
 			else
@@ -4177,8 +4182,9 @@ static void e1000e_trigger_lsc(struct e1000_adapter *adapter)
 
 void e1000e_up(struct e1000_adapter *adapter)
 {
+	ENTL_DEBUG("e1000e_up is called, calling entl_e1000_configure\n" );
 	/* hardware has been reset, we need to reload some things */
-	e1000_configure(adapter);
+	entl_e1000_configure(adapter);
 
 	clear_bit(__E1000_DOWN, &adapter->state);
 
@@ -4582,7 +4588,7 @@ static int e1000_open(struct net_device *netdev)
 	 * as soon as we call pci_request_irq, so we have to setup our
 	 * clean_rx handler before we do so.
 	 */
-	e1000_configure(adapter);
+	entl_e1000_configure(adapter);
 
 	err = e1000_request_irq(adapter);
 	if (err)

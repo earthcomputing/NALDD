@@ -179,7 +179,11 @@ static void entl_watchdog_task(struct work_struct *work)
  			}
 		}
 		else {
-			 ENTL_DEBUG("ENTL %s entl_watchdog_task not hello state but %d\n", dev->name, dev->stm.current_state.current_state );
+			ENTL_DEBUG("ENTL %s entl_watchdog_task not hello state but %d\n", dev->name, dev->stm.current_state.current_state );
+			if( entl_retry_hello(&dev->stm ) ) {
+				dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
+				ENTL_DEBUG("ENTL %s entl_watchdog_task retry hello sending state = %d\n", dev->name, dev->stm.current_state.current_state );
+			}
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
@@ -748,6 +752,8 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	struct net_device *netdev = adapter->netdev;
 	entl_device_t *dev = &adapter->entl_dev ;
+
+	ENTL_DEBUG("entl_e1000_configure is called\n" );
 
 	entl_e1000e_set_rx_mode(adapter->netdev);  // entl version always set Promiscuous mode
 
