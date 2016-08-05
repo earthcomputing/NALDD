@@ -1949,7 +1949,8 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t e1000_intr_msix_tx(int __always_unused irq, void *data)
+//static irqreturn_t e1000_intr_msix_tx(int __always_unused irq, void *data)
+static irqreturn_t e1000_intr_msix_tx(int irq, void *data)
 {
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -1960,7 +1961,7 @@ static irqreturn_t e1000_intr_msix_tx(int __always_unused irq, void *data)
 	adapter->total_tx_bytes = 0;
 	adapter->total_tx_packets = 0;
 
-	ENTL_DEBUG("ENTL %s e1000_intr_msix_tx called with ICR = %08x\n", netdev->name, icr );
+	ENTL_DEBUG("ENTL %s e1000_intr_msix_tx %d called with ICR = %08x\n", netdev->name, irq, icr );
 
 	if (!e1000_clean_tx_irq(tx_ring))
 		/* Ring was not completely cleaned, so fire another interrupt */
@@ -1972,7 +1973,8 @@ static irqreturn_t e1000_intr_msix_tx(int __always_unused irq, void *data)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
+//static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
+static irqreturn_t e1000_intr_msix_rx(int irq, void *data)
 {
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -1980,7 +1982,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
 
-	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx called with ICR = %08x\n", netdev->name, icr );
+	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x\n", netdev->name, irq, icr );
 
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
