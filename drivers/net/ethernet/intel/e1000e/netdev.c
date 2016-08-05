@@ -1977,6 +1977,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
 
 	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx called with ICR = %08x\n", netdev->name, icr );
