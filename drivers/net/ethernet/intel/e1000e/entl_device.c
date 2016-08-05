@@ -94,6 +94,8 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr )
 		 *IA64/Altix systems
 		 */
 		mmiowb();
+		ENTL_DEBUG("ENTL inject_message %04x %08x injected on %d\n", u_addr, l_addr, i);
+
 	}
 	else {
 		ENTL_DEBUG("ENTL inject_message failed to allocate sk_buffer\n");
