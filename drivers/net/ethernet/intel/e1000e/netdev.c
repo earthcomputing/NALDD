@@ -634,6 +634,7 @@ static void e1000e_update_rdt_wa(struct e1000_ring *rx_ring, unsigned int i)
 		u32 rctl = er32(RCTL);
 
 		ew32(RCTL, rctl & ~E1000_RCTL_EN);
+	    ENTL_DEBUG("ENTL %s e1000e_update_rdt_wa RCTL = %08x \n", adapter->netdev->name, rctl & ~E1000_RCTL_EN );
 		e_err("ME firmware caused invalid RDT - resetting\n");
 		schedule_work(&adapter->reset_task);
 	}
@@ -1815,6 +1816,7 @@ static irqreturn_t e1000_intr_msi(int __always_unused irq, void *data)
 			u32 rctl = er32(RCTL);
 
 			ew32(RCTL, rctl & ~E1000_RCTL_EN);
+	    	ENTL_DEBUG("ENTL %s e1000_intr_msi RCTL = %08x \n", adapter->netdev->name, rctl & ~E1000_RCTL_EN );
 			adapter->flags |= FLAG_RESTART_NOW;
 		}
 		/* guard against interrupt when we're going down */
@@ -1896,6 +1898,7 @@ static irqreturn_t e1000_intr(int __always_unused irq, void *data)
 			/* disable receives */
 			rctl = er32(RCTL);
 			ew32(RCTL, rctl & ~E1000_RCTL_EN);
+	    	ENTL_DEBUG("ENTL %s e1000_intr RCTL = %08x \n", adapter->netdev->name, rctl & ~E1000_RCTL_EN );
 			adapter->flags |= FLAG_RESTART_NOW;
 		}
 		/* guard against interrupt when we're going down */
@@ -2809,6 +2812,8 @@ static void e1000e_vlan_filter_disable(struct e1000_adapter *adapter)
 		/* disable VLAN receive filtering */
 		rctl = er32(RCTL);
 		rctl &= ~(E1000_RCTL_VFE | E1000_RCTL_CFIEN);
+
+	    ENTL_DEBUG("ENTL %s e1000e_vlan_filter_disable RCTL = %08x \n", netdev->name, rctl );
 		ew32(RCTL, rctl);
 
 		if (adapter->mng_vlan_id != (u16)E1000_MNG_VLAN_NONE) {
@@ -2833,6 +2838,7 @@ static void e1000e_vlan_filter_enable(struct e1000_adapter *adapter)
 		rctl = er32(RCTL);
 		rctl |= E1000_RCTL_VFE;
 		rctl &= ~E1000_RCTL_CFIEN;
+	    ENTL_DEBUG("ENTL %s e1000e_vlan_filter_enable RCTL = %08x \n", adapter->netdev->name, rctl );
 		ew32(RCTL, rctl);
 	}
 }
@@ -3216,6 +3222,7 @@ static void e1000_setup_rctl(struct e1000_adapter *adapter)
 		 */
 	}
 
+	ENTL_DEBUG("ENTL %s e1000_setup_rctl RCTL = %08x \n", adapter->netdev->name, rctl );
 	ew32(RCTL, rctl);
 	/* just started the receive unit, no need to restart */
 	adapter->flags &= ~FLAG_RESTART_NOW;
@@ -3339,6 +3346,7 @@ static void e1000_configure_rx(struct e1000_adapter *adapter)
 				      PM_QOS_DEFAULT_VALUE);
 	}
 
+	ENTL_DEBUG("ENTL %s e1000_configure_rx RCTL = %08x \n", adapter->netdev->name, rctl );
 	/* Enable Receives */
 	ew32(RCTL, rctl);
 }
@@ -3490,6 +3498,7 @@ static void e1000e_set_rx_mode(struct net_device *netdev)
 			rctl |= E1000_RCTL_UPE;
 	}
 
+	ENTL_DEBUG("ENTL %s e1000e_set_rx_mode RCTL = %08x \n", netdev->name, rctl );
 	ew32(RCTL, rctl);
 
 	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
@@ -3896,6 +3905,7 @@ static void e1000_flush_rx_ring(struct e1000_adapter *adapter)
 	e1e_flush();
 	usleep_range(100, 150);
 	ew32(RCTL, rctl & ~E1000_RCTL_EN);
+	ENTL_DEBUG("ENTL %s e1000_flush_rx_ring RCTL = %08x \n", adapter->netdev->name, rctl );
 }
 
 /**
@@ -5091,6 +5101,7 @@ static void e1000e_enable_receives(struct e1000_adapter *adapter)
 		struct e1000_hw *hw = &adapter->hw;
 		u32 rctl = er32(RCTL);
 
+	    ENTL_DEBUG("ENTL %s e1000e_enable_receives RCTL = %08x \n", adapter->netdev->name, rctl | E1000_RCTL_EN );
 		ew32(RCTL, rctl | E1000_RCTL_EN);
 		adapter->flags &= ~FLAG_RESTART_NOW;
 	}
@@ -6348,6 +6359,7 @@ static int __e1000_shutdown(struct pci_dev *pdev, bool runtime)
 			rctl = er32(RCTL);
 			rctl |= E1000_RCTL_MPE;
 			ew32(RCTL, rctl);
+	    	ENTL_DEBUG("ENTL %s __e1000_shutdown RCTL = %08x \n", netdev->name, rctl );
 		}
 
 		ctrl = er32(CTRL);
