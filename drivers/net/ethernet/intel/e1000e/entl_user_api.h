@@ -20,7 +20,7 @@
 #define ENTL_STATE_SEND 3
 #define ENTL_STATE_RECEIVE 4
 #define ENTL_STATE_ERROR 5
-
+ 
 // Error type bits
 #define ENTL_ERROR_FLAG_SEQUENCE 0x0001
 #define ENTL_ERROR_FLAG_LINKDONW 0x0002

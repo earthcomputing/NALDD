@@ -26,6 +26,8 @@
 #define ENTL_DEBUG(fmt, args...) /* no message */
 #endif
 
+#define ENTL_COUNT_MAX  10
+ 
 // Message sent on the MAC dst addr
 #define ENTL_MESSAGE_HELLO_U  0x0000
 #define ENTL_MESSAGE_HELLO_L  0x0000
@@ -55,6 +57,8 @@ typedef struct entl_state_machine {
   __u16 hello_u_addr ;          // When Hello message is received before send, the src addr is kept in here to be processed
   __u32 hello_l_addr ;          // When Hello message is received before send, the src addr is kept in here to be processed
   __u8 hello_addr_valid;        // valid flag for hello address
+
+  __u32 state_count ;
 
   char name[ENTL_DEVICE_NAME_LEN] ;
 

@@ -158,7 +158,7 @@ static void entl_watchdog_task(struct work_struct *work)
 			ENTL_DEBUG("ENTL %s entl_watchdog_task got t = %d\n", dev->name, t );
 			goto restart_watchdog ; 
 		}
-		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO ) {
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT ) {
 			__u16 u_addr ;
 			__u32 l_addr ;
 			if( entl_get_hello(&dev->stm, &u_addr, &l_addr) ){
@@ -170,7 +170,7 @@ static void entl_watchdog_task(struct work_struct *work)
 	    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    		if( result == 0 ) {
 	    			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_HELLO ;
-					ENTL_DEBUG("ENTL %s entl_watchdog_task hello packet sent\n", dev->name );
+					ENTL_DEBUG("ENTL %s entl_watchdog_task %04x packet sent\n", dev->name, u_addr );
 	    		}
 	    		else {
 					ENTL_DEBUG("ENTL %s entl_watchdog_task hello packet failed with %d \n", dev->name, result );	    			
@@ -209,11 +209,9 @@ static void entl_watchdog_task(struct work_struct *work)
 	}
 	else if( dev->flag & ENTL_DEVICE_FLAG_WAITING )
 	{
-		if( entl_retry_hello(&dev->stm ) ) {
-			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
-			dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
-			ENTL_DEBUG("ENTL %s entl_watchdog_task retry hello sending\n", dev->name );
-		}
+		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
+		dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
+		ENTL_DEBUG("ENTL %s entl_watchdog_task retry message sending\n", dev->name );
 	}
 	restart_watchdog:
 	mod_timer(&dev->watchdog_timer, round_jiffies(jiffies + wakeup));
@@ -239,6 +237,7 @@ static void entl_device_init( entl_device_t *dev )
 
 static void entl_device_link_up( entl_device_t *dev ) 
 {
+	ENTL_DEBUG("ENTL entl_device_link_up called\n", dev->name );
 	entl_link_up( &dev->stm ) ;
 	if( dev->stm.current_state.current_state ==  ENTL_STATE_HELLO) {
 		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL | ENTL_DEVICE_FLAG_HELLO ;
@@ -246,8 +245,26 @@ static void entl_device_link_up( entl_device_t *dev )
 	}
 }
 
+static void dump_state( char *type, entl_state_t *st, int flag )
+{
+	ENTL_DEBUG( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld.%ld \n", 
+		type, st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec, st->update_time.tv_nsec
+	) ;
+	if( st->error_flag ) {
+		ENTL_DEBUG( "  Error time: %ld.%ld\n", st->error_time.tv_sec, st->error_time.tv_nsec ) ;
+	}
+#ifdef ENTL_SPEED_CHECK
+	if( flag ) {
+		ENTL_DEBUG( "  interval_time    : %ld.%ld\n", st->interval_time.tv_sec, st->interval_time.tv_nsec ) ;
+		ENTL_DEBUG( "  max_interval_time: %ld.%ld\n", st->max_interval_time.tv_sec, st->max_interval_time.tv_nsec ) ;
+		ENTL_DEBUG( "  min_interval_time: %ld.%ld\n", st->min_interval_time.tv_sec, st->min_interval_time.tv_nsec ) ;
+	}
+#endif
+}
+
 static void entl_device_link_down( entl_device_t *dev ) 
 {
+	ENTL_DEBUG("ENTL entl_device_link_down called\n", dev->name );
 	entl_state_error( &dev->stm, ENTL_ERROR_FLAG_LINKDONW ) ;
 	dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
 	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
@@ -267,13 +284,17 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		entl_read_current_state( &dev->stm, &entl_data.state ) ;
 		entl_read_error_state( &dev->stm, &entl_data.error_state ) ;
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
+		dump_state( "current", &entl_data.state, 1 ) ;
+		dump_state( "error", &entl_data.error_state, 0 ) ;		
 		break;		
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 		ENTL_DEBUG("ENTL %s ioctl reading error state\n", dev->name );
 		entl_data.link_state = test_bit(__E1000_DOWN, &adapter->state) ? 0 : 1 ;
-		entl_read_error_state( &dev->stm, &entl_data.state ) ;
+		entl_read_current_state( &dev->stm, &entl_data.state ) ;
 		entl_read_error_state( &dev->stm, &entl_data.error_state ) ;
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
+		dump_state( "current", &entl_data.state, 1 ) ;
+		dump_state( "error", &entl_data.error_state, 0 ) ;		
 		break;
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
 		copy_from_user(&entl_data, ifr->ifr_data, sizeof(struct entl_ioctl_data) ) ;
@@ -396,7 +417,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
-		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet\n", dev->name );
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
 	}
 
 }
@@ -788,6 +809,9 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	// initialize the state machine
 	entl_state_machine_init( &dev->stm ) ;
 	strlcpy(dev->stm.name, dev->name, sizeof(dev->stm.name));
+	
+	// AK: Setting MAC address for Hello handling
+	entl_e1000_set_my_addr( &adapter->entl_dev, netdev->dev_addr ) ;
 
 }
 

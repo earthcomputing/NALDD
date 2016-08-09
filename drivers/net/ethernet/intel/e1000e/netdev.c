@@ -2061,6 +2061,8 @@ static void e1000_configure_msix(struct e1000_adapter *adapter)
 	/* Cause Tx interrupts on every write back */
 	ivar |= (1 << 31);
 
+	ENTL_DEBUG("%s e1000_configure_msix set IVAR = %08x\n", adapter->netdev->name, ivar );
+
 	ew32(IVAR, ivar);
 
 	/* enable MSI-X PBA support */
@@ -5143,7 +5145,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 
 	link = e1000e_has_link(adapter);
 
-	//ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
+	ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
