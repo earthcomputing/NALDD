@@ -181,11 +181,7 @@ static void entl_watchdog_task(struct work_struct *work)
  			}
 		}
 		else {
-			ENTL_DEBUG("ENTL %s entl_watchdog_task not hello state but %d\n", dev->name, dev->stm.current_state.current_state );
-			if( entl_retry_hello(&dev->stm ) ) {
-				dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
-				ENTL_DEBUG("ENTL %s entl_watchdog_task retry hello sending state = %d\n", dev->name, dev->stm.current_state.current_state );
-			}
+			ENTL_DEBUG("ENTL %s entl_watchdog_task not hello/wait state but %d\n", dev->name, dev->stm.current_state.current_state );
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
