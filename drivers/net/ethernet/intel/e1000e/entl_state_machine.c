@@ -343,39 +343,6 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			*l_addr = ENTL_MESSAGE_HELLO_L ;
 			*u_addr = ENTL_MESSAGE_HELLO_U ;
 			ret = 1 ;
-			if( mcn->hello_addr_valid ) {
-				// case peer hello is already received
-				if( mcn->my_addr_valid == 0 ) {
-					// say error here
-					ENTL_DEBUG( "%s My address is not set on Hello message request @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
-				}
-				else {
-					if( mcn->my_u_addr > mcn->hello_u_addr || (mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr > mcn->hello_l_addr ) ) {
-						mcn->current_state.current_state = ENTL_STATE_SEND ;			
-						mcn->current_state.event_i_sent = mcn->current_state.event_i_know = mcn->current_state.event_send_next = 0 ;
-						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-						clear_intervals( mcn ) ; 
-					}
-					else if( mcn->my_u_addr == mcn->hello_u_addr && mcn->my_l_addr == mcn->hello_l_addr ) {
-						// say error as Alan's 1990s problem again
-						ENTL_DEBUG( "%s hello message with same address received @ %ld sec\n", mcn->name, ts.tv_sec ) ;
-						set_error( mcn, ENTL_ERROR_SAME_ADDRESS ) ;
-						mcn->current_state.current_state = ENTL_STATE_IDLE ;		
-						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-					}
-					else {
-						mcn->current_state.current_state = ENTL_STATE_RECEIVE ;			
-						mcn->current_state.event_i_sent = mcn->current_state.event_i_know = mcn->current_state.event_send_next = 0 ;
-						memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-						clear_intervals( mcn ) ; 
-					}
-					mcn->hello_addr_valid = 0 ;	
-				}
-			}
-			else {
-				mcn->current_state.current_state = ENTL_STATE_WAIT ;
-				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-			}
 		}
 		break ;
 		case ENTL_STATE_WAIT:
