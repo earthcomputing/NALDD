@@ -1981,8 +1981,9 @@ static irqreturn_t e1000_intr_msix_rx(int irq, void *data)
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
+	u32 rctl = er32(RCTL);
 
-	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x\n", netdev->name, irq, icr );
+	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x RCTL = %08x \n", netdev->name, irq, icr, rctl );
 
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.

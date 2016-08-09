@@ -455,7 +455,8 @@ static void entl_e1000e_set_rx_mode(struct net_device *netdev)
 			adapter->mng_vlan_id = E1000_MNG_VLAN_NONE;
 		//}
 	}
-    
+    ENTL_DEBUG("entl_e1000e_set_rx_mode  RCTL = %08x\n", rctl );
+
 	ew32(RCTL, rctl);
 
 	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)  // this flag is set on prove function
@@ -627,6 +628,8 @@ static void entl_e1000_setup_rctl(struct e1000_adapter *adapter)
 		 */
 	//}
 
+    ENTL_DEBUG("entl_e1000_setup_rctl  RCTL = %08x\n", rctl );
+
 	ew32(RCTL, rctl);
 	/* just started the receive unit, no need to restart */
 	adapter->flags &= ~FLAG_RESTART_NOW;
@@ -760,6 +763,7 @@ static void entl_e1000_configure_rx(struct e1000_adapter *adapter)
 		pm_qos_update_request(&adapter->pm_qos_req,
 				      PM_QOS_DEFAULT_VALUE);
 	}
+	ENTL_DEBUG("entl_e1000_configure_rx  RCTL = %08x\n", rctl );
 
 	/* Enable Receives */
 	ew32(RCTL, rctl);
