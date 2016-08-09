@@ -75,6 +75,7 @@ static void entl_error_sig_handler( int signum ) {
 }
 
 int main( int argc, char *argv[] ) {
+	int count = 0 ;
 
 	if( argc != 2 ) {
 		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
@@ -134,15 +135,15 @@ int main( int argc, char *argv[] ) {
 	}
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
-	//if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
-	//	printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
-	//}
-	//else {
-	//	printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
-	//}
+	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
+		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
+	}
+	else {
+		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
+	}
 
     while( 1 ) {
-    	printf( "sleeping 5 sec\n" ) ;
+    	printf( "sleeping 5 sec on %d\n", count++ ) ;
 	
 		sleep(5) ;
 
