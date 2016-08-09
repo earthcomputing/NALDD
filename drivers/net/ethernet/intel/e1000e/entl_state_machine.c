@@ -384,6 +384,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			ENTL_DEBUG( "%s repeated Message requested on Wait state @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 			*l_addr = 0 ;
 			*u_addr = ENTL_MESSAGE_EVENT_U ;
+			ret = 1 ;
 		}
 		break ;
 		default:
@@ -513,7 +514,7 @@ void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st )
 	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
-  	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
+  	memcpy( st, &mcn->current_state, sizeof(entl_state_t)) ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	ENTL_DEBUG( "%s entl_read_current_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
