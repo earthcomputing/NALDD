@@ -3470,7 +3470,9 @@ static void e1000e_set_rx_mode(struct net_device *netdev)
 	/* clear the affected bits */
 	rctl &= ~(E1000_RCTL_UPE | E1000_RCTL_MPE);
 
-	if (netdev->flags & IFF_PROMISC) {
+	//if (netdev->flags & IFF_PROMISC) {
+	// AK: ENTL always use promisc mode
+	if( 1 ) {
 		rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
 		/* Do not hardware filter VLANs in promisc mode */
 		e1000e_vlan_filter_disable(adapter);
@@ -7019,7 +7021,7 @@ static const struct net_device_ops e1000e_netdev_ops = {
 	.ndo_stop		= e1000_close,
 	.ndo_start_xmit		= e1000_xmit_frame,
 	.ndo_get_stats64	= e1000e_get_stats64,
-	.ndo_set_rx_mode	= e1000e_set_rx_mode,
+	.ndo_set_rx_mode	= entl_e1000e_set_rx_mode,
 	.ndo_set_mac_address	= e1000_set_mac,
 	.ndo_change_mtu		= e1000_change_mtu,
 	.ndo_do_ioctl		= e1000_ioctl,
