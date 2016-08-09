@@ -30,8 +30,6 @@ void entl_state_machine_init( entl_state_machine_t *mcn )
 	mcn->error_state.current_state = 0 ;
   	mcn->error_state.error_flag = 0 ;
 
-  	mcn->error_state.state_count = 0 ;
-
   	mcn->state_count = 0 ;
 
   	spin_lock_init( &mcn->state_lock ) ;
@@ -229,7 +227,8 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				}
 			}
 			else if( (u_daddr & ENTL_MESSAGE_MASK) == ENTL_MESSAGE_EVENT_U )
-				if( l_addr == event_i_sent + 1 ) {
+			{
+				if( l_daddr == mcn->current_state.event_i_sent + 1 ) {
 					mcn->current_state.event_i_know = l_daddr ;
 					mcn->current_state.event_send_next = l_daddr + 1 ;
 					mcn->current_state.current_state = ENTL_STATE_SEND ;			
@@ -260,7 +259,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 		case ENTL_STATE_SEND:
 		{
 			if( (u_daddr & ENTL_MESSAGE_MASK) == ENTL_MESSAGE_EVENT_U ) {
-				if( l_addr == mcn->current_state.event_i_know ) {
+				if( l_daddr == mcn->current_state.event_i_know ) {
 					ENTL_DEBUG( "%s Same ENTL message %d received on Send state @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;
 				}
 				else {
