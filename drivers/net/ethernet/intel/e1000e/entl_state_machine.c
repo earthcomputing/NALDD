@@ -180,6 +180,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					clear_intervals( mcn ) ; 
 					retval = 1 ;
+					mcn->state_count = 0 ;
 					ENTL_DEBUG( "%s Hello message %d received on hello state and win -> Wait state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;
 				}
 				else if( mcn->my_u_addr == u_saddr && mcn->my_l_addr == l_saddr ) {
@@ -251,7 +252,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 			}
 			else {
 				// Received non hello message on Wait state
-				ENTL_DEBUG( "%s wrong message %d received on Wait state @ %ld sec\n", mcn->name, u_saddr, ts.tv_sec ) ;			
+				ENTL_DEBUG( "%s wrong message %04x received on Wait state -> Hello @ %ld sec\n", mcn->name, u_daddr, ts.tv_sec ) ;			
 				set_error( mcn, ENTL_ERROR_FLAG_SEQUENCE ) ;
 				mcn->current_state.event_i_know = 0 ;
 				mcn->current_state.event_send_next = 0 ;
@@ -276,7 +277,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					mcn->current_state.current_state = ENTL_STATE_HELLO ;
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					retval = -1 ;
-					ENTL_DEBUG( "%s wrong ENTL %d received on Send state @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;
+					ENTL_DEBUG( "%s Out of Sequence ENTL %d received on Send state -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;
 				}
 			}
 			else {
@@ -287,7 +288,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				mcn->current_state.current_state = ENTL_STATE_HELLO ;
 				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 				retval = -1 ;
-				ENTL_DEBUG( "%s wrong message %d received on Send state @ %ld sec\n", mcn->name, u_daddr, ts.tv_sec ) ;
+				ENTL_DEBUG( "%s wrong message %04x received on Send state -> Hello @ %ld sec\n", mcn->name, u_daddr, ts.tv_sec ) ;
 			}
 		}
 		break ;
@@ -314,7 +315,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					mcn->current_state.current_state = ENTL_STATE_HELLO ;
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					retval = -1 ;
-					ENTL_DEBUG( "%s Wrong ETL message %d received on Recive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s Out of Sequence ETL message %d received on Recive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
 			}
 			else {
@@ -325,7 +326,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				mcn->current_state.current_state = ENTL_STATE_HELLO ;
 				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 				retval = -1 ;
-				ENTL_DEBUG( "%s Wrong message %d received on Recive -> Hello @ %ld sec\n", mcn->name, u_daddr,   ts.tv_sec ) ;			
+				ENTL_DEBUG( "%s Wrong message %04x received on Recive -> Hello @ %ld sec\n", mcn->name, u_daddr,   ts.tv_sec ) ;			
 			}
 		}
 		break ;
