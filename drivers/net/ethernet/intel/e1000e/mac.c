@@ -430,13 +430,18 @@ s32 e1000e_check_for_copper_link(struct e1000_hw *hw)
 	 * of the PHY.
 	 */
 	ret_val = e1000e_phy_has_link_generic(hw, 1, 0, &link);
-	if (ret_val)
+	if (ret_val) {
+		e_dbg("e1000e_check_for_copper_link got e1000e_phy_has_link_generic\n");
 		return ret_val;
+	}
 
-	if (!link)
+	if (!link) {
+		e_dbg("e1000e_check_for_copper_link got no link\n");
 		return 0;	/* No link detected */
+	}
 
 	mac->get_link_status = false;
+	e_dbg("e1000e_check_for_copper_link clear get_link_status\n");
 
 	/* Check if there was DownShift, must be checked
 	 * immediately after link-up
