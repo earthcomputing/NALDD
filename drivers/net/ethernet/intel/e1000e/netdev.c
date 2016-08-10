@@ -1940,6 +1940,8 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
+	u32 icr = er32(ICR);
+	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x Down = %d \n", netdev->name, irq, icr, test_bit(__E1000_DOWN, &adapter->state) );
 
 	hw->mac.get_link_status = true;
 
@@ -5069,6 +5071,7 @@ static bool e1000e_has_link(struct e1000_adapter *adapter)
 		if (hw->mac.get_link_status) {
 			ret_val = hw->mac.ops.check_for_link(hw);
 			link_active = !hw->mac.get_link_status;
+	    	ENTL_DEBUG("ENTL %s e1000e_has_link link_active = %d \n", adapter->netdev->name, link_active );
 		} else {
 			link_active = true;
 		}
