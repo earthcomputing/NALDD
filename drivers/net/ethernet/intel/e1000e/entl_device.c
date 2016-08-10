@@ -94,7 +94,7 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr )
 		 *IA64/Altix systems
 		 */
 		mmiowb();
-		ENTL_DEBUG("ENTL inject_message %04x %08x injected on %d\n", u_addr, l_addr, i);
+		//ENTL_DEBUG("ENTL inject_message %04x %08x injected on %d\n", u_addr, l_addr, i);
 
 	}
 	else {
@@ -206,8 +206,10 @@ static void entl_watchdog_task(struct work_struct *work)
 	else if( dev->flag & ENTL_DEVICE_FLAG_WAITING )
 	{
 		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
-		dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
-		ENTL_DEBUG("ENTL %s entl_watchdog_task retry message sending\n", dev->name );
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT ) {
+			dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
+			ENTL_DEBUG("ENTL %s entl_watchdog_task retry message sending\n", dev->name );
+		}
 	}
 	restart_watchdog:
 	mod_timer(&dev->watchdog_timer, round_jiffies(jiffies + wakeup));

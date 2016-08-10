@@ -1235,7 +1235,7 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 	unsigned int total_tx_bytes = 0, total_tx_packets = 0;
 	unsigned int bytes_compl = 0, pkts_compl = 0;
 
- 	ENTL_DEBUG("e1000_clean_tx_irq %s called\n", adapter->netdev->name );
+ 	//ENTL_DEBUG("e1000_clean_tx_irq %s called\n", adapter->netdev->name );
 
 	i = tx_ring->next_to_clean;
 	eop = tx_ring->buffer_info[i].next_to_watch;
@@ -1276,7 +1276,7 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 
 	tx_ring->next_to_clean = i;
 
- 	ENTL_DEBUG("e1000_clean_tx_irq %s %d entry cleanend\n", adapter->netdev->name, count );
+ 	//ENTL_DEBUG("e1000_clean_tx_irq %s %d entry cleanend\n", adapter->netdev->name, count );
 
 	netdev_completed_queue(netdev, pkts_compl, bytes_compl);
 
@@ -1964,7 +1964,7 @@ static irqreturn_t e1000_intr_msix_tx(int irq, void *data)
 	adapter->total_tx_bytes = 0;
 	adapter->total_tx_packets = 0;
 
-	ENTL_DEBUG("ENTL %s e1000_intr_msix_tx %d called with ICR = %08x\n", netdev->name, irq, icr );
+	//ENTL_DEBUG("ENTL %s e1000_intr_msix_tx %d called with ICR = %08x\n", netdev->name, irq, icr );
 
 	if (!e1000_clean_tx_irq(tx_ring))
 		/* Ring was not completely cleaned, so fire another interrupt */
@@ -1986,7 +1986,7 @@ static irqreturn_t e1000_intr_msix_rx(int irq, void *data)
 	u32 icr = er32(ICR);
 	u32 rctl = er32(RCTL);
 
-	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x RCTL = %08x \n", netdev->name, irq, icr, rctl );
+	//ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x RCTL = %08x \n", netdev->name, irq, icr, rctl );
 
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
@@ -2718,11 +2718,11 @@ static int e1000e_poll(struct napi_struct *napi, int weight)
 	    (adapter->rx_ring->ims_val & adapter->tx_ring->ims_val))
 		tx_cleaned = e1000_clean_tx_irq(adapter->tx_ring);
 
- 	ENTL_DEBUG("e1000e_poll %s called\n", adapter->netdev->name );
+ 	//ENTL_DEBUG("e1000e_poll %s called\n", adapter->netdev->name );
 
 	adapter->clean_rx(adapter->rx_ring, &work_done, weight);
 
- 	ENTL_DEBUG("e1000e_poll %s clean_rx done %d work\n", adapter->netdev->name, work_done );
+ 	//ENTL_DEBUG("e1000e_poll %s clean_rx done %d work\n", adapter->netdev->name, work_done );
 
 	if (!tx_cleaned)
 		work_done = weight;
@@ -2733,7 +2733,7 @@ static int e1000e_poll(struct napi_struct *napi, int weight)
 			e1000_set_itr(adapter);
 		napi_complete_done(napi, work_done);
 		if (!test_bit(__E1000_DOWN, &adapter->state)) {
- 			ENTL_DEBUG("e1000e_poll %s enabling rx interrupt\n", adapter->netdev->name );
+ 			//ENTL_DEBUG("e1000e_poll %s enabling rx interrupt\n", adapter->netdev->name );
 			if (adapter->msix_entries)
 				ew32(IMS, adapter->rx_ring->ims_val);
 			else
@@ -5159,7 +5159,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 
 	link = e1000e_has_link(adapter);
 
-	ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
+	//ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
