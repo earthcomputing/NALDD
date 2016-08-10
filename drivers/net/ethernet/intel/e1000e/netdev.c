@@ -5071,7 +5071,7 @@ static bool e1000e_has_link(struct e1000_adapter *adapter)
 		if (hw->mac.get_link_status) {
 			ret_val = hw->mac.ops.check_for_link(hw);
 			link_active = !hw->mac.get_link_status;
-	    	ENTL_DEBUG("ENTL %s e1000e_has_link link_active = %d \n", adapter->netdev->name, link_active );
+	    	//ENTL_DEBUG("ENTL %s e1000e_has_link link_active = %d \n", adapter->netdev->name, link_active );
 		} else {
 			link_active = true;
 		}
@@ -5274,6 +5274,11 @@ static void e1000_watchdog_task(struct work_struct *work)
 
 			netif_carrier_on(netdev);
 
+
+			// AK: tell ENTL state machine 
+			ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_up\n", adapter->netdev->name ) ;
+			entl_device_link_up( &adapter->entl_dev ) ;
+
 			if (!test_bit(__E1000_DOWN, &adapter->state))
 				mod_timer(&adapter->phy_info_timer,
 					  round_jiffies(jiffies + 2 * HZ));
@@ -5288,6 +5293,10 @@ static void e1000_watchdog_task(struct work_struct *work)
 			if (!test_bit(__E1000_DOWN, &adapter->state))
 				mod_timer(&adapter->phy_info_timer,
 					  round_jiffies(jiffies + 2 * HZ));
+
+			// AK: tell ENTL state machine 
+	    	ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_down\n", adapter->netdev->name ) ;
+			entl_device_link_down( &adapter->entl_dev ) ;
 
 			/* 8000ES2LAN requires a Rx packet buffer work-around
 			 * on link down event; reset the controller to flush
@@ -5327,19 +5336,8 @@ link_up:
 	/* If reset is necessary, do it outside of interrupt context. */
 	if (adapter->flags & FLAG_RESTART_NOW) {
 		schedule_work(&adapter->reset_task);
-
-		// AK: tell ENTL state machine 
-	    ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_down\n", adapter->netdev->name ) ;
-		entl_device_link_down( &adapter->entl_dev ) ;
-
 		/* return immediately since reset is imminent */
 		return;
-	}
-
-	// AK: tell ENTL state machine 
-	if( link ) {
-	    ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_up\n", adapter->netdev->name ) ;
-		entl_device_link_up( &adapter->entl_dev ) ;
 	}
 
 	e1000e_update_adaptive(&adapter->hw);
