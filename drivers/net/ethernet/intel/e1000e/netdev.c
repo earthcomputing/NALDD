@@ -1941,12 +1941,12 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
-	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x Down = %d \n", netdev->name, irq, icr, test_bit(__E1000_DOWN, &adapter->state) );
 
 	hw->mac.get_link_status = true;
 
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
+		ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x invoking watchdog_timer \n", netdev->name, irq, icr );
 		mod_timer(&adapter->watchdog_timer, jiffies + 1);
 		ew32(IMS, E1000_IMS_OTHER);
 	}
@@ -5162,7 +5162,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 
 	link = e1000e_has_link(adapter);
 
-	//ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d\n", adapter->state, link ) ;
+	ENTL_DEBUG( "e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d \n", adapter->state, link, netif_carrier_ok(netdev) ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
@@ -6194,7 +6194,7 @@ static int e1000e_hwtstamp_get(struct net_device *netdev, struct ifreq *ifr)
 static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
 
-	ENTL_DEBUG( "e1000_ioctl called with cmd %d\n", cmd) ;
+	//ENTL_DEBUG( "e1000_ioctl called with cmd %d\n", cmd) ;
 	
 	switch (cmd) {
 	case SIOCGMIIPHY:
