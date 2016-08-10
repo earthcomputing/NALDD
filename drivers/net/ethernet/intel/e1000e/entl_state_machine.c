@@ -294,18 +294,18 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 		break ;
 		case ENTL_STATE_RECEIVE:
 		{
-			if( u_daddr == ENTL_MESSAGE_EVENT_U ) {
+			if( (u_daddr & ENTL_MESSAGE_MASK) == ENTL_MESSAGE_EVENT_U ) {
 				if( mcn->current_state.event_i_know + 2 == l_daddr ) {
 					mcn->current_state.event_i_know = l_daddr ;
 					mcn->current_state.event_send_next = l_daddr + 1 ;
 					mcn->current_state.current_state = ENTL_STATE_SEND ;
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					retval = 1 ;
-					ENTL_DEBUG( "%s ETL message %d received on Recive -> Send @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s ETL message %d received on Receive -> Send @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
 				else if( mcn->current_state.event_i_know == l_daddr )
 				{
-					ENTL_DEBUG( "%s same ETL message %d received on Recive @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s same ETL message %d received on Receive @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
 				else {
 					set_error( mcn, ENTL_ERROR_FLAG_SEQUENCE ) ;
@@ -315,7 +315,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					mcn->current_state.current_state = ENTL_STATE_HELLO ;
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					retval = -1 ;
-					ENTL_DEBUG( "%s Out of Sequence ETL message %d received on Recive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
+					ENTL_DEBUG( "%s Out of Sequence ETL message %d received on Receive -> Hello @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
 			}
 			else {
@@ -326,7 +326,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				mcn->current_state.current_state = ENTL_STATE_HELLO ;
 				memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 				retval = -1 ;
-				ENTL_DEBUG( "%s Wrong message %04x received on Recive -> Hello @ %ld sec\n", mcn->name, u_daddr,   ts.tv_sec ) ;			
+				ENTL_DEBUG( "%s Wrong message %04x received on Receive -> Hello @ %ld sec\n", mcn->name, u_daddr,   ts.tv_sec ) ;			
 			}
 		}
 		break ;
