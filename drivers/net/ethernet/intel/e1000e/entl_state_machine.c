@@ -100,7 +100,7 @@ static void calc_intervals( entl_state_machine_t *mcn )
 			mcn->current_state.interval_time.tv_nsec = 1000000000 + ts.tv_nsec - mcn->current_state.update_time.tv_nsec ;
 		}
 		else {
-			mcn->current_state.interval_time.tv_nsec = ts.tv_nsec ; // don't know what to do
+			//mcn->current_state.interval_time.tv_nsec = ts.tv_nsec ; // don't know what to do
 		}
 		if( mcn->current_state.max_interval_time.tv_sec < mcn->current_state.interval_time.tv_sec ||
 		   ( mcn->current_state.max_interval_time.tv_sec == mcn->current_state.interval_time.tv_sec && 
@@ -498,7 +498,7 @@ void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag )
 	ENTL_DEBUG( "%s entl_state_error %d Statemachine exit on state %d on %ld sec\n", mcn->name, error_flag, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
-void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st ) 
+void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err ) 
 {
 	unsigned long flags ;
 	struct timespec ts ;
@@ -506,21 +506,23 @@ void entl_read_current_state( entl_state_machine_t *mcn, entl_state_t *st )
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
   	memcpy( st, &mcn->current_state, sizeof(entl_state_t)) ;
+  	memcpy( err, &mcn->error_state, sizeof(entl_state_t)) ;
 
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	//ENTL_DEBUG( "%s entl_read_current_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
 
-void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st ) 
+void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err ) 
 {
 	unsigned long flags ;
 	struct timespec ts ;
 	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 	
-  	memcpy( st, &mcn->error_state, sizeof(entl_state_t)) ;
+  	memcpy( st, &mcn->current_state, sizeof(entl_state_t)) ;
+  	memcpy( err, &mcn->error_state, sizeof(entl_state_t)) ;
   	mcn->error_state.error_count = 0 ;
-
+  	mcn->error_state.p_error_flag = 0 ;
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	//ENTL_DEBUG( "%s entl_read_error_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }

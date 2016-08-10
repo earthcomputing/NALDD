@@ -94,8 +94,8 @@ void entl_link_up(entl_state_machine_t *mcn) ;
 
 
 // read current state to the given state structure
-void entl_read_current_state(entl_state_machine_t *mcn, entl_state_t *st) ;
+void entl_read_current_state(entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err) ;
 // read error state to the given state structure
-void entl_read_error_state(entl_state_machine_t *mcn, entl_state_t *st) ;
+void entl_read_error_state(entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err) ;
 
 #endif
