@@ -294,14 +294,14 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	{
 		u32 link;
 		struct e1000_hw *hw = &adapter->hw;
-		//ENTL_DEBUG("ENTL %s ioctl reading error state\n", dev->name );
     	hw->mac.get_link_status = 1 ; // AK force to read
 		link = e1000e_has_link(adapter);
-		entl_data.link_state = test_bit(__E1000_DOWN, &adapter->state) ? 0 : 1 ;
+		ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
+		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
-		//dump_state( "current", &entl_data.state, 1 ) ;
-		//dump_state( "error", &entl_data.error_state, 0 ) ;			
+		dump_state( "current", &entl_data.state, 1 ) ;
+		dump_state( "error", &entl_data.error_state, 0 ) ;			
 	}
 
 		break;
