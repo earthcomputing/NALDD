@@ -1944,6 +1944,8 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 
 	hw->mac.get_link_status = true;
 
+	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x E1000_Down = %d \n", netdev->name, irq, icr, test_bit(__E1000_DOWN, &adapter->state) );
+
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
 		ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x invoking watchdog_timer \n", netdev->name, irq, icr );
@@ -5156,13 +5158,14 @@ static void e1000_watchdog_task(struct work_struct *work)
 	struct e1000_ring *tx_ring = adapter->tx_ring;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 link, tctl;
+	u32 ims = er32(IMS);
 
 	if (test_bit(__E1000_DOWN, &adapter->state))
 		return;
 
 	link = e1000e_has_link(adapter);
 
-	ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d \n", netdev->name, adapter->state, link, netif_carrier_ok(netdev) ) ;
+	ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
