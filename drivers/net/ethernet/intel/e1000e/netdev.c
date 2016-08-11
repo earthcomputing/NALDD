@@ -5163,6 +5163,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 	if (test_bit(__E1000_DOWN, &adapter->state))
 		return;
 
+    hw->mac.get_link_status = 1 ; // AK force to read
 	link = e1000e_has_link(adapter);
 
 	ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
