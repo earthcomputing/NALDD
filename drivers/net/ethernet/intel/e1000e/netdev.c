@@ -5073,7 +5073,7 @@ static bool e1000e_has_link(struct e1000_adapter *adapter)
 		if (hw->mac.get_link_status) {
 			ret_val = hw->mac.ops.check_for_link(hw);
 			link_active = !hw->mac.get_link_status;
-	    	ENTL_DEBUG("ENTL %s e1000e_has_link link_active = %d \n", adapter->netdev->name, link_active );
+	    	//ENTL_DEBUG("ENTL %s e1000e_has_link link_active = %d \n", adapter->netdev->name, link_active );
 		} else {
 			link_active = true;
 		}
@@ -5166,7 +5166,7 @@ static void e1000_watchdog_task(struct work_struct *work)
     hw->mac.get_link_status = 1 ; // AK force to read
 	link = e1000e_has_link(adapter);
 
-	ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
+	//ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
