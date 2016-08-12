@@ -495,24 +495,11 @@ void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag )
  	set_error( mcn, error_flag ) ;
 
  	if( error_flag == ENTL_ERROR_FLAG_LINKDONW ) {
-	 	mcn->current_state.current_state = 0 ;
-	  	mcn->current_state.error_flag = 0 ;
-	  	mcn->current_state.error_count = 0 ;
-	  	// when following 3 members are all zero, it means fresh out of Hello handshake
-	  	mcn->current_state.event_i_sent = 0;
-	  	mcn->current_state.event_i_know = 0;
-	  	mcn->current_state.event_send_next = 0;
-#ifdef ENTL_SPEED_CHECK
-	    mcn->current_state.interval_time.tv_sec = 0;			// the last interval time between S <-> R transition
-	    mcn->current_state.interval_time.tv_nsec = 0;			// the last interval time between S <-> R transition
-	    mcn->current_state.max_interval_time.tv_sec = 0; 	// the max interval time
-	    mcn->current_state.max_interval_time.tv_nsec = 0; 	// the max interval time
-	    mcn->current_state.min_interval_time.tv_sec = 0;  	// the min interval time
-	    mcn->current_state.min_interval_time.tv_nsec = 0;  	// the min interval time
-#endif		
- 	}
- 	if( error_flag == ENTL_ERROR_FLAG_SEQUENCE ) {
-	 	mcn->current_state.current_state = ENTL_STATE_HELLO ;
+	 	mcn->current_state.current_state = ENTL_STATE_IDLE ;
+	}
+	else if( error_flag == ENTL_ERROR_FLAG_SEQUENCE ) {
+		mcn->current_state.current_state = ENTL_STATE_HELLO ;
+		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
 	  	mcn->current_state.error_flag = 0 ;
 	  	mcn->current_state.error_count = 0 ;
 	  	// when following 3 members are all zero, it means fresh out of Hello handshake
@@ -576,9 +563,23 @@ void entl_link_up( entl_state_machine_t *mcn )
 		ENTL_DEBUG( "%s Link UP !! @ %ld sec\n", mcn->name, ts.tv_sec ) ;
 		mcn->current_state.current_state = ENTL_STATE_HELLO ;
 		memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
+	  	mcn->current_state.error_flag = 0 ;
+	  	mcn->current_state.error_count = 0 ;
+	  	// when following 3 members are all zero, it means fresh out of Hello handshake
+	  	mcn->current_state.event_i_sent = 0;
+	  	mcn->current_state.event_i_know = 0;
+	  	mcn->current_state.event_send_next = 0;
+#ifdef ENTL_SPEED_CHECK
+	    mcn->current_state.interval_time.tv_sec = 0;			// the last interval time between S <-> R transition
+	    mcn->current_state.interval_time.tv_nsec = 0;			// the last interval time between S <-> R transition
+	    mcn->current_state.max_interval_time.tv_sec = 0; 	// the max interval time
+	    mcn->current_state.max_interval_time.tv_nsec = 0; 	// the max interval time
+	    mcn->current_state.min_interval_time.tv_sec = 0;  	// the min interval time
+	    mcn->current_state.min_interval_time.tv_nsec = 0;  	// the min interval time
+#endif
 	}
 	else {
-		// ENTL_DEBUG( "Unexpected Link UP on state %d @ %ld sec ignored\n", mcn->current_state.current_state, ts.tv_sec ) ;
+		ENTL_DEBUG( "Unexpected Link UP on state %d @ %ld sec ignored\n", mcn->current_state.current_state, ts.tv_sec ) ;
 		//set_error( mcn, ENTL_ERROR_UNEXPECTED_LU ) ;
 		//mcn->current_state.current_state = ENTL_STATE_HELLO ;
 		//memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;		
