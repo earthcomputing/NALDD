@@ -75,6 +75,9 @@ struct entl_ioctl_data {
   int       link_state ; // 0: down, 1: up
   entl_state_t    state ;
   entl_state_t    error_state ;
+  u32   icr ;
+  u32   ctrl ;
+  u32   ims ;
 };
 
 #endif

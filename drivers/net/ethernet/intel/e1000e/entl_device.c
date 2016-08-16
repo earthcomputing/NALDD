@@ -272,6 +272,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	entl_device_t *dev = &adapter->entl_dev ;
+	struct e1000_hw *hw = &adapter->hw;
   	struct entl_ioctl_data entl_data ;
 
 	switch( cmd )
@@ -285,6 +286,9 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		link = e1000e_has_link(adapter);
 		entl_data.link_state = link ;
 		entl_read_current_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
+		entl_data.icr = er32(ICR);
+		entl_data.ctrl = er32(CTRL);
+		entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		//dump_state( "current", &entl_data.state, 1 ) ;
 		//dump_state( "error", &entl_data.error_state, 0 ) ;		
@@ -299,6 +303,9 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
 		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
+		entl_data.icr = er32(ICR);
+		entl_data.ctrl = er32(CTRL);
+		entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		dump_state( "current", &entl_data.state, 1 ) ;
 		dump_state( "error", &entl_data.error_state, 0 ) ;			

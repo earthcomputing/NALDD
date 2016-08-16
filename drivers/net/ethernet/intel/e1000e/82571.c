@@ -1443,7 +1443,9 @@ static s32 e1000_setup_copper_link_82571(struct e1000_hw *hw)
 	ctrl = er32(CTRL);
 	ctrl |= E1000_CTRL_SLU;
 	ctrl &= ~(E1000_CTRL_FRCSPD | E1000_CTRL_FRCDPX);
-	ew32(CTRL, ctrl);
+	e_dbg("e1000_setup_copper_link_82571 called and set SLU\n");
+
+	ew32( ctrl);
 
 	switch (hw->phy.type) {
 	case e1000_phy_m88:

@@ -27,6 +27,10 @@ static int sock;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 
+static void dump_regs( struct entl_ioctl_data *data ) {
+	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
+}
+
 static void dump_state( char *type, entl_state_t *st, int flag )
 {
 	printf( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld.%ld \n", 
@@ -61,11 +65,13 @@ static void entl_error_sig_handler( int signum ) {
 			printf( "  Link Up!\n " ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
+			dump_regs( &entl_data ) ;
 		}
 		else {
 			printf( "  Link Down!\n " ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
+			dump_regs( &entl_data ) ;
 		}
 	}
   }
@@ -132,6 +138,7 @@ int main( int argc, char *argv[] ) {
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
 		dump_state( "current", &entl_data.state, 1 ) ;
+		dump_regs( &entl_data ) ;
 	}
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
@@ -159,6 +166,7 @@ int main( int argc, char *argv[] ) {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
 			printf( "  Link state : %s\n", entl_data.link_state? "UP" : "DOWN" ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
+			dump_regs( &entl_data ) ;
 		}
     }
 

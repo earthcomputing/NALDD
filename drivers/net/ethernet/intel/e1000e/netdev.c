@@ -1941,10 +1941,11 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
+	u32 ctrl = er32(CTRL);
 
 	hw->mac.get_link_status = true;
 
-	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x E1000_Down = %d \n", netdev->name, irq, icr, test_bit(__E1000_DOWN, &adapter->state) );
+	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x CTRL = %08x E1000_Down = %d \n", netdev->name, irq, icr, ctrl, test_bit(__E1000_DOWN, &adapter->state) );
 
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
@@ -1989,8 +1990,9 @@ static irqreturn_t e1000_intr_msix_rx(int irq, void *data)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
 	u32 rctl = er32(RCTL);
+	u32 ctrl = er32(CTRL);
 
-	//ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x RCTL = %08x \n", netdev->name, irq, icr, rctl );
+	ENTL_DEBUG("ENTL %s e1000_intr_msix_rx %d called with ICR = %08x RCTL = %08x CTRL = %08x \n", netdev->name, irq, icr, rctl, ctrl );
 
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
