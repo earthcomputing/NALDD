@@ -325,6 +325,10 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_DO_INIT:
 		ENTL_DEBUG("ENTL %s ioctl initialize the device\n", dev->name );
 		entl_e1000_configure( adapter ) ;
+		u32 icr = er32(ICR);
+		u32 ctrl = er32(CTRL);
+		u32 ims = er32(IMS);
+		ENTL_DEBUG("ENTL %s ioctl initializef the device with icr %08x ctrl %08x ims %08x\n", dev->name, icr, ctrl, ims );
 		break ;
 	default:
 		ENTL_DEBUG("ENTL %s ioctl error: undefined cmd %d\n", dev->name, cmd);
