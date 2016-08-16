@@ -1942,10 +1942,11 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = er32(ICR);
 	u32 ctrl = er32(CTRL);
+	u32 ims = er32(IMS);
 
 	hw->mac.get_link_status = true;
 
-	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x CTRL = %08x E1000_Down = %d \n", netdev->name, irq, icr, ctrl, test_bit(__E1000_DOWN, &adapter->state) );
+	ENTL_DEBUG("ENTL %s e1000_msix_other %d called with ICR = %08x CTRL = %08x IMS = %08x E1000_Down = %d \n", netdev->name, irq, icr, ctrl, ims, test_bit(__E1000_DOWN, &adapter->state) );
 
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
@@ -5165,10 +5166,8 @@ static void e1000_watchdog_task(struct work_struct *work)
 	if (test_bit(__E1000_DOWN, &adapter->state))
 		return;
 
-    hw->mac.get_link_status = 1 ; // AK force to read
+    //hw->mac.get_link_status = 1 ; // AK force to read
 	link = e1000e_has_link(adapter);
-
-	//ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
 	
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */
@@ -5185,6 +5184,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 	if (link) {
 		if (!netif_carrier_ok(netdev)) {
 			bool txb2b = true;
+	        ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
 
 			/* Cancel scheduled suspend requests. */
 			pm_runtime_resume(netdev->dev.parent);
@@ -5293,6 +5293,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 		if (netif_carrier_ok(netdev)) {
 			adapter->link_speed = 0;
 			adapter->link_duplex = 0;
+	        ENTL_DEBUG( "%s e1000_watchdog_task adapter->state = %d link = %d carrier_ok = %d IMS = %08x\n", netdev->name, adapter->state, link, netif_carrier_ok(netdev), ims ) ;
 			/* Link status message must follow this format */
 			pr_info("%s NIC Link is Down\n", adapter->netdev->name);
 			netif_carrier_off(netdev);
