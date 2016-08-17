@@ -4293,6 +4293,8 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 	e1e_flush();
 	usleep_range(10000, 20000);
 
+	ENTL_DEBUG("ENTL %s e1000e_down calling e1000_irq_disable\n", netdev->name );
+
 	e1000_irq_disable(adapter);
 
 	napi_synchronize(&adapter->napi);
@@ -4433,6 +4435,7 @@ static int e1000_sw_init(struct e1000_adapter *adapter)
 		INIT_WORK(&adapter->tx_hwtstamp_work, e1000e_tx_hwtstamp_work);
 	}
 
+	ENTL_DEBUG("ENTL %s e1000_sw_init calling e1000_irq_disable\n", netdev->name );
 	/* Explicitly disable IRQ since the NIC can be in any state. */
 	e1000_irq_disable(adapter);
 
@@ -4512,6 +4515,7 @@ static int e1000_test_msi_interrupt(struct e1000_adapter *adapter)
 	e1e_flush();
 	msleep(100);
 
+	ENTL_DEBUG("ENTL %s e1000_test_msi_interrupt calling e1000_irq_disable\n", netdev->name );
 	e1000_irq_disable(adapter);
 
 	rmb();			/* read flags after interrupt has been fired */
