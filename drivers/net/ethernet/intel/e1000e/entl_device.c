@@ -181,7 +181,10 @@ static void entl_watchdog_task(struct work_struct *work)
  			}
 		}
 		else {
-			ENTL_DEBUG("ENTL %s entl_watchdog_task not hello/wait state but %d\n", dev->name, dev->stm.current_state.current_state );
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_HELLO ;
+			if(  dev->stm.current_state.current_state != ENTL_STATE_IDLE ){
+				ENTL_DEBUG("ENTL %s entl_watchdog_task not hello/wait state but %d\n", dev->name, dev->stm.current_state.current_state );
+			}
 		}
 	}
 	else if(  dev->flag & ENTL_DEVICE_FLAG_RETRY ) {
@@ -280,10 +283,13 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 	{
 		u32 link;
+		int tt ;
 		struct e1000_hw *hw = &adapter->hw;
 		//ENTL_DEBUG("ENTL %s ioctl reading current state\n", dev->name );
+		tt = hw->mac.get_link_status ;
     	hw->mac.get_link_status = 1 ; // AK force to read
 		link = e1000e_has_link(adapter);
+		hw->mac.get_link_status = tt ;
 		entl_data.link_state = link ;
 		entl_read_current_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
 		entl_data.icr = er32(ICR);
@@ -297,10 +303,13 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 	{
 		u32 link;
+		int tt ;
 		struct e1000_hw *hw = &adapter->hw;
+		tt = hw->mac.get_link_status ;
     	hw->mac.get_link_status = 1 ; // AK force to read
 		link = e1000e_has_link(adapter);
 		ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
+		hw->mac.get_link_status = tt ;
 		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
 		entl_data.icr = er32(ICR);
@@ -799,6 +808,7 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	struct net_device *netdev = adapter->netdev;
 	entl_device_t *dev = &adapter->entl_dev ;
+	struct e1000_hw *hw = &adapter->hw;
 
 	ENTL_DEBUG("entl_e1000_configure is called\n" );
 
@@ -836,6 +846,9 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	
 	// AK: Setting MAC address for Hello handling
 	entl_e1000_set_my_addr( &adapter->entl_dev, netdev->dev_addr ) ;
+
+	// force to check the link status on kernel task
+	hw->mac.get_link_status = true;
 
 }
 
