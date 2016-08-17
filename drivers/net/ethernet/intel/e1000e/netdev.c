@@ -3807,6 +3807,7 @@ static void e1000_configure(struct e1000_adapter *adapter)
 {
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 
+	ENTL_DEBUG("%s e1000_configure calling e1000e_set_rx_mode\n", adapter->netdev->name );
 	e1000e_set_rx_mode(adapter->netdev);
 
 	e1000_restore_vlan(adapter);
@@ -6366,6 +6367,7 @@ static int __e1000_shutdown(struct pci_dev *pdev, bool runtime)
 
 	if (wufc) {
 		e1000_setup_rctl(adapter);
+		ENTL_DEBUG("%s __e1000_shutdown calling e1000e_set_rx_mode\n", adapter->netdev->name );
 		e1000e_set_rx_mode(netdev);
 
 		/* turn on all-multi mode if wake on multicast is enabled */
