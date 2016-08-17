@@ -7605,7 +7605,7 @@ static int __init e1000_init_module(void)
 		e1000e_driver_version);
 	pr_info("Copyright(c) 1999 - 2015 Intel Corporation.\n");
 
-	pr_info("Earth Computing ENTL extension \n" ) ;
+	pr_info("Earth Computing ENTL extension (demo 0)\n" ) ;
 	pr_info("Copyright(c) 2016 Earth Computing.\n");
 
 	return pci_register_driver(&e1000_driver);
