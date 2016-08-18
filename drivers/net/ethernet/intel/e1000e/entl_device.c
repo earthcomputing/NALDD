@@ -158,7 +158,7 @@ static void entl_watchdog_task(struct work_struct *work)
 			ENTL_DEBUG("ENTL %s entl_watchdog_task got t = %d\n", dev->name, t );
 			goto restart_watchdog ; 
 		}
-		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT ) {
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT || dev->stm.current_state.current_state == ENTL_STATE_RECEIVE ) {
 			__u16 u_addr ;
 			__u32 l_addr ;
 			if( entl_get_hello(&dev->stm, &u_addr, &l_addr) ){
@@ -170,7 +170,7 @@ static void entl_watchdog_task(struct work_struct *work)
 	    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    		if( result == 0 ) {
 	    			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_HELLO ;
-					ENTL_DEBUG("ENTL %s entl_watchdog_task %04x packet sent\n", dev->name, u_addr );
+					ENTL_DEBUG("ENTL %s entl_watchdog_task %04x %08x packet sent\n", dev->name, u_addr, l_addr );
 	    		}
 	    		else {
 					ENTL_DEBUG("ENTL %s entl_watchdog_task hello packet failed with %d \n", dev->name, result );	    			
