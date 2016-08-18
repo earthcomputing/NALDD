@@ -489,6 +489,11 @@ void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag )
 {
 	unsigned long flags ;
 	struct timespec ts ;
+
+	if( error_flag == ENTL_ERROR_FLAG_LINKDONW && mcn->current_state.current_state == ENTL_STATE_IDLE ) {
+	 	return ;
+	}
+
 	ts = current_kernel_time();
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;
 
