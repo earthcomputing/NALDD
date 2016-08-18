@@ -4278,7 +4278,7 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 	netif_carrier_off(netdev);
 
 	// AK: clean the ENTL state
-	entl_state_error( &adapter->entl_dev->stm, ENTL_ERROR_FLAG_LINKDONW ) ;
+	entl_state_error( &adapter->entl_dev.stm, ENTL_ERROR_FLAG_LINKDONW ) ;
 
 	/* disable receives in the hardware */
 	rctl = er32(RCTL);
