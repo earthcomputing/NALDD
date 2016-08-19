@@ -29,9 +29,10 @@ FAMILYH = 82571.h ich8lan.h 80003es2lan.h
 
 # core driver files
 CFILES = netdev.c ethtool.c param.c $(FAMILYC) \
-         mac.c nvm.c phy.c manage.c kcompat.c
+         mac.c nvm.c phy.c manage.c kcompat.c entl_state_machine.c
 HFILES = e1000.h hw.h regs.h defines.h \
-         mac.h nvm.h phy.h manage.h $(FAMILYH) kcompat.h
+         mac.h nvm.h phy.h manage.h $(FAMILYH) kcompat.h \
+         entl_user_api.h entl_state_machine.h entl_device.h entl_device.c
 ifeq (,$(BUILD_KERNEL))
 BUILD_KERNEL=$(shell uname -r)
 endif
@@ -150,6 +151,8 @@ EXTRA_CFLAGS += $(shell [ -f $(KSRC)/include/linux/modversions.h ] && \
                   -include $(KSRC)/include/linux/modversions.h")
 
 EXTRA_CFLAGS += $(CFLAGS_EXTRA)
+
+EXTRA_CFLAGS += -Wno-error=date-time
 
 RHC := $(KSRC)/include/linux/rhconfig.h
 ifneq (,$(wildcard $(RHC)))

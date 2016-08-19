@@ -1,0 +1,17 @@
+This directory contains the ENTL version of e1000e driver, based on Intel driver version 3.3.4.
+It is assumed that the kernel is updated to 4.4.0 by following the steps described in 'BringUpSystem' document in <DropBox>/Device Driver/.
+
+To compile the driver module:
+
+   make -C /lib/modules/$(uname -r)/build M=$(pwd) modules
+
+To inject the driver module to the system:
+
+	sudo rmmod e1000e
+	sudo insmod ./e1000e.ko
+
+To install the kernel to the system:
+
+	sudo rmmod e1000e
+	sudo make install
+

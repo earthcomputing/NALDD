@@ -48,6 +48,9 @@
 #endif
 #include "hw.h"
 
+// AK: ENTL extension
+#include "entl_device.h"
+
 struct e1000_info;
 
 #define e_dbg(format, arg...) \
@@ -226,6 +229,13 @@ struct e1000_adapter {
 	struct work_struct watchdog_task;
 
 	const struct e1000_info *ei;
+
+	// AK: ENTL device structure
+	entl_device_t entl_dev ;
+	// AK: this lock is used to protect tx_ring
+	spinlock_t tx_ring_lock ;
+	// AK: This flag enables ENTL mode
+	u32 entl_flag ;
 
 #ifdef HAVE_VLAN_RX_REGISTER
 	struct vlan_group *vlgrp;

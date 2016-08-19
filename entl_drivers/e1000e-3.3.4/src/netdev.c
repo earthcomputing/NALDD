@@ -48,9 +48,9 @@
 #include "e1000.h"
 
 #ifdef CONFIG_E1000E_NAPI
-#define DRV_EXTRAVERSION "" "-NAPI"
+#define DRV_EXTRAVERSION "-NAPI-ENTL"
 #else
-#define DRV_EXTRAVERSION ""
+#define DRV_EXTRAVERSION "-ENTL"
 #endif
 
 #define DRV_VERSION "3.3.4" DRV_EXTRAVERSION
@@ -1097,6 +1097,16 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		total_rx_bytes += length;
 		total_rx_packets++;
 
+		// AK: Process ENTL packet for RX data
+		if( adapter->entl_flag ) {
+			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
+			{
+				// This packet is ENTL message only. Not forward to upper layer
+				buffer_info->skb = skb; // recycle
+				goto next_desc;
+			}	
+		}
+
 		/* code added for copybreak, this should improve
 		 * performance for small packets with large amounts
 		 * of reassembly being done in the stack
@@ -1498,6 +1508,16 @@ static bool e1000_clean_rx_irq_ps(struct e1000_ring *rx_ring)
 			goto next_desc;
 		}
 
+		// AK: Process ENTL packet for RX data
+		if( adapter->entl_flag ) {
+			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
+			{
+				// This packet is ENTL message only. Not forward to upper layer
+				dev_kfree_skb_irq(skb);
+				goto next_desc;
+			}	
+		}
+
 		/* Good Receive */
 		skb_put(skb, length);
 
@@ -1707,6 +1727,17 @@ static bool e1000_clean_jumbo_rx_irq(struct e1000_ring *rx_ring, int *work_done,
 			rx_ring->rx_skb_top = NULL;
 			goto next_desc;
 		}
+
+		// AK: Process ENTL packet for RX data
+		if( adapter->entl_flag ) {
+			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
+			{
+				// This packet is ENTL message only. Not forward to upper layer
+				buffer_info->skb = skb; // recycle
+				goto next_desc;
+			}	
+		}
+
 #define rxtop (rx_ring->rx_skb_top)
 		if (!(staterr & E1000_RXD_STAT_EOP)) {
 			/* this descriptor is only the beginning (or middle) */
@@ -3867,7 +3898,8 @@ static void e1000e_set_rx_mode(struct net_device *netdev)
 	/* clear the affected bits */
 	rctl &= ~(E1000_RCTL_UPE | E1000_RCTL_MPE);
 
-	if (netdev->flags & IFF_PROMISC) {
+	// AK: ENTL mode always use promiscuous mode
+	if (adapter->entl_flag || netdev->flags & IFF_PROMISC) {
 		rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
 #ifdef HAVE_VLAN_RX_REGISTER
 		rctl &= ~E1000_RCTL_VFE;
@@ -4649,7 +4681,14 @@ static void e1000e_trigger_lsc(struct e1000_adapter *adapter)
 void e1000e_up(struct e1000_adapter *adapter)
 {
 	/* hardware has been reset, we need to reload some things */
-	e1000_configure(adapter);
+	if (adapter->entl_flag)
+	{
+		ENTL_DEBUG("e1000e_up is called, calling entl_e1000_configure\n" );
+		entl_e1000_configure(adapter);
+	}
+	else {
+		e1000_configure(adapter);		
+	}
 
 	clear_bit(__E1000_DOWN, &adapter->state);
 
@@ -4707,6 +4746,14 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 	set_bit(__E1000_DOWN, &adapter->state);
 
 	netif_carrier_off(netdev);
+
+	if (adapter->entl_flag)
+	{
+		ENTL_DEBUG("e1000e_down is called, calling entl_state_error for LINKDOWN \n" );
+		// AK: clean the ENTL state
+		entl_state_error( &adapter->entl_dev.stm, ENTL_ERROR_FLAG_LINKDONW ) ;
+	}
+
 #ifdef DYNAMIC_LTR_SUPPORT
 	adapter->c10_demote_ltr = false;
 	e1000_demote_ltr(hw, false, false);
@@ -5095,7 +5142,13 @@ static int e1000_open(struct net_device *netdev)
 	 * as soon as we call pci_request_irq, so we have to setup our
 	 * clean_rx handler before we do so.
 	 */
-	e1000_configure(adapter);
+	if (adapter->entl_flag)
+	{
+		entl_e1000_configure(adapter);
+	}
+	else {
+		e1000_configure(adapter);		
+	}	
 
 	err = e1000_request_irq(adapter);
 	if (err)
@@ -5845,6 +5898,13 @@ static void e1000_watchdog_task(struct work_struct *work)
 
 			netif_carrier_on(netdev);
 
+			// AK: tell ENTL state machine 
+			if (adapter->entl_flag)
+			{
+				ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_up\n", adapter->netdev->name ) ;
+				entl_device_link_up( &adapter->entl_dev ) ;
+			}
+
 			if (!test_bit(__E1000_DOWN, &adapter->state))
 				mod_timer(&adapter->phy_info_timer,
 					  round_jiffies(jiffies + 2 * HZ));
@@ -5859,6 +5919,13 @@ static void e1000_watchdog_task(struct work_struct *work)
 			if (!test_bit(__E1000_DOWN, &adapter->state))
 				mod_timer(&adapter->phy_info_timer,
 					  round_jiffies(jiffies + 2 * HZ));
+
+			// AK: tell ENTL state machine 
+			if (adapter->entl_flag)
+			{
+	    		ENTL_DEBUG( "%s e1000_watchdog_task calling entl_device_link_down\n", adapter->netdev->name ) ;
+				entl_device_link_down( &adapter->entl_dev ) ;
+			}
 
 			/* 8000ES2LAN requires a Rx packet buffer work-around
 			 * on link down event; reset the controller to flush
@@ -6376,6 +6443,7 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	int tso;
 	unsigned int f;
 	__be16 protocol = vlan_get_protocol(skb);
+	unsigned long flags;
 
 	if (test_bit(__E1000_DOWN, &adapter->state)) {
 		dev_kfree_skb_any(skb);
@@ -6392,6 +6460,12 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	 */
 	if (skb_put_padto(skb, 17))
 		return NETDEV_TX_OK;
+
+	if (adapter->entl_flag)
+	{
+		// AK: packet modification for ENTL connection
+		entl_device_process_tx_packet( &adapter->entl_dev, skb ) ;
+	}
 
 #ifdef NETIF_F_TSO
 	mss = skb_shinfo(skb)->gso_size;
@@ -6453,6 +6527,13 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 			     E1000_TX_FLAGS_VLAN_SHIFT);
 	}
 #endif
+
+	// AK: use spin_lock to protext tx_ring. (assuming this is not on ISR context)
+	if (adapter->entl_flag)
+	{
+		spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;	
+	}
+
 	first = tx_ring->next_to_use;
 
 	tso = e1000_tso(tx_ring, skb, protocol);
@@ -6543,6 +6624,12 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 		tx_ring->next_to_use = first;
 	}
 	netdev->trans_start = jiffies;
+
+	if (adapter->entl_flag)
+	{
+		// AK: don't forget to unlock before returning
+    	spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;    	
+   	}
 
 	return NETDEV_TX_OK;
 }
@@ -6889,6 +6976,12 @@ static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCETHTOOL:
 		return ethtool_ioctl(ifr);
 #endif
+	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
+	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
+	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
+	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
+	case SIOCDEVPRIVATE_ENTL_DO_INIT:
+		return entl_do_ioctl(netdev, ifr, cmd);		
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -7995,6 +8088,13 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	adapter->max_hw_frame_size = ei->max_hw_frame_size;
 	adapter->msg_enable = netif_msg_init(debug, DEFAULT_MSG_ENABLE);
 
+	// AK: initialize lock for tx_ring
+	spin_lock_init( &adapter->tx_ring_lock ) ;
+	// AK: initialize entl device
+	entl_device_init( &adapter->entl_dev ) ;
+	// AK: default, entl mode is disabled
+	adapter->entl_flag = 0 ;
+
 	mmio_start = pci_resource_start(pdev, 0);
 	mmio_len = pci_resource_len(pdev, 0);
 
@@ -8201,6 +8301,9 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		err = -EIO;
 		goto err_eeprom;
 	}
+
+	// AK: Setting MAC address for Hello handling
+	entl_e1000_set_my_addr( &adapter->entl_dev, netdev->dev_addr ) ;
 
 	init_timer(&adapter->watchdog_timer);
 	adapter->watchdog_timer.function = e1000_watchdog;
@@ -8584,6 +8687,9 @@ static int __init e1000_init_module(void)
 		e1000e_driver_version);
 	pr_info("Copyright(c) 1999 - 2016 Intel Corporation.\n");
 
+	pr_info("Earth Computing ENTL extension (Develop %s %s)\n", __DATE__, __TIME__ ) ;
+	pr_info("Copyright(c) 2016 Earth Computing.\n");
+
 #ifndef USE_REBOOT_NOTIFIER
 	return pci_register_driver(&e1000_driver);
 #else
@@ -8609,6 +8715,9 @@ static void __exit e1000_exit_module(void)
 	pci_unregister_driver(&e1000_driver);
 }
 module_exit(e1000_exit_module);
+
+// AK: including ENTL device code
+#include "entl_device.c"
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver");
