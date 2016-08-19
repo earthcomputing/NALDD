@@ -484,6 +484,7 @@ static void entl_e1000e_set_rx_mode(struct net_device *netdev)
     ENTL_DEBUG("entl_e1000e_set_rx_mode  RCTL = %08x\n", rctl );
 
 	ew32(RCTL, rctl);
+#ifndef HAVE_VLAN_RX_REGISTER
 
 #ifdef NETIF_F_HW_VLAN_CTAG_RX
 	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
@@ -501,7 +502,6 @@ static void entl_e1000e_set_rx_mode(struct net_device *netdev)
  * @adapter: Board private structure
  **/
 static void entl_e1000_setup_rctl(struct e1000_adapter *adapter)
-static void e1000_setup_rctl(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	u32 rctl, rfctl;
@@ -831,6 +831,8 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 {
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	entl_device_t *dev = &adapter->entl_dev ;
+	struct e1000_hw *hw = &adapter->hw;
+	struct net_device *netdev = adapter->netdev;
 
 	ENTL_DEBUG("entl_e1000_configure is called\n" );
 
