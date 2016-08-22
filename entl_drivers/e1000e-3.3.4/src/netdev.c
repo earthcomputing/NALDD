@@ -4685,7 +4685,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 	/* hardware has been reset, we need to reload some things */
 	if (adapter->entl_flag)
 	{
-		ENTL_DEBUG("e1000e_up is called, calling entl_e1000_configure\n" );
+		ENTL_DEBUG("e1000e_up is called on %s, calling entl_e1000_configure\n", adapter->netdev->name );
 		entl_e1000_configure(adapter);
 		entl_device_link_up( &adapter->entl_dev ) ;
 	}
@@ -4752,7 +4752,7 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 
 	if (adapter->entl_flag)
 	{
-		ENTL_DEBUG("e1000e_down is called, calling entl_device_link_down \n" );
+		ENTL_DEBUG("e1000e_down is called on %s, calling entl_device_link_down \n", adapter->netdev->name );
 		entl_device_link_down( &adapter->entl_dev ) ;
 	}
 
