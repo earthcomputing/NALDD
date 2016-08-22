@@ -4685,6 +4685,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 	{
 		ENTL_DEBUG("e1000e_up is called, calling entl_e1000_configure\n" );
 		entl_e1000_configure(adapter);
+		entl_device_link_up( &adapter->entl_dev ) ;
 	}
 	else {
 		e1000_configure(adapter);		
@@ -4749,9 +4750,8 @@ void e1000e_down(struct e1000_adapter *adapter, bool reset)
 
 	if (adapter->entl_flag)
 	{
-		ENTL_DEBUG("e1000e_down is called, calling entl_state_error for LINKDOWN \n" );
-		// AK: clean the ENTL state
-		entl_state_error( &adapter->entl_dev.stm, ENTL_ERROR_FLAG_LINKDONW ) ;
+		ENTL_DEBUG("e1000e_down is called, calling entl_device_link_down \n" );
+		entl_device_link_down( &adapter->entl_dev ) ;
 	}
 
 #ifdef DYNAMIC_LTR_SUPPORT

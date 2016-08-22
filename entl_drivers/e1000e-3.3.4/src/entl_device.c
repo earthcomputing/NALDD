@@ -220,12 +220,8 @@ static void entl_watchdog_task(struct work_struct *work)
 
 static void entl_device_init( entl_device_t *dev ) 
 {
-	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
-
-	dev->user_pid = 0 ;
-	dev->flag = 0 ;
-
-  	spin_lock_init( &adapter->tx_ring_lock ) ;
+	
+	memset(dev, 0, sizeof(struct entl_device));
 
 	// watchdog timer & task setup
 	init_timer(&dev->watchdog_timer);
@@ -240,8 +236,10 @@ static void entl_device_link_up( entl_device_t *dev )
 {
 	ENTL_DEBUG("ENTL entl_device_link_up called\n", dev->name );
 	entl_link_up( &dev->stm ) ;
+	dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
 	if( dev->stm.current_state.current_state ==  ENTL_STATE_HELLO) {
-		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL | ENTL_DEVICE_FLAG_HELLO ;
+		dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
 		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
 	}
 }
