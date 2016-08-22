@@ -1,0 +1,4 @@
+This repository contains the ENTL drivers (entl_drivers) and test codes (entl_test).
+The first implementation is done with intel e1000e driver version 3.3.4.
+See README.earthcomputing under the directory for compilation and installation.
+
