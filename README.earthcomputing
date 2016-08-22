@@ -1,3 +1,0 @@
-This repository contains entire linux-4.4.0.24 kernel source code to implement ETL driver on intel e1000e driver (Located in drivers/net/ethernet/intel/e1000e/).
-The driver itself is a kernel module, but it must be compiled with the actual kernel running on the system. So, at least the first time, the testing system must boot on the matched kernel.
-
