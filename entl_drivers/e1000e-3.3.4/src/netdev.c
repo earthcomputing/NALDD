@@ -45,6 +45,8 @@
 #endif
 #include <linux/prefetch.h>
 
+#define _IN_NETDEV_C_
+
 #include "e1000.h"
 
 #ifdef CONFIG_E1000E_NAPI
