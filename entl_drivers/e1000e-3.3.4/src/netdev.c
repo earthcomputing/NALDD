@@ -4827,6 +4827,7 @@ void e1000e_reinit_locked(struct e1000_adapter *adapter)
 	might_sleep();
 	while (test_and_set_bit(__E1000_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
+	ENTL_DEBUG("e1000e_reinit_locked on %s, calling e1000e_down and e1000e_up\n", adapter->netdev->name );
 	e1000e_down(adapter, true);
 	e1000e_up(adapter);
 	clear_bit(__E1000_RESETTING, &adapter->state);
@@ -6808,8 +6809,10 @@ static int e1000_change_mtu(struct net_device *netdev, int new_mtu)
 	if (max_frame <= (VLAN_ETH_FRAME_LEN + ETH_FCS_LEN))
 		adapter->rx_buffer_len = VLAN_ETH_FRAME_LEN + ETH_FCS_LEN;
 
-	if (netif_running(netdev))
+	if (netif_running(netdev)) {
+		ENTL_DEBUG("e1000_change_mtu on %s, calling e1000e_down and e1000e_up\n", adapter->netdev->name );
 		e1000e_up(adapter);
+	}
 	else
 		e1000e_reset(adapter);
 
@@ -7466,6 +7469,8 @@ static int e1000e_pm_thaw(struct device *dev)
 		if (err)
 			return err;
 
+		ENTL_DEBUG("e1000e_pm_thaw on %s, calling e1000e_up\n", adapter->netdev->name );
+
 		e1000e_up(adapter);
 	}
 
@@ -7550,8 +7555,11 @@ static int e1000e_pm_runtime_resume(struct device *dev)
 	if (rc)
 		return rc;
 
-	if (netdev->flags & IFF_UP)
+	if (netdev->flags & IFF_UP) {
+		ENTL_DEBUG("e1000e_pm_runtime_resume on %s, calling e1000e_up\n", adapter->netdev->name );
+
 		e1000e_up(adapter);
+	}
 
 	return rc;
 }
@@ -7611,8 +7619,10 @@ static int e1000e_pm_runtime_resume(struct device *dev)
 	if (rc)
 		return rc;
 
-	if (netdev->flags & IFF_UP)
+	if (netdev->flags & IFF_UP) {
+		ENTL_DEBUG("e1000e_pm_runtime_resume on %s, calling e1000e_up\n", adapter->netdev->name );
 		e1000e_up(adapter);
+	}
 
 	return rc;
 }
@@ -7835,8 +7845,10 @@ static void e1000_io_resume(struct pci_dev *pdev)
 
 	e1000_init_manageability_pt(adapter);
 
-	if (netif_running(netdev))
+	if (netif_running(netdev)) {
+		ENTL_DEBUG("e1000_io_resume on %s, calling e1000e_up\n", adapter->netdev->name );		
 		e1000e_up(adapter);
+	}
 
 	netif_device_attach(netdev);
 
