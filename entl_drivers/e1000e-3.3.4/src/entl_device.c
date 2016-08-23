@@ -124,6 +124,8 @@ static void entl_watchdog_task(struct work_struct *work)
 	// ENTL_DEBUG("entl_watchdog_task wakes up\n");
 
 	entl_device_t *dev = container_of(work, entl_device_t, watchdog_task); // get the struct pointer from a member
+	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
+
 	if( !dev->flag ) {
 		dev->flag |= ENTL_DEVICE_FLAG_WAITING ;
 		goto restart_watchdog ;
@@ -143,9 +145,8 @@ static void entl_watchdog_task(struct work_struct *work)
 		        send_sig_info(SIGUSR1, &info, t);
 		}
 	}
-	if( dev->flag & ENTL_DEVICE_FLAG_HELLO ) {
+	if( netif_carrier_ok(adapter->netdev) && dev->flag & ENTL_DEVICE_FLAG_HELLO ) {
 		int t ;
-		struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
     	struct e1000_ring *tx_ring = adapter->tx_ring ;
 		//entl_state_t st ;
 		ENTL_DEBUG("ENTL %s entl_watchdog_task trying to send hello\n", dev->name );
