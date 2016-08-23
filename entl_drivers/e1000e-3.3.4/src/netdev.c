@@ -5986,14 +5986,14 @@ link_up:
 	 */
 	if (!netif_carrier_ok(netdev) &&
 	    (e1000_desc_unused(tx_ring) + 1 < tx_ring->count)) {
-			    		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW here\n", adapter->netdev->name ) ;				
+			    		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW here netif_carrier_ok %d e1000_desc_unused + 1 %d tx_ring->count %d \n", adapter->netdev->name, netif_carrier_ok(netdev), e1000_desc_unused(tx_ring) + 1, tx_ring->count ) ;				
 		adapter->flags |= FLAG_RESTART_NOW;
 
 	}
 
 	/* If reset is necessary, do it outside of interrupt context. */
 	if (adapter->flags & FLAG_RESTART_NOW) {
-	    ENTL_DEBUG( "%s e1000_watchdog_task calling adapter->reset_task for FLAG_RESTART_NOW\n", adapter->netdev->name ) ;
+	    ENTL_DEBUG( "%s e1000_watchdog_task schedules adapter->reset_task for FLAG_RESTART_NOW\n", adapter->netdev->name ) ;
 
 		schedule_work(&adapter->reset_task);
 		/* return immediately since reset is imminent */
