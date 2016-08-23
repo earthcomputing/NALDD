@@ -5985,6 +5985,8 @@ link_up:
 
 	/* If reset is necessary, do it outside of interrupt context. */
 	if (adapter->flags & FLAG_RESTART_NOW) {
+	    ENTL_DEBUG( "%s e1000_watchdog_task calling adapter->reset_task for FLAG_RESTART_NOW\n", adapter->netdev->name ) ;
+
 		schedule_work(&adapter->reset_task);
 		/* return immediately since reset is imminent */
 		return;
