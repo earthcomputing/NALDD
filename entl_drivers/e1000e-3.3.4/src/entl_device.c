@@ -265,7 +265,7 @@ static void entl_device_link_down( entl_device_t *dev )
 {
 	ENTL_DEBUG("ENTL entl_device_link_down called\n", dev->name );
 	entl_state_error( &dev->stm, ENTL_ERROR_FLAG_LINKDONW ) ;
-	dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+	dev->flag = ENTL_DEVICE_FLAG_SIGNAL ;  // clear other flag and just signal
 	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer	
 }
 
