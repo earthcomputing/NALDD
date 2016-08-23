@@ -381,8 +381,8 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 		case ENTL_STATE_RECEIVE:
 		{
 			ENTL_DEBUG( "%s repeated Message requested on Receive state @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
-			*l_addr = 0 ;
-			*u_addr = mcn->current_state.event_i_sent ;
+			*l_addr = mcn->current_state.event_i_sent ;
+			*u_addr = ENTL_MESSAGE_EVENT_U ;
 			ret = 1 ;
 		}
 		break ;
