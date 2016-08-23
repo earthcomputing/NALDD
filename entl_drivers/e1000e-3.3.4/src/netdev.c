@@ -5986,7 +5986,7 @@ link_up:
 	 */
 	if (!netif_carrier_ok(netdev) &&
 	    (e1000_desc_unused(tx_ring) + 1 < tx_ring->count)) {
-		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW here netif_carrier_ok %d ring->next_to_clean %d ring->next_to_use %d tx_ring->count %d \n", adapter->netdev->name, netif_carrier_ok(netdev), ring->next_to_clean, ring->next_to_use, tx_ring->count ) ;				
+		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW here netif_carrier_ok %d tx_ring->next_to_clean %d tx_ring->next_to_use %d tx_ring->count %d \n", adapter->netdev->name, netif_carrier_ok(netdev), tx_ring->next_to_clean, tx_ring->next_to_use, tx_ring->count ) ;				
 		adapter->flags |= FLAG_RESTART_NOW;
 
 	}
