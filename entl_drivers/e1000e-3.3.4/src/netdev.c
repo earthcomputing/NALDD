@@ -1987,6 +1987,8 @@ static irqreturn_t e1000_intr_msi(int __always_unused irq, void *data)
 			u32 rctl = er32(RCTL);
 
 			ew32(RCTL, rctl & ~E1000_RCTL_EN);
+			ENTL_DEBUG("e1000_intr_msi on %s, setting FLAG_RESTART_NOW\n", adapter->netdev->name );
+		
 			adapter->flags |= FLAG_RESTART_NOW;
 		}
 		/* guard against interrupt when we're going down */
@@ -2090,6 +2092,7 @@ static irqreturn_t e1000_intr(int __always_unused irq, void *data)
 			/* disable receives */
 			rctl = er32(RCTL);
 			ew32(RCTL, rctl & ~E1000_RCTL_EN);
+			ENTL_DEBUG("e1000_intr on %s, setting FLAG_RESTART_NOW\n", adapter->netdev->name );
 			adapter->flags |= FLAG_RESTART_NOW;
 		}
 		/* guard against interrupt when we're going down */
@@ -5935,8 +5938,10 @@ static void e1000_watchdog_task(struct work_struct *work)
 			 * on link down event; reset the controller to flush
 			 * the Rx packet buffer.
 			 */
-			if (adapter->flags & FLAG_RX_NEEDS_RESTART)
+			if (adapter->flags & FLAG_RX_NEEDS_RESTART) {
+	    		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW\n", adapter->netdev->name ) ;				
 				adapter->flags |= FLAG_RESTART_NOW;
+			}
 			else
 				pm_schedule_suspend(netdev->dev.parent,
 						    LINK_TIMEOUT);
@@ -5980,8 +5985,11 @@ link_up:
 	 * reset the controller to flush the Tx packet buffers.
 	 */
 	if (!netif_carrier_ok(netdev) &&
-	    (e1000_desc_unused(tx_ring) + 1 < tx_ring->count))
+	    (e1000_desc_unused(tx_ring) + 1 < tx_ring->count)) {
+			    		ENTL_DEBUG( "%s e1000_watchdog_task setting FLAG_RESTART_NOW here\n", adapter->netdev->name ) ;				
 		adapter->flags |= FLAG_RESTART_NOW;
+
+	}
 
 	/* If reset is necessary, do it outside of interrupt context. */
 	if (adapter->flags & FLAG_RESTART_NOW) {
