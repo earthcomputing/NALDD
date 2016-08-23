@@ -6664,6 +6664,8 @@ static void e1000_reset_task(struct work_struct *work)
 		e1000e_dump(adapter);
 		e_err("Reset adapter unexpectedly\n");
 	}
+	ENTL_DEBUG("e1000_reset_task on %s, calling e1000e_reinit_locked\n", adapter->netdev->name );
+
 	e1000e_reinit_locked(adapter);
 }
 
@@ -7956,10 +7958,14 @@ static int e1000_set_features(struct net_device *netdev,
 
 	netdev->features = features;
 
-	if (netif_running(netdev))
+	if (netif_running(netdev)) {
+		ENTL_DEBUG("e1000_set_features on %s, calling e1000e_reinit_locked\n", adapter->netdev->name );
 		e1000e_reinit_locked(adapter);
-	else
+	}
+	else {
+		ENTL_DEBUG("e1000_set_features on %s, calling e1000e_reset\n", adapter->netdev->name );
 		e1000e_reset(adapter);
+	}
 
 	return 0;
 }
