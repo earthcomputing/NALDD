@@ -5786,6 +5786,9 @@ static void e1000_watchdog_task(struct work_struct *work)
 		return;
 #endif /* DYNAMIC_LTR_SUPPORT */
 
+	// AK: force to read from hw
+	adapter->hw.mac.get_link_status = true ;
+
 	link = e1000e_has_link(adapter);
 	if ((netif_carrier_ok(netdev)) && link) {
 		/* Cancel scheduled suspend requests. */

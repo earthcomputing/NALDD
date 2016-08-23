@@ -294,9 +294,9 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		entl_data.ctrl = er32(CTRL);
 		entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
-		ENTL_DEBUG("ENTL %s ioctl reading current state on %d icr %08x ctrl %08x ims %08x\n", dev->name, link, entl_data.icr, entl_data.ctrl, entl_data.ims );
-		dump_state( "rd current", &entl_data.state, 1 ) ;
-		dump_state( "rd error", &entl_data.error_state, 0 ) ;		
+		//ENTL_DEBUG("ENTL %s ioctl reading current state on %d icr %08x ctrl %08x ims %08x\n", dev->name, link, entl_data.icr, entl_data.ctrl, entl_data.ims );
+		//dump_state( "rd current", &entl_data.state, 1 ) ;
+		//dump_state( "rd error", &entl_data.error_state, 0 ) ;		
 	}
 		break;		
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
