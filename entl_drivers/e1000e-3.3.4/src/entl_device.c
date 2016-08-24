@@ -359,6 +359,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	struct e1000_hw *hw = &adapter->hw;
 	union e1000_rx_desc_extended *rx_desc, *next_rxd;
 	struct e1000_buffer *buffer_info, *next_buffer;
+	u32 staterr;
 	unsigned int i = rx_ring->next_to_peek ;
 
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);

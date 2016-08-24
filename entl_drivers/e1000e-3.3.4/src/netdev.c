@@ -2198,9 +2198,10 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct e1000_hw *hw = &adapter->hw;
+
 #ifndef CONFIG_E1000E_NAPI
 	int i;
-	struct e1000_hw *hw = &adapter->hw;
 #endif
 
 #ifdef ENTL_BUSY_RX_INTERRUPT
@@ -2239,7 +2240,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 
 out1:
 #endif /* CONFIG_E1000E_NAPI */		
-	}
+
 	// ready for next interrupt
 	ew32(ICS, rx_ring->ims_val);
 
