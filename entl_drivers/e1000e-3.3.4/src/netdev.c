@@ -2155,9 +2155,12 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
-		ENTL_DEBUG("e1000_msix_other %s is called, triggering watchdog\n", netdev->name );
+		u32 ims ;
 		mod_timer(&adapter->watchdog_timer, jiffies + 1);
-		ew32(IMS, E1000_IMS_OTHER);
+		// AK: try to set E1000_IMS_LSC 
+		ew32(IMS, E1000_IMS_OTHER | E1000_IMS_LSC );
+		ims = er32(IMS) ;
+		ENTL_DEBUG("e1000_msix_other %s is called, triggering watchdog ims %08x \n", netdev->name, ims );
 	}
 
 	return IRQ_HANDLED;
