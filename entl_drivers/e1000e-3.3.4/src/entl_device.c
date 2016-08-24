@@ -353,6 +353,45 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 //	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
 //}
 
+static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
+{
+	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct e1000_hw *hw = &adapter->hw;
+	union e1000_rx_desc_extended *rx_desc, *next_rxd;
+	struct e1000_buffer *buffer_info, *next_buffer;
+	unsigned int i = rx_ring->next_to_peek ;
+
+	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
+	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
+	buffer_info = &rx_ring->buffer_info[i];
+
+	while (staterr & E1000_RXD_STAT_DD) {
+		struct sk_buff *skb;
+
+		i++;
+		if (i == rx_ring->count)
+			i = 0;
+		next_rxd = E1000_RX_DESC_EXT(*rx_ring, i);
+		prefetch(next_rxd);
+
+		next_buffer = &rx_ring->buffer_info[i];
+
+		skb = buffer_info->skb;
+
+		// AK: Process ENTL packet for RX data
+		entl_device_process_rx_packet( &adapter->entl_dev, skb ) ;
+
+		rx_desc = next_rxd;
+		buffer_info = next_buffer;
+
+		staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
+	
+	}
+
+	rx_ring->next_to_peek = i ;
+
+}
+
 // process received packet, if not message only, return true to let upper side forward this packet
 //   It is assumed that this is called on ISR context.
 static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *skb )
@@ -833,6 +872,8 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	struct net_device *netdev = adapter->netdev;
 
+	adapter->p_jiffies = 0 ;
+	
 	ENTL_DEBUG("entl_e1000_configure is called\n" );
 
 	entl_e1000e_set_rx_mode(adapter->netdev);

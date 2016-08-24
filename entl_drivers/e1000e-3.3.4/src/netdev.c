@@ -1099,6 +1099,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		total_rx_bytes += length;
 		total_rx_packets++;
 
+#ifndef ENTL_BUSY_RX_INTERRUPT
 		// AK: Process ENTL packet for RX data
 		if( adapter->entl_flag ) {
 			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
@@ -1108,6 +1109,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				goto next_desc;
 			}	
 		}
+#endif
 
 		/* code added for copybreak, this should improve
 		 * performance for small packets with large amounts
@@ -1928,6 +1930,11 @@ static void e1000_clean_rx_ring(struct e1000_ring *rx_ring)
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
+
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	rx_ring->next_to_peek = 0;
+#endif
+	
 	adapter->flags2 &= ~FLAG2_IS_DISCARDING;
 
 	writel(0, rx_ring->head);
@@ -2196,6 +2203,47 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct e1000_hw *hw = &adapter->hw;
 #endif
 
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	// no ITR , full throttle
+	writel(0, rx_ring->itr_register);
+
+	// Processing ENTL packet
+	entl_proces_rx_ring_on_isr( adapter ) ;
+
+#ifdef CONFIG_E1000E_NAPI
+	{
+		// jiffies based polling speed control
+		unsigned long nsec = (1000000000L / HZ) * rx_ring->itr_val ;
+		if ( adapter->p_jiffies == 0 || (jiffies - adapter->p_jiffies) > nsec ) {
+			if (napi_schedule_prep(&adapter->napi)) {
+				adapter->total_rx_bytes = 0;
+				adapter->total_rx_packets = 0;
+				__napi_schedule(&adapter->napi);
+				adapter->p_jiffies = jiffies ;
+			}			
+		}
+
+	}
+#else
+		adapter->total_rx_bytes = 0;
+		adapter->total_rx_packets = 0;
+
+		for (i = 0; i < E1000_MAX_INTR; i++) {
+			int rx_cleaned = adapter->clean_rx(rx_ring);
+			if (!rx_cleaned)
+				goto out1;
+		}
+		/* If we got here, the ring was not completely cleaned,
+		 * so fire another interrupt.
+		 */
+
+out1:
+#endif /* CONFIG_E1000E_NAPI */		
+	}
+	// ready for next interrupt
+	ew32(ICS, rx_ring->ims_val);
+
+#else
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
 	 */
@@ -2228,6 +2276,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 
 out:
 #endif /* CONFIG_E1000E_NAPI */
+#endif /* ENTL_BUSY_RX_INTERRUPT */
 	return IRQ_HANDLED;
 }
 
@@ -2669,6 +2718,11 @@ int e1000e_setup_rx_resources(struct e1000_ring *rx_ring)
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
+
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	rx_ring->next_to_peek = 0;
+#endif
+
 	rx_ring->rx_skb_top = NULL;
 
 	return 0;
