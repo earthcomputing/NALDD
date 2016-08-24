@@ -556,8 +556,8 @@ void entl_read_error_state( entl_state_machine_t *mcn, entl_state_t *st, entl_st
 	
   	memcpy( st, &mcn->current_state, sizeof(entl_state_t)) ;
   	memcpy( err, &mcn->error_state, sizeof(entl_state_t)) ;
-  	mcn->error_state.error_count = 0 ;
-  	mcn->error_state.p_error_flag = 0 ;
+  	memset(&mcn->error_state, 0, sizeof(entl_state_t)) ;
+  	
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 	//ENTL_DEBUG( "%s entl_read_error_state Statemachine exit on state %d on %ld sec\n", mcn->name, mcn->current_state.current_state, ts.tv_sec ) ;			
 }
