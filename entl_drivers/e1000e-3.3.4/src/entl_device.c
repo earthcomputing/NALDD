@@ -362,8 +362,11 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	u32 staterr;
 	unsigned int i = rx_ring->next_to_peek ;
 
-    if( !netif_carrier_ok(adapter->netdev) ) return ;
-    
+    if( !netif_carrier_ok(adapter->netdev) ) {
+		ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
+    	return ;
+    }
+
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
 	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
 	buffer_info = &rx_ring->buffer_info[i];
