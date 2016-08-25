@@ -2209,7 +2209,9 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	writel(0, rx_ring->itr_register);
 
 	// Processing ENTL packet
-	entl_proces_rx_ring_on_isr( adapter ) ;
+	if( adapter->entl_flag ){
+		entl_proces_rx_ring_on_isr( adapter ) ;
+	}
 
 #ifdef CONFIG_E1000E_NAPI
 	{
