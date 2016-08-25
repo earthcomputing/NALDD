@@ -361,6 +361,8 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	struct e1000_buffer *buffer_info, *next_buffer;
 	unsigned int i = rx_ring->next_to_peek ;
 
+    if( !netif_carrier_ok(adapter->netdev) ) return ;
+    
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
 	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
 	buffer_info = &rx_ring->buffer_info[i];
