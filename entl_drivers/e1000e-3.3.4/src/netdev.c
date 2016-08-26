@@ -2212,6 +2212,9 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	if( adapter->entl_flag ){
 		entl_proces_rx_ring_on_isr( adapter ) ;
 	}
+	else {
+		ENTL_DEBUG("ENTL %s e1000_intr_msix_rx entl_flag is %d\n", adapter->netdev->name, adapter->entl_flag );
+	}
 
 #ifdef CONFIG_E1000E_NAPI
 	{
