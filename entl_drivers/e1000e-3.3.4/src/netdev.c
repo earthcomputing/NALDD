@@ -2228,7 +2228,9 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 
 #ifdef CONFIG_E1000E_NAPI
 	{
-		// jiffies based polling speed control
+		u32 itr = rx_ring->itr_val ?
+		    1000000000 / (rx_ring->itr_val * 256) : 0;
+
 		unsigned long nsec = (1000000000L / HZ) * rx_ring->itr_val ;
 		if ( adapter->p_jiffies == 0 || (jiffies - adapter->p_jiffies) > nsec ) {
 			if (napi_schedule_prep(&adapter->napi)) {
@@ -2243,7 +2245,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 			}
 		}
 		else {
-			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi nsec %lu itr_val %lu HZ %lu (1000000000L / HZ) %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, nsec, rx_ring->itr_val, HZ, (1000000000L / HZ), jiffies, adapter->p_jiffies );
+			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi itr %lu nsec %lu itr_val %lu HZ %lu (1000000000L / HZ) %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, itr, nsec, rx_ring->itr_val, HZ, (1000000000L / HZ), jiffies, adapter->p_jiffies );
 		}
 
 	}
