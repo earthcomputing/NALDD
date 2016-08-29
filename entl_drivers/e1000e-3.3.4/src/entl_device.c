@@ -367,7 +367,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
     	return ;
     }
     //if( i == 0 || i == 15 ) {
-	//	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
+	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
     //}
 
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
@@ -422,11 +422,11 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
 
-	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
-	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
 
     if( result == 1 ) {
     	// need to send message
