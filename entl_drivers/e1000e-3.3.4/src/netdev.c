@@ -2230,22 +2230,23 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	{
 		u32 itr = rx_ring->itr_val ?
 		    1000000000 / (rx_ring->itr_val * 256) : 0;
-
-		unsigned long nsec = (1000000000L / HZ) * rx_ring->itr_val ;
-		if ( adapter->p_jiffies == 0 || (jiffies - adapter->p_jiffies) > nsec ) {
+		// itr_val should have num-interrupt/sec, 
+		unsigned long nsec = 1000000000L / rx_ring->itr_val ;
+		unsigned long i_nsec = (jiffies - adapter->p_jiffies) * 1000000000L / HZ ;
+		if ( adapter->p_jiffies == 0 || i_nsec > nsec ) {
 			if (napi_schedule_prep(&adapter->napi)) {
 				adapter->total_rx_bytes = 0;
 				adapter->total_rx_packets = 0;
 				__napi_schedule(&adapter->napi);
-				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi on %lu\n", adapter->netdev->name, adapter->p_jiffies );
-				adapter->p_jiffies = jiffies ;
+				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi i_nsec %lu nsec %lu itr_val %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, i_nsec, nsec, rx_ring->itr_val, jiffies, adapter->p_jiffies );
 			}
 			else {
 				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx busy napi on %lu\n", adapter->netdev->name, jiffies );
 			}
+			adapter->p_jiffies = jiffies ;
 		}
 		else {
-			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi itr %lu nsec %lu itr_val %lu HZ %lu (1000000000L / HZ) %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, itr, nsec, rx_ring->itr_val, HZ, (1000000000L / HZ), jiffies, adapter->p_jiffies );
+			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx NOT schedule napi i_nsec %lu nsec %lu itr_val %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, i_nsec, nsec, rx_ring->itr_val, jiffies, adapter->p_jiffies );
 		}
 
 	}
