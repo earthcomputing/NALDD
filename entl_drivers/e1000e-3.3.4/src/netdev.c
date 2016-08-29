@@ -2561,10 +2561,13 @@ static void e1000_irq_disable(struct e1000_adapter *adapter)
 static void e1000_irq_enable(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
+	u32 ims ;
 
 	if (adapter->msix_entries) {
 		ew32(EIAC_82574, adapter->eiac_mask & E1000_EIAC_MASK_82574);
 		ew32(IMS, adapter->eiac_mask | E1000_IMS_LSC);
+		ims = er32(IMS);
+		ENTL_DEBUG("ENTL %s e1000_irq_enable ims %08x eiac_mask %08x\n", adapter->netdev->name, ims, adapter->eiac_mask );
 	} else if ((hw->mac.type == e1000_pch_lpt) ||
 		   (hw->mac.type == e1000_pch_spt)) {
 		ew32(IMS, IMS_ENABLE_MASK | E1000_IMS_ECCER);
