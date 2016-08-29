@@ -2225,6 +2225,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 				adapter->total_rx_bytes = 0;
 				adapter->total_rx_packets = 0;
 				__napi_schedule(&adapter->napi);
+				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi on %d\n", adapter->netdev->name, adapter->p_jiffies );
 				adapter->p_jiffies = jiffies ;
 			}			
 		}
@@ -2242,12 +2243,17 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 		/* If we got here, the ring was not completely cleaned,
 		 * so fire another interrupt.
 		 */
-
-out1:
-#endif /* CONFIG_E1000E_NAPI */		
-
 	// ready for next interrupt
 	ew32(ICS, rx_ring->ims_val);
+
+out1:
+
+#endif /* CONFIG_E1000E_NAPI */		
+
+	ew32(IMS, rx_ring->ims_val);
+
+	// should set IMS here here
+
 
 #else
 	/* Write the ITR value calculated at the end of the
@@ -2563,7 +2569,7 @@ static void e1000_irq_enable(struct e1000_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 ims ;
 
-	ENTL_DEBUG("ENTL %s e1000_irq_enable called with msix_entries %d eiac_mask %08x\n", adapter->netdev->name, adapter->msix_entries, , adapter->eiac_mask );
+	ENTL_DEBUG("ENTL %s e1000_irq_enable called with msix_entries %d eiac_mask %08x\n", adapter->netdev->name, adapter->msix_entries, adapter->eiac_mask );
 
 	if (adapter->msix_entries) {
 		ew32(EIAC_82574, adapter->eiac_mask & E1000_EIAC_MASK_82574);
