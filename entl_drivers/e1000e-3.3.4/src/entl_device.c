@@ -366,9 +366,9 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 		ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
     	return ;
     }
-    if( i == 0 || i == 15 ) {
-		ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
-    }
+    //if( i == 0 || i == 15 ) {
+	//	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
+    //}
 
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
 	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
@@ -426,7 +426,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
-	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
+	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
 
     if( result == 1 ) {
     	// need to send message
