@@ -2235,15 +2235,15 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 				adapter->total_rx_bytes = 0;
 				adapter->total_rx_packets = 0;
 				__napi_schedule(&adapter->napi);
-				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi on %d\n", adapter->netdev->name, adapter->p_jiffies );
+				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi on %lu\n", adapter->netdev->name, adapter->p_jiffies );
 				adapter->p_jiffies = jiffies ;
 			}
 			else {
-				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx busy napi on %d\n", adapter->netdev->name, jiffies );
+				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx busy napi on %lu\n", adapter->netdev->name, jiffies );
 			}
 		}
 		else {
-			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi nsec %d jiffies %d p_jeffies %d\n", adapter->netdev->name, nsec, jiffies, adapter->p_jiffies );
+			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi nsec %lu itr_val %lu HZ %lu (1000000000L / HZ) %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, nsec, rx_ring->itr_val, HZ, (1000000000L / HZ), jiffies, adapter->p_jiffies );
 		}
 
 	}
