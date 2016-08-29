@@ -462,6 +462,23 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
 }
 
+
+static bool entl_device_check_rx_packet( entl_device_t *dev, struct sk_buff *skb )
+{
+	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
+	bool ret = true ;
+	struct ethhdr *eth = (struct ethhdr *)skb->data ;
+	int result ;
+
+    u16 d_u_addr; 
+
+    d_u_addr = (u16)eth->h_dest[0] << 8 | eth->h_dest[1] ;
+
+    if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
+
+    return ret ;
+}
+
 // process packet being sent. The ENTL message can only be ent over the single (non MSS) packet
 //  Assuming this is called from non-interrupt context
 static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *skb )

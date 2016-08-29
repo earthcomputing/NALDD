@@ -1109,6 +1109,16 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				goto next_desc;
 			}	
 		}
+#else
+		// AK: Skip ENTL only packet 
+		if( adapter->entl_flag ) {
+			if( !entl_device_check_rx_packet( &adapter->entl_dev, skb ) )
+			{
+				// This packet is ENTL message only. Not forward to upper layer
+				buffer_info->skb = skb; // recycle
+				goto next_desc;
+			}	
+		}		
 #endif
 
 		/* code added for copybreak, this should improve
@@ -2227,7 +2237,13 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 				__napi_schedule(&adapter->napi);
 				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi on %d\n", adapter->netdev->name, adapter->p_jiffies );
 				adapter->p_jiffies = jiffies ;
-			}			
+			}
+			else {
+				ENTL_DEBUG("ENTL %s e1000_intr_msix_rx busy napi on %d\n", adapter->netdev->name, jiffies );
+			}
+		}
+		else {
+			ENTL_DEBUG("ENTL %s e1000_intr_msix_rx not schedule napi nsec %d jiffies %d p_jeffies %d\n", adapter->netdev->name, nsec, jiffies, adapter->p_jiffies );
 		}
 
 	}

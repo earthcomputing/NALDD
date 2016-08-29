@@ -62,6 +62,8 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter ) ;
 /// process the packet upon receive
 static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
 
+static bool entl_device_check_rx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
+
 /// process the packet for transmit. 
 static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
 
