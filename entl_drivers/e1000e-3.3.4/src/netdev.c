@@ -2563,6 +2563,8 @@ static void e1000_irq_enable(struct e1000_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 ims ;
 
+	ENTL_DEBUG("ENTL %s e1000_irq_enable called with msix_entries %d eiac_mask %08x\n", adapter->netdev->name, adapter->msix_entries, , adapter->eiac_mask );
+
 	if (adapter->msix_entries) {
 		ew32(EIAC_82574, adapter->eiac_mask & E1000_EIAC_MASK_82574);
 		ew32(IMS, adapter->eiac_mask | E1000_IMS_LSC);
@@ -4767,6 +4769,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 
 	if (adapter->msix_entries)
 		e1000_configure_msix(adapter);
+	ENTL_DEBUG("e1000e_up is calling e1000_irq_enable\n", adapter->netdev->name );
 	e1000_irq_enable(adapter);
 
 	netif_start_queue(adapter->netdev);
