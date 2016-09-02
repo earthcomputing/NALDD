@@ -10,6 +10,7 @@
 #include <linux/timekeeping.h>
 #include <linux/spinlock.h>
 #include <linux/spinlock_types.h>
+#include <linux/slab.h>
 
 #include "entl_user_api.h"
 
@@ -125,7 +126,7 @@ void entl_link_up(entl_state_machine_t *mcn) ;
 int entl_send_AIT_message( entl_state_machine_t *mcn, struct entt_ioctl_ait_data* data ) ;
 
 // Read the next AIT message to send 
-struct entt_ioctl_ait_data* entl_next_AIT_message( entl_state_machine_t *mcn ) 
+struct entt_ioctl_ait_data* entl_next_AIT_message( entl_state_machine_t *mcn ) ;
 
 // the new AIT message received 
 void entl_new_AIT_message( entl_state_machine_t *mcn, struct entt_ioctl_ait_data* data ) ;

@@ -39,7 +39,7 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int f
 	d_addr[5] = l_addr ;
 
 	if( flag & ENTL_ACTION_SEND_AIT ) {
-		ait_data = entl_next_AIT_message( dev->stm ) ;
+		ait_data = entl_next_AIT_message( &dev->stm ) ;
 		len = ETH_HLEN + ait_data->message_len ;
 		if( len < ETH_ZLEN ) len = ETH_ZLEN ; // min length = 60 defined in include/uapi/linux/if_ether.h
 		len += ETH_FCS_LEN ;

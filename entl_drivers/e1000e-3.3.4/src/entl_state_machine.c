@@ -8,11 +8,11 @@
 #include <linux/string.h>
 #include "entl_state_machine.h"
 
-static void init_ENTT_queue( ENTT_queue* q ) ;
-static int is_ENTT_queue_full( ENTT_queue_t* q ) 
-static int push_back_ENTT_queue(ENTT_queue* q, void* dt ) ;
+static void init_ENTT_queue( ENTT_queue_t* q ) ;
+static int is_ENTT_queue_full( ENTT_queue_t* q ) ;
+static int push_back_ENTT_queue(ENTT_queue_t* q, void* dt ) ;
 static void* front_ENTT_queue(ENTT_queue_t* q ) ;
-static void* pop_front_ENTT_queue(ENTT_queue* q ) ;
+static void* pop_front_ENTT_queue(ENTT_queue_t* q ) ;
 
 void entl_state_machine_init( entl_state_machine_t *mcn )
 {
@@ -320,7 +320,6 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 				if( mcn->current_state.event_i_know + 2 == l_daddr ) {
 					mcn->current_state.event_i_know = l_daddr ;
 					mcn->current_state.event_send_next = l_daddr + 1 ;
-					if( mcn->send_ATI_queue.count ) {
 					mcn->current_state.current_state = ENTL_STATE_SEND ;
 					retval = ENTL_ACTION_SEND ;
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
@@ -608,7 +607,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			ENTL_DEBUG( "%s repeated AIT requested on Am state @ %ld sec\n", mcn->name, ts.tv_sec ) ;			
 			*l_addr = mcn->current_state.event_i_sent ;
 			*u_addr = ENTL_MESSAGE_AIT_U ;
-			retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT ;
+			ret = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT ;
 		}
 		break ;		
 		case ENTL_STATE_BH:
