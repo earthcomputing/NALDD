@@ -233,6 +233,7 @@ static void entl_watchdog_task(struct work_struct *work)
 	    spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    if( result == 0 ) {
     		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_RETRY ;
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
 			ENTL_DEBUG("ENTL %s entl_watchdog_task retry packet sent\n", dev->name );
 	    }
 	    else {
@@ -486,6 +487,10 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	   				dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
 					mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
 	    		}
+	    		else {
+	    			// clear watchdog flag
+					dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
+	    		}
 	    	}		
 	    }
 
@@ -528,6 +533,9 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
+		if( u_addr != ENTL_MESSAGE_NOP_U ) {
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;			
+		}
 		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
 	}
 
