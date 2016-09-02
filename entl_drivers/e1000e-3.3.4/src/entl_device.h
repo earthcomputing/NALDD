@@ -11,10 +11,12 @@
  #include "entl_state_machine.h"
 
 // these flags are used to request tasks to service task
-#define ENTL_DEVICE_FLAG_HELLO 1
-#define ENTL_DEVICE_FLAG_SIGNAL 2
-#define ENTL_DEVICE_FLAG_RETRY 4
-#define ENTL_DEVICE_FLAG_WAITING 8
+#define ENTL_DEVICE_FLAG_HELLO 		1
+#define ENTL_DEVICE_FLAG_SIGNAL 	2
+#define ENTL_DEVICE_FLAG_RETRY 		4
+#define ENTL_DEVICE_FLAG_WAITING 	8
+#define ENTL_DEVICE_FLAG_SIGNAL2	0x10
+
 #define ENTL_DEVICE_FLAG_FATAL 0x8000
 
 typedef struct entl_device {
@@ -31,6 +33,7 @@ typedef struct entl_device {
 	// keep the last value to be sent for retry
     __u16 u_addr; 
     __u32 l_addr;	
+    int action ;
 
     char name[ENTL_DEVICE_NAME_LEN] ;
 } entl_device_t ;

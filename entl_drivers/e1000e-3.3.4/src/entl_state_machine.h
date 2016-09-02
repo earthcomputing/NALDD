@@ -32,13 +32,26 @@
 #define ENTL_MESSAGE_HELLO_U  0x0000
 #define ENTL_MESSAGE_HELLO_L  0x0000
 #define ENTL_MESSAGE_EVENT_U  0x0001
-#define ENTL_MESSAGE_NOP_U	   0x0002
+#define ENTL_MESSAGE_NOP_U    0x0002
+#define ENTL_MESSAGE_AIT_U    0x0003
+#define ENTL_MESSAGE_ACK_U    0x0004
+
 // When MSB of upper address is set, this is message only, no packet to upper layer
 #define ENTL_MESSAGE_ONLY_U	 0x8000
 #define ENTL_TEST_MASK        0x7f00
 #define ENTL_MESSAGE_MASK     0x00ff
 
 #define ENTL_DEVICE_NAME_LEN 15
+
+#define MAX_ENTT_QUEUE_SIZE 32
+ 
+typedef struct ENTT_queue {
+    u16 size ;
+    u16 count ;
+    u16 head ;
+    u16 tail ;
+    void* data[MAX_ENTT_QUEUE_SIZE] ;
+} ENTT_queue_t ;
 
 /// The data structure represent the state machine
 typedef struct entl_state_machine {
@@ -60,9 +73,15 @@ typedef struct entl_state_machine {
 
   __u32 state_count ;
 
+    struct entt_ioctl_ait_data* receive_buffer ;
+
+    ENTT_queue_t send_ATI_queue ;
+    ENTT_queue_t receive_ATI_queue ;
+
   char name[ENTL_DEVICE_NAME_LEN] ;
 
 } entl_state_machine_t ;
+
 
 /// initialize the state machine structure
 void entl_state_machine_init( entl_state_machine_t *mcn ) ;
@@ -74,14 +93,24 @@ void entl_set_my_adder( entl_state_machine_t *mcn, __u16 u_addr, __u32 l_addr ) 
 int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 
 // resend hello 
-int entl_retry_hello( entl_state_machine_t *mcn ) ;
+// int entl_retry_hello( entl_state_machine_t *mcn ) ;
+
+// return value flag for entl_received
+#define ENTL_ACTION_NOP         0
+#define ENTL_ACTION_SEND        0x01
+#define ENTL_ACTION_SEND_AIT    0x02
+#define ENTL_ACTION_PROC_AIT    0x04
+#define ENTL_ACTION_SIG_AIT     0x08
+#define ENTL_ACTION_ERROR       -1
 
 // On Received message, this should be called with the massage (MAC source & destination addr)
-//   return value: 0 : no msg to send  1 : need to send  -1 : sequence error and need to send hello
+//   return value : bit 0: send, bit 1: send AIT, bit 2: process AIT
 int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u16 u_daddr, __u32 l_daddr ) ; 
 
 // On sending ethernet packet, this function should be called to get the destination MAC address for message
-void entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ; 
+//   return value : bit 0: send, bit 1: send AIT, bit 2: process AIT
+int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ; 
+int entl_next_send_tx( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 
 // On receiving error (link down, timeout), this functon should be called to report to the state machine
 void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag ) ;
@@ -92,6 +121,17 @@ __u32 get_entl_state(entl_state_machine_t *mcn) ;
 // On Link-Up, this function should be called
 void entl_link_up(entl_state_machine_t *mcn) ;
 
+// Request to send the AIT message, return 0 if OK, -1 if queue full 
+int entl_send_AIT_message( entl_state_machine_t *mcn, struct entt_ioctl_ait_data* data ) ;
+
+// Read the next AIT message to send 
+struct entt_ioctl_ait_data* entl_next_AIT_message( entl_state_machine_t *mcn ) 
+
+// the new AIT message received 
+void entl_new_AIT_message( entl_state_machine_t *mcn, struct entt_ioctl_ait_data* data ) ;
+
+// Read the AIT message, return NULL if queue empty 
+struct entt_ioctl_ait_data* entl_read_AIT_message( entl_state_machine_t *mcn ) ; 
 
 // read current state to the given state structure
 void entl_read_current_state(entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err) ;
