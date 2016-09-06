@@ -49,7 +49,7 @@ static void dump_ait( struct entt_ioctl_ait_data *dt )
 {
 	int i ;
 	printf( "AIT message :" ) ;
-	for( i = 0 ; i < dt->message_len, i++ ) {
+	for( i = 0 ; i < dt->message_len; i++ ) {
 		printf( "%c", dt->data[i]) ;
 	}
 	printf( "\n" ) ;
@@ -67,9 +67,9 @@ static void entl_ait_sig_handler( int signum ) {
 		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT failed on %s\n",ifr.ifr_name );
 	}
 	else {
-		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT successed on %s\n",ifr.ifr_name );
+		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT successed on %s num_massage %d\n",ifr.ifr_name, ait_data.num_messages );
 		if( ait_data.message_len ) {
-			dump_ait( "current", &ait_data ) ;
+			dump_ait( &ait_data ) ;
 		}
 		else {
 			printf( "  AIT Message Len is zero\n " ) ;
@@ -85,8 +85,8 @@ static void entl_ait_sig_handler( int signum ) {
 static void entl_ait_sender( char* msg ) {
     printf( "entl_ait_sender sending \"%s\"\n", msg ) ;
   	// Set parm pinter to ifr
-	ait_data->message_len = strlen(msg) + 1 ;
-	sprintf( ait_data->data, "%s", msg ) ;
+	ait_data.message_len = strlen(msg) + 1 ;
+	sprintf( ait_data.data, "%s", msg ) ;
   	ifr.ifr_data = (char *)&ait_data ;
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTT_SEND_AIT, &ifr) == -1) {
