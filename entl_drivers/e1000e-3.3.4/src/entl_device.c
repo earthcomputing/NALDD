@@ -40,7 +40,7 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int f
 
 	if( flag & ENTL_ACTION_SEND_AIT ) {
 		ait_data = entl_next_AIT_message( &dev->stm ) ;
-		len = ETH_HLEN + ait_data->message_len ;
+		len = ETH_HLEN + ait_data->message_len + sizeof(u32) ;
 		if( len < ETH_ZLEN ) len = ETH_ZLEN ; // min length = 60 defined in include/uapi/linux/if_ether.h
 		len += ETH_FCS_LEN ;
 		skb = __netdev_alloc_skb( netdev, len , GFP_ATOMIC );
@@ -58,7 +58,8 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int f
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
 		eth->h_proto = 0 ; // protocol type is not used anyway
 		if( flag & ENTL_ACTION_SEND_AIT ) {
-			memcpy( cp, ait_data->data, ait_data->message_len) ;
+			memcpy( cp, &ait_data->message_len, sizeof(u32)) ;
+			memcpy( cp + sizeof(u32), ait_data->data, ait_data->message_len) ;
 		}
 		i = adapter->tx_ring->next_to_use;
 		buffer_info = &tx_ring->buffer_info[i];
@@ -452,13 +453,17 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    	ait_data = kzalloc( sizeof(struct entt_ioctl_ait_data), GFP_ATOMIC );
 	    	if( len > sizeof(struct ethhdr) ) {
 	    		unsigned char *data = skb->data + sizeof(struct ethhdr) ;
-	    		len -= sizeof(struct ethhdr) ;
-	    		if( len > MAX_AIT_MASSAGE_SIZE ) len = MAX_AIT_MASSAGE_SIZE ;
-	    		ait_data->message_len = len ;
-	    		memcpy( ait_data->data, data, len ) ;
+	    		memcpy( &ait_data->message_len, data, sizeof(u32)) ;
+	    		if( ait_data->message_len && ait_data->message_len < MAX_AIT_MASSAGE_SIZE ) 
+	    		{
+	    			memcpy( ait_data->data, data + sizeof(u32), ait_data->message_len ) ;
+	    		}
+	    		else {
+	    			ait_data->message_len = 0 ;
+	    		}
 	    	}
 	    	entl_new_AIT_message( &dev->stm, ait_data ) ;
-			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got ATI len %d\n", dev->name, len );
+			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got ATI len %d\n", dev->name, ait_data->message_len );
 		}
 		if( result & ENTL_ACTION_SIG_AIT ) {
 			dev->flag |= ENTL_DEVICE_FLAG_SIGNAL2 ;
