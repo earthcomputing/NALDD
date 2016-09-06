@@ -60,6 +60,8 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int f
 		if( flag & ENTL_ACTION_SEND_AIT ) {
 			memcpy( cp, &ait_data->message_len, sizeof(u32)) ;
 			memcpy( cp + sizeof(u32), ait_data->data, ait_data->message_len) ;
+			ENTL_DEBUG("inject_message %02x %02x %02x %02x %02x %02x %02x %02x \n", cp[0], cp[1],cp[2],cp[3],cp[4],cp[5],cp[6],cp[7] );
+
 		}
 		i = adapter->tx_ring->next_to_use;
 		buffer_info = &tx_ring->buffer_info[i];
@@ -450,15 +452,21 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    	// AIT message is received, put in to the receive buffer
 	    	struct entt_ioctl_ait_data *ait_data ;
 	    	unsigned int len = skb->len ;
+	    	char *cp = skb->data + sizeof(struct ethhdr) ;
+			ENTL_DEBUG("entl_device_process_rx_packet %02x %02x %02x %02x %02x %02x %02x %02x \n", cp[0], cp[1],cp[2],cp[3],cp[4],cp[5],cp[6],cp[7] );
+	    	
 	    	ait_data = kzalloc( sizeof(struct entt_ioctl_ait_data), GFP_ATOMIC );
+			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got skb len %d\n", dev->name, len );
 	    	if( len > sizeof(struct ethhdr) ) {
 	    		unsigned char *data = skb->data + sizeof(struct ethhdr) ;
 	    		memcpy( &ait_data->message_len, data, sizeof(u32)) ;
 	    		if( ait_data->message_len && ait_data->message_len < MAX_AIT_MASSAGE_SIZE ) 
 	    		{
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got message_len %d\n", dev->name, ait_data->message_len );
 	    			memcpy( ait_data->data, data + sizeof(u32), ait_data->message_len ) ;
 	    		}
 	    		else {
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got too big message_len %d\n", dev->name, ait_data->message_len );
 	    			ait_data->message_len = 0 ;
 	    		}
 	    	}
