@@ -1101,6 +1101,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 
 		// AK: Process ENTL packet for RX data
 		if( adapter->entl_flag ) {
+			skb_put(skb, length);
 			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
 			{
 				// This packet is ENTL message only. Not forward to upper layer
