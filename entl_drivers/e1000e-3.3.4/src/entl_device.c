@@ -384,7 +384,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		ret = entl_send_AIT_message( &dev->stm, ait_data ) ;
 		ENTL_DEBUG("ENTL %s ioctl send %d byte AIT, %d left\n", dev->name, ait_data->message_len, ret );
 		ait_data->num_messages = ret ; // return how many buffer left
-		copy_to_user(ifr->ifr_data, &ait_data, sizeof(struct entt_ioctl_ait_data));
+		copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
 		if( ret < 0 ) {
 			// error, dealloc data
 			kfree(ait_data) ;
@@ -397,7 +397,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		ait_data = entl_read_AIT_message( &dev->stm ) ;
 		if( ait_data ) {
 			ENTL_DEBUG("ENTL %s ioctl got %d byte AIT, %d left\n", dev->name, ait_data->message_len, ait_data->num_messages );
-			copy_to_user(ifr->ifr_data, &ait_data, sizeof(struct entt_ioctl_ait_data));
+			copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
 			kfree(ait_data) ;
 		}
 	}

@@ -48,10 +48,23 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 static void dump_ait( struct entt_ioctl_ait_data *dt ) 
 {
 	int i ;
-	printf( "AIT message :" ) ;
-	for( i = 0 ; i < dt->message_len; i++ ) {
-		printf( "%c", dt->data[i]) ;
+	int len = dt->message_len ;
+	if( dt->message_len > MAX_AIT_MASSAGE_SIZE ) {
+		printf( "dump_ait: length too long %d\n", dt->message_len ) ;
+		len = MAX_AIT_MASSAGE_SIZE ;
+		printf( "AIT data :" ) ;
+		for( i = 0 ; i < len; i++ ) {
+			printf( "%02x ", dt->data[i]) ;
+		}
 	}
+	else {
+			printf( "AIT message :" ) ;
+		for( i = 0 ; i < len; i++ ) {
+			printf( "%c", dt->data[i]) ;
+		}
+		
+	}
+
 	printf( "\n" ) ;
 }
 
