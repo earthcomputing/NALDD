@@ -152,6 +152,7 @@ int main( int argc, char *argv[] ) {
 
 	// Set my handler here
 	signal(SIGUSR1, entl_error_sig_handler);
+	signal(SIGUSR2, entl_ait_sig_handler);
 
   	// Set parm pinter to ifr
 	memset(&entl_data, 0, sizeof(entl_data));
