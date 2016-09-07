@@ -1101,6 +1101,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 
 		// AK: Process ENTL packet for RX data
 		if( adapter->entl_flag ) {
+			skb_put(skb, length);
 			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
 			{
 				// This packet is ENTL message only. Not forward to upper layer
@@ -7005,6 +7006,8 @@ static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
 	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
 	case SIOCDEVPRIVATE_ENTL_DO_INIT:
+	case SIOCDEVPRIVATE_ENTT_SEND_AIT:
+	case SIOCDEVPRIVATE_ENTT_READ_AIT:
 		return entl_do_ioctl(netdev, ifr, cmd);		
 	default:
 		return -EOPNOTSUPP;
