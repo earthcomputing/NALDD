@@ -8727,7 +8727,7 @@ static int __init e1000_init_module(void)
 		e1000e_driver_version);
 	pr_info("Copyright(c) 1999 - 2016 Intel Corporation.\n");
 
-	pr_info("Earth Computing ENTL extension (Develop %s %s)\n", __DATE__, __TIME__ ) ;
+	pr_info("Earth Computing ENTL extension (demo2)\n" ) ;
 	pr_info("Copyright(c) 2016 Earth Computing.\n");
 
 #ifndef USE_REBOOT_NOTIFIER
