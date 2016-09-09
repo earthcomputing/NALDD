@@ -26,8 +26,8 @@ all: ${TARGETS}
 
 install: e1000e
 	 sudo rmmod $?
-	 sudo insmod ${e1000e_dir}/${?}.ko
-	 
+	 sudo insmod ${${?}_dir}/${?}.ko
+
 
 clean:
 	pushd ${harness_dir}; \
