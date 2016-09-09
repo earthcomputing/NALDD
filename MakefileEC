@@ -1,0 +1,38 @@
+# Makefile for Earth Computing drivers and harnesses
+
+# enable bash extensions for build shell
+SHELL :=/bin/bash
+
+# include headers for driver api
+e1000e_dir = drivers/net/ethernet/intel/e1000e
+
+# test harness
+harness_dir = entl_test
+SRC = entl_test_main.c entl_signal_test_main.c ifconfig.c
+
+TARGETS = e1000e test
+
+e1000e:
+	pushd ${e1000e_dir}; \
+	make -C /lib/modules/`uname -r`/build M=`pwd` modules; \
+	popd
+
+test:
+	pushd ${harness_dir}; \
+	make all; \
+	popd
+
+all: ${TARGETS}
+
+install: e1000e
+	 sudo rmmod $?
+	 sudo insmod ${e1000e_dir}/${?}.ko
+	 
+
+clean:
+	pushd ${harness_dir}; \
+	make clean; \
+	popd; \
+	pushd ${e1000e_dir}; \
+	make clean; \
+	popd
