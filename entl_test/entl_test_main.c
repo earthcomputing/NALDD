@@ -156,7 +156,7 @@ int main( int argc, char *argv[] ) {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 		}
 		else {
-			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
+			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT succeeded on %s\n",ifr.ifr_name );
 			printf( "  Link state : %s\n", entl_data.link_state? "UP" : "DOWN" ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 		}
