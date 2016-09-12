@@ -136,6 +136,7 @@ int main( int argc, char *argv[] ) {
   	ifr.ifr_data = (char *)&entl_data ;
 
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+  	/*
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 	}
@@ -144,6 +145,7 @@ int main( int argc, char *argv[] ) {
 		dump_state( "current", &entl_data.state, 1 ) ;
 		dump_regs( &entl_data ) ;
 	}
+	*/
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
   	/*
@@ -163,7 +165,7 @@ int main( int argc, char *argv[] ) {
   		// Set parm pinter to ifr
 		memset(&entl_data, 0, sizeof(entl_data));
   		ifr.ifr_data = (char *)&entl_data ;
-
+  		/*
   		// SIOCDEVPRIVATE_ENTL_RD_CURRENT
 		if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
@@ -174,6 +176,7 @@ int main( int argc, char *argv[] ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_regs( &entl_data ) ;
 		}
+		*/
     }
 
     
