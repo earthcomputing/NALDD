@@ -117,6 +117,7 @@ int main( int argc, char *argv[] ) {
 		//dump_state( &entl_data.state ) ;
 	}
 
+	/*
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_GEN_SIGNAL, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_GEN_SIGNAL failed on %s\n",ifr.ifr_name );
 	}
@@ -126,6 +127,9 @@ int main( int argc, char *argv[] ) {
 		printf( "sleeping 10..\n") ;
 		sleep(10) ;
 	}
+	*/
+	printf( "sleeping 10..\n") ;
+	sleep(10) ;
 
   	// Set parm pinter to ifr
 	memset(&entl_data, 0, sizeof(entl_data));
@@ -142,12 +146,14 @@ int main( int argc, char *argv[] ) {
 	}
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
+  	/*
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
 	}
+	*/
 
     while( 1 ) {
     	printf( "sleeping 5 sec on %d\n", count++ ) ;
