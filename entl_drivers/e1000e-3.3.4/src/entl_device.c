@@ -318,17 +318,17 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 	{
 		u32 link;
-		int tt ;
+		//int tt ;
 		struct e1000_hw *hw = &adapter->hw;
-		tt = hw->mac.get_link_status ;
-    	hw->mac.get_link_status = 1 ; // AK force to read
-		link = e1000e_has_link(adapter);
-		hw->mac.get_link_status = tt ;
+		//tt = hw->mac.get_link_status ;
+    	//hw->mac.get_link_status = 1 ; // AK force to read
+		link = !hw->mac.get_link_status ;
+		//hw->mac.get_link_status = tt ;
 		entl_data.link_state = link ;
 		entl_read_current_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
-		entl_data.icr = er32(ICR);
-		entl_data.ctrl = er32(CTRL);
-		entl_data.ims = er32(IMS);
+		//entl_data.icr = er32(ICR);
+		//entl_data.ctrl = er32(CTRL);
+		//entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		//ENTL_DEBUG("ENTL %s ioctl reading current state on %d icr %08x ctrl %08x ims %08x\n", dev->name, link, entl_data.icr, entl_data.ctrl, entl_data.ims );
 		//dump_state( "rd current", &entl_data.state, 1 ) ;
@@ -338,18 +338,18 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 	{
 		u32 link;
-		int tt ;
+		//int tt ;
 		struct e1000_hw *hw = &adapter->hw;
-		tt = hw->mac.get_link_status ;
-    	hw->mac.get_link_status = 1 ; // AK force to read
-		link = e1000e_has_link(adapter);
-		ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
-		hw->mac.get_link_status = tt ;
+		//tt = hw->mac.get_link_status ;
+    	//hw->mac.get_link_status = 1 ; // AK force to read
+		link = !hw->mac.get_link_status ;
+		//ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
+		//hw->mac.get_link_status = hw->mac.get_link_status ;
 		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
-		entl_data.icr = er32(ICR);
-		entl_data.ctrl = er32(CTRL);
-		entl_data.ims = er32(IMS);
+		//entl_data.icr = er32(ICR);
+		//entl_data.ctrl = er32(CTRL);
+		//entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		dump_state( "current", &entl_data.state, 1 ) ;
 		dump_state( "error", &entl_data.error_state, 0 ) ;			
