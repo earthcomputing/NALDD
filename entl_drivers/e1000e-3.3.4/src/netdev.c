@@ -8135,8 +8135,8 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	spin_lock_init( &adapter->tx_ring_lock ) ;
 	// AK: initialize entl device
 	entl_device_init( &adapter->entl_dev ) ;
-	// AK: default, entl mode is disabled
-	adapter->entl_flag = 0 ;
+	// AK: default, entl mode is enabled for testing
+	adapter->entl_flag = 1 ;
 
 	mmio_start = pci_resource_start(pdev, 0);
 	mmio_len = pci_resource_len(pdev, 0);
