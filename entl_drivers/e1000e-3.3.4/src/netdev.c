@@ -4700,6 +4700,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 		entl_device_link_up( &adapter->entl_dev ) ;
 	}
 	else {
+		ENTL_DEBUG("e1000e_up is called on %s, calling e1000_configure\n", adapter->netdev->name );
 		e1000_configure(adapter);		
 	}
 
