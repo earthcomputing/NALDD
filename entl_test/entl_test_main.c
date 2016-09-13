@@ -66,6 +66,7 @@ static void entl_error_sig_handler( int signum ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
 			dump_regs( &entl_data ) ;
+			
 		}
 		else {
 			printf( "  Link Down!\n " ) ;

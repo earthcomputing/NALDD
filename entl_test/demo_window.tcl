@@ -39,7 +39,10 @@ frame .f_entl_state
 frame .f_ait_send
 frame .f_ait_state
 
-label .f_info.name  -text $DeviceName -foreground $Clabelf -background $Clabelb
+label .f_info.l  -text "Device:" -foreground $Clabelf -background $Clabelb
+label .f_info.name  -text $DeviceName -foreground $Clabelf -background $Ctextb -width 20
+label .f_info.link  -text " Link:" -foreground $Clabelf -background $Clabelb
+label .f_info.link_state  -text "Down" -foreground $Clabelf -background $Cred -width 20
 
 button .f_sim_cntl.bt1 -text "Start" \
   -foreground $Cbuttonf -background $Cbuttonb \
@@ -61,7 +64,7 @@ label .f_ait_state.ait -text "Received AIT:" -foreground $Clabelf -background $C
 label .f_ait_state.ait_get -text "-none-" -foreground $Centryf -background $Centryb
 
 ##### packing frames
-pack .f_info.name 
+pack .f_info.l .f_info.name .f_info.link .f_info.link_state -side left
 pack .f_sim_cntl.bt1 .f_sim_cntl.bt2 -side left
 pack .f_entl_state.st_label .f_entl_state.st_value -side left
 pack .f_ait_send.ait .f_ait_send.message -side left
@@ -69,15 +72,17 @@ pack .f_ait_state.ait .f_ait_state.ait_get -side left
 
 ##Top frame
 pack .f_info  -expand 1 -fill both
-pack .f_sim_cntl
 pack .f_entl_state
+pack .f_sim_cntl
 pack .f_ait_send
 pack .f_ait_state -expand 1 -fill both
 
 
 # Command field action
 bind .f_ait_send.message <Key-Return> {
-  puts "ATI $Command"
+  global jdbSocket
+
+  puts $jdbSocket "ATI $Command"
 }
 
 if { $SocketPort != "" } {
@@ -91,11 +96,28 @@ if { $SocketPort != "" } {
 
 
 proc exec_start_command { } {
-	puts "start"
+  global jdbSocket
+	puts $jdbSocket "start"
 }
 
 proc exec_quit_command { } {
-	puts "quit"
+  global jdbSocket
+	puts $jdbSocket "quit"
+}
+
+proc show_link line {
+	global Cred
+	global Cyellow
+	global Cgreen
+
+	if { $line == "UP" } {
+		.f_entl_state.st_label configure -text $line -background $Cgreen
+	} elseif { $line == "DOWN" } {
+		.f_entl_state.st_label configure -text $line -background $Cred
+	} else {
+		.f_entl_state.st_label configure -text $line -background $Cyellow
+	}
+
 }
 
 proc show_state line {
@@ -105,7 +127,7 @@ proc show_state line {
 
 	if { $line == "Idle" } {
 		.f_entl_state.st_label configure -text $line -background $Cred
-	} elseif { $line == "Hello" } {
+	} elseif { $line == "Hello" || $line == "Wait" } {
 		.f_entl_state.st_label configure -text $line -background $Cyellow
 	} else {
 		.f_entl_state.st_label configure -text $line -background $Cgreen
@@ -123,26 +145,49 @@ proc show_ait line {
 proc exec_read_loop { } {
   global jdbSocket
   global Line
+  global ReadState
   
   gets $jdbSocket Line
+
+  #puts stderr "got $Line on state $ReadState"
 
   if { $Line=="" } {
   } elseif { $ReadState=="Idle" } {
   	if { $Line == "#AIT" } {
-  		set $ReadState "AIT"
+  		set ReadState "AIT"
+  		#puts stderr "got AIT"
   	} elseif { $Line == "#State" } {
-  		$ReadState = "State"
-  	} elseif { $Line == "#Value" } {
-  		$ReadState = "Value"
-  	}
+  		set ReadState "State"
+   		#puts stderr "got State"
+ 	} elseif { $Line == "#Value" } {
+  		set ReadState "Value"
+   		#puts stderr "got Value"
+ 	} elseif { $Line == "#Link" } {
+  		set ReadState "Link"
+   		#puts stderr "got Value"
+ 	}
+
   } elseif { $ReadState== "AIT" } {
+  		#puts stderr "got AIT $Line"
   	show_ait $Line
+  	set ReadState "Idle"
   } elseif { $ReadState== "State" } {
+  		#puts stderr "got AIT $Line"
   	show_state $Line
+  	set ReadState "Idle"
   } elseif { $ReadState== "Value" } {
+  		#puts stderr "got AIT $Line"
   	show_value $Line
+  	set ReadState "Idle"
+  } elseif { $ReadState== "Link" } {
+  		#puts stderr "got AIT $Line"
+  	show_link $Line
+  	set ReadState "Idle"
   } 
-  set ReadState "Idle"
+ 
+
+  #puts stderr "now $Line on state $ReadState"
+
 }
 
 
