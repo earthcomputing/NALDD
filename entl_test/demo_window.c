@@ -22,7 +22,7 @@
 
 typedef struct {
   char *name;			/* User printable name of the function. */
-  Function *func;		/* Function to call to do the job. */
+  int (*func)();		/* Function to call to do the job. */
   char *doc;			/* Documentation for this function.  */
 } COMMAND;
 
@@ -31,8 +31,8 @@ static int com_quit(), com_start(), com_ait() ;
 static COMMAND commands[] = {
 	{ "quit", com_quit, "quit from program"},
 	{ "start", com_start, "start entl mode"},
-	{ "AIT", com_ait, "send AIT message"}
-  { (char *)NULL, (Function *)NULL, (char *)NULL }
+	{ "AIT", com_ait, "send AIT message"},
+  { (char *)NULL, NULL, (char *)NULL }
 };
 
 #include "entl_user_api.h"
@@ -322,8 +322,8 @@ static int com_start()
 static int com_ait()
 {
 	char *cp = inlin ;
-	while( cp != ' ' ) cp++ ;
-	while( cp == ' ' ) cp++ ;
+	while( *cp != ' ' ) cp++ ;
+	while( *cp == ' ' ) cp++ ;
 	entl_ait_sender(cp) ;
 }
 
@@ -348,8 +348,8 @@ static void exec_command()
 {
 	int i ;
 	for( i = 0 ; commands[i].name ; i++ ) {
-		if( strncmp(inlin, commands[i].name, strlen(commands[i].name) ) ){
-			((*(command->func)) ());
+		if( strncmp(inlin, commands[i].name, strlen(commands[i].name) ) == 0 ){
+			((*(commands[i].func)) ());
 			return ;
 		}
 	}
