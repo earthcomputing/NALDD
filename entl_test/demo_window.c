@@ -16,9 +16,36 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pthread.h>
+
+typedef pthread_mutex_t mutex_t;
+static mutex_t access_mutex ;
+#define ACCESS_LOCK pthread_mutex_lock( &access_mutex )  
+#define ACCESS_UNLOCK pthread_mutex_unlock( &access_mutex )
 
 #define PRINTF printf
 #define DEFAULT_DBG_PORT  2540
+
+#ifdef STANDALONE_DEBUG
+
+// State definition
+#define ENTL_STATE_IDLE     0
+#define ENTL_STATE_HELLO    1
+#define ENTL_STATE_WAIT     2
+#define ENTL_STATE_SEND     3
+#define ENTL_STATE_RECEIVE  4
+#define ENTL_STATE_AM       5
+#define ENTL_STATE_BM       6
+#define ENTL_STATE_AH       7
+#define ENTL_STATE_BH       8
+
+#define ENTL_STATE_MOD    9
+
+#endif
+
 
 typedef struct {
   char *name;			/* User printable name of the function. */
@@ -35,14 +62,57 @@ static COMMAND commands[] = {
   { (char *)NULL, NULL, (char *)NULL }
 };
 
+static void write_window( char *str ) ;
+
+static void show_status( int current_state, int value ) 
+{
+		char value_str[256] ;
+		write_window( "#State\n" ) ;
+		switch( current_state ) {
+			case ENTL_STATE_IDLE:
+				write_window( "Idle\n" ) ;
+			break ;
+			case ENTL_STATE_HELLO:
+				write_window( "Hello\n" ) ;
+			break ;
+			case ENTL_STATE_WAIT:
+				write_window( "Wait\n" ) ;
+			break ;
+			case ENTL_STATE_SEND:
+				write_window( "Send\n" ) ;
+			break ;
+			case ENTL_STATE_RECEIVE:
+				write_window( "Receive\n" ) ;
+			break ;
+			case ENTL_STATE_AM:
+				write_window( "AM\n" ) ;
+			break ;
+			case ENTL_STATE_BM:
+				write_window( "BM\n" ) ;
+			break ;
+			case ENTL_STATE_AH:
+				write_window( "AH\n" ) ;
+			break ;
+			case ENTL_STATE_BH:
+				write_window( "BH\n" ) ;
+			break ;
+			default:
+				write_window( "Unknown\n" ) ;
+			break ;
+		}
+		sprintf( value_str, "%d\n", value ) ;
+		write_window( "#Value\n" ) ;
+		write_window( value_str ) ;	
+}
+
+#ifndef STANDALONE_DEBUG
+
 #include "entl_user_api.h"
 
 static int sock;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 struct entt_ioctl_ait_data ait_data ;
-
-static void write_window( char *str ) ;
 
 static void dump_regs( struct entl_ioctl_data *data ) {
 	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
@@ -64,40 +134,7 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 	}
 #endif
 	if( flag ) {
-		char value[256] ;
-		write_window( "#State" ) ;
-		switch( st->current_state ) {
-			case ENTL_STATE_IDLE:
-				write_window( "Idle" ) ;
-			break ;
-			case ENTL_STATE_HELLO:
-				write_window( "Hello" ) ;
-			break ;
-			case ENTL_STATE_WAIT:
-				write_window( "Wait" ) ;
-			break ;
-			case ENTL_STATE_SEND:
-				write_window( "Send" ) ;
-			break ;
-			case ENTL_STATE_RECEIVE:
-				write_window( "Receive" ) ;
-			break ;
-			case ENTL_STATE_AM:
-				write_window( "AM" ) ;
-			break ;
-			case ENTL_STATE_BM:
-				write_window( "BM" ) ;
-			break ;
-			case ENTL_STATE_AH:
-				write_window( "AH" ) ;
-			break ;
-			case ENTL_STATE_BH:
-				write_window( "BH" ) ;
-			break ;
-		}
-		sprintf( value, "%d", st->event_i_know ) ;
-		write_window( "#Value" ) ;
-		write_window( value ) ;
+		show_status( st->current_state, st->event_i_know ) ;
 	}
 }
 
@@ -118,8 +155,9 @@ static void dump_ait( struct entt_ioctl_ait_data *dt )
 		for( i = 0 ; i < len; i++ ) {
 			printf( "%c", dt->data[i]) ;
 		}
-		dt->data[len] = 0 ;
-		write_window( "#AIT" ) ;
+		dt->data[len] = '\n' ;
+		dt->data[len+1] = 0 ;
+		write_window( "#AIT\n" ) ;
 		write_window( dt->data ) ;
 
 	}
@@ -161,12 +199,14 @@ static void entl_ait_sender( char* msg ) {
 	sprintf( ait_data.data, "%s", msg ) ;
   	ifr.ifr_data = (char *)&ait_data ;
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+  	ACCESS_LOCK ;
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTT_SEND_AIT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTT_SEND_AIT failed on %s\n",ifr.ifr_name );
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTT_SEND_AIT successed on %s\n",ifr.ifr_name );
 	}
+	ACCESS_UNLOCK ;
 }
 
 // the signal handler
@@ -177,11 +217,17 @@ static void entl_error_sig_handler( int signum ) {
 	memset(&entl_data, 0, sizeof(entl_data));
   	ifr.ifr_data = (char *)&entl_data ;
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+  	ACCESS_LOCK ;
+
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr) == -1) {
+		ACCESS_UNLOCK ;
+
 		printf( "SIOCDEVPRIVATE_ENTL_RD_ERROR failed on %s\n",ifr.ifr_name );
 	}
 	else {
+		ACCESS_UNLOCK ;
 		printf( "SIOCDEVPRIVATE_ENTL_RD_ERROR successed on %s\n",ifr.ifr_name );
+
 		if( entl_data.link_state ) {
 			printf( "  Link Up!\n " ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
@@ -204,6 +250,9 @@ static void entl_error_sig_handler( int signum ) {
     printf( "entl_error_sig_handler got unknown %d signal.\n", signum ) ;
   }
 }
+
+
+#endif  /* ifndef STANDALONE_DEBUG */
 
 /* variables for debug window */
 static int sockfd, w_socket ;
@@ -288,15 +337,22 @@ static void com_window( char *dev_name ) {
         exit(0) ;
     }
     else {
+		int optval;
+      //int iMode = 0 ;
       /* get stdin from the pipe */
       printf( "I'm here!\n") ;
-      close(0) ;
-      dup(pipefd[0]) ;
       a_len = sizeof(w_sockaddr) ;
       w_socket =   
         accept( sockfd, (struct sockaddr *)&w_sockaddr, &a_len ) ;
+      //fcntl(sockfd, F_SETFL, O_NONBLOCK);
+
+	// set SO_REUSEADDR on a socket to true (1):
+	optval = 1;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &optval, sizeof optval);
+
       printf( "exit accept\n") ;
-      if( w_socket < 0) {
+ 		//ioctl(sockfd, FIONBIO, &iMode);  
+     if( w_socket < 0) {
         printf( "accept error on port %d\n", port ) ;
         close( sockfd ) ;
         kill( w_pid, SIGKILL ) ;
@@ -308,38 +364,53 @@ static void com_window( char *dev_name ) {
 }
 
 static int com_quit() {
-    close( sockfd ) ;
+	printf( "com_quit: quitting\n" );
+    // close( sockfd ) ;
     kill( w_pid, SIGKILL ) ;
     exit(0) ;
 }
 
 static int com_start()
 {
+	printf( "com_start: called\n" );
+
+#ifndef STANDALONE_DEBUG
+  	ACCESS_LOCK ;
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
 	}
+	ACCESS_UNLOCK ;
+
+#endif
+
 }
 
 static int com_ait()
 {
 	char *cp = inlin ;
 	while( *cp != ' ' ) cp++ ;
-	while( *cp == ' ' ) cp++ ;
+	while( *cp == ' ' ) cp++ ;	
+#ifdef STANDALONE_DEBUG
+	printf( "AIT: %s\n", cp ) ;
+#else
 	entl_ait_sender(cp) ;
+#endif
 }
 
 static void write_window( char *str ) {
-  /* PRINTF( "soc: %s", str ) ; */
+  //PRINTF( "soc: %s", str ) ;
   write( w_socket, str, strlen(str) ) ;
 }
 
 static int read_window() {
  	int rr, n;
    	n = INMAX;
+   	//printf( "calling read\n" ) ;
    	rr = read(w_socket,inlin,n);
+   	//printf( "done read with %d \n", rr ) ;
    	if (rr <= 0) {
       	rr = 0;
    	}
@@ -359,8 +430,24 @@ static void exec_command()
 	}
 }
 
+static pthread_t read_thread ;
+
+static void read_task( void* me )
+{
+	printf( "read_task started\n") ;
+    while(1) {
+    	if( read_window() ) {
+        	if( inlin[0] != '\n' ) {
+        	    printf( "got command: %s\n", inlin ) ;
+        		exec_command() ;	
+        	}
+        }
+    }
+}
+
 int main( int argc, char *argv[] ) {
 	int count = 0 ;
+	int err ;
 	//u32 event_i_know = 0 ;
 	char *name = argv[1] ;
 
@@ -369,6 +456,10 @@ int main( int argc, char *argv[] ) {
 		return 0 ;
 	}
   	printf( "ENTL driver test on %s.. \n", argv[1] ) ;
+
+#ifndef STANDALONE_DEBUG
+
+
 
 	// Creating socet
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -390,6 +481,8 @@ int main( int argc, char *argv[] ) {
   	ifr.ifr_data = (char *)&entl_data ;
 
   	// SIOCDEVPRIVATE_ENTL_SET_SIGRCVR
+  	ACCESS_LOCK ;
+
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_SET_SIGRCVR, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_SET_SIGRCVR failed on %s\n",ifr.ifr_name );
 	}
@@ -397,17 +490,36 @@ int main( int argc, char *argv[] ) {
 		printf( "SIOCDEVPRIVATE_ENTL_SET_SIGRCVR successed on %s\n",ifr.ifr_name );
 		//dump_state( &entl_data.state ) ;
 	}
+  	ACCESS_UNLOCK ;
 
+#endif
 
 	// open window
   	com_window( name ) ;
 
-  	while( 1 ) {
 
-    	//printf( "sleeping 5 sec on %d\n", count++ ) ;
+    pthread_mutex_init( &access_mutex, NULL ) ;
+    err = pthread_create( &read_thread, NULL, read_task, NULL );
+
+
+  	while( 1 ) {
+  		char message[256] ;
+    	printf( "sleeping 1 sec on %d\n", count++ ) ;
 	
 		sleep(1) ;
 
+#ifdef STANDALONE_DEBUG
+		//printf( "calling show_status \n" ) ;
+		show_status( count % ENTL_STATE_MOD, count ) ;
+		sprintf( message, "ATI%d\n", count ) ;
+		//printf( "sending AIT %s", message ) ;
+		write_window( "#AIT\n" ) ;
+		write_window( message ) ;
+		//printf( "sending Link %s", (count%2)?"UP\n":"DOWN\n" ) ;
+		write_window( "#Link\n" ) ;
+		write_window( (count%2)?"UP\n":"DOWN\n") ;
+
+#else
 		memset(&entl_data, 0, sizeof(entl_data));
 	  	ifr.ifr_data = (char *)&entl_data ;
 
@@ -421,15 +533,11 @@ int main( int argc, char *argv[] ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			//dump_regs( &entl_data ) ;
 		}
-
+#endif
         //write_window("#State\n") ;
         //write_window("Read\n") ;
 
-        if( read_window() ) {
-        	printf( "got %s\n", inlin ) ;
-        	exec_command() ;
-        }
-
+ 
 	}
 }
 

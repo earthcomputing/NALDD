@@ -82,7 +82,7 @@ pack .f_ait_state -expand 1 -fill both
 bind .f_ait_send.message <Key-Return> {
   global jdbSocket
 
-  puts $jdbSocket "ATI $Command"
+  puts $jdbSocket "AIT $Command\n"
 }
 
 if { $SocketPort != "" } {
@@ -93,16 +93,21 @@ if { $SocketPort != "" } {
   fileevent $jdbSocket readable exec_read_loop
 }
 
-
+proc sleep {time} {
+    after $time set end 1
+    vwait end
+}
 
 proc exec_start_command { } {
   global jdbSocket
-	puts $jdbSocket "start"
+	puts $jdbSocket "start\n"
 }
 
 proc exec_quit_command { } {
   global jdbSocket
-	puts $jdbSocket "quit"
+	puts $jdbSocket "quit\n"
+  sleep 5
+  exit 
 }
 
 proc show_link line {
@@ -111,9 +116,9 @@ proc show_link line {
 	global Cgreen
 
 	if { $line == "UP" } {
-		.f_entl_state.st_label configure -text $line -background $Cgreen
+		.f_info.link_state configure -text $line -background $Cgreen
 	} elseif { $line == "DOWN" } {
-		.f_entl_state.st_label configure -text $line -background $Cred
+		.f_info.link_state configure -text $line -background $Cred
 	} else {
 		.f_entl_state.st_label configure -text $line -background $Cyellow
 	}
@@ -148,9 +153,9 @@ proc exec_read_loop { } {
   global ReadState
   
   gets $jdbSocket Line
-
-  #puts stderr "got $Line on state $ReadState"
-
+  if { $Line!="" } {
+  		#puts stderr "got $Line on state $ReadState"  
+  }
   if { $Line=="" } {
   } elseif { $ReadState=="Idle" } {
   	if { $Line == "#AIT" } {
@@ -175,14 +180,17 @@ proc exec_read_loop { } {
   		#puts stderr "got AIT $Line"
   	show_state $Line
   	set ReadState "Idle"
+	#puts $jdbSocket "\n"
   } elseif { $ReadState== "Value" } {
   		#puts stderr "got AIT $Line"
   	show_value $Line
   	set ReadState "Idle"
+	#puts $jdbSocket "\n"
   } elseif { $ReadState== "Link" } {
   		#puts stderr "got AIT $Line"
   	show_link $Line
   	set ReadState "Idle"
+	#puts $jdbSocket "\n"
   } 
  
 
@@ -192,4 +200,4 @@ proc exec_read_loop { } {
 
 
 #testing
-#show_value "5546543"
+#  show_value "5546543"
