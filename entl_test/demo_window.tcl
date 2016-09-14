@@ -120,7 +120,7 @@ proc show_link line {
 	} elseif { $line == "DOWN" } {
 		.f_info.link_state configure -text $line -background $Cred
 	} else {
-		.f_entl_state.st_label configure -text $line -background $Cyellow
+		.f_info.link_state  configure -text $line -background $Cyellow
 	}
 
 }
@@ -173,21 +173,21 @@ proc exec_read_loop { } {
  	}
 
   } elseif { $ReadState== "AIT" } {
-  		#puts stderr "got AIT $Line"
+  	#puts stderr "got AIT $Line"
   	show_ait $Line
   	set ReadState "Idle"
   } elseif { $ReadState== "State" } {
-  		#puts stderr "got AIT $Line"
+  	#puts stderr "got State $Line"
   	show_state $Line
   	set ReadState "Idle"
 	#puts $jdbSocket "\n"
   } elseif { $ReadState== "Value" } {
-  		#puts stderr "got AIT $Line"
+  	#puts stderr "got Value $Line"
   	show_value $Line
   	set ReadState "Idle"
 	#puts $jdbSocket "\n"
   } elseif { $ReadState== "Link" } {
-  		#puts stderr "got AIT $Line"
+  	#puts stderr "got Link $Line"
   	show_link $Line
   	set ReadState "Idle"
 	#puts $jdbSocket "\n"

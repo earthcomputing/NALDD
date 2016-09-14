@@ -340,7 +340,7 @@ static void com_window( char *dev_name ) {
         exit(0) ;
     }
     else {
-		int optval;
+	//	int optval;
       //int iMode = 0 ;
       /* get stdin from the pipe */
       printf( "I'm here!\n") ;
@@ -350,8 +350,8 @@ static void com_window( char *dev_name ) {
       //fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
 	// set SO_REUSEADDR on a socket to true (1):
-	optval = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &optval, sizeof optval);
+	//optval = 1;
+	//setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &optval, sizeof optval);
 
       printf( "exit accept\n") ;
  		//ioctl(sockfd, FIONBIO, &iMode);  
@@ -445,8 +445,13 @@ static void read_task( void* me )
         		exec_command() ;	
         	}
         }
+        else {
+        	sleep(1) ;
+        }
     }
 }
+
+#define USE_PTHREAD
 
 int main( int argc, char *argv[] ) {
 	int count = 0 ;
@@ -502,19 +507,21 @@ int main( int argc, char *argv[] ) {
 
 
     pthread_mutex_init( &access_mutex, NULL ) ;
+#ifdef USE_PTHREAD
     err = pthread_create( &read_thread, NULL, read_task, NULL );
+#endif
 
 
   	while( 1 ) {
   		char message[256] ;
-    	printf( "sleeping 1 sec on %d\n", count++ ) ;
+    	//printf( "sleeping 1 sec on %d\n", count ) ;
 	
 		sleep(1) ;
 
 #ifdef STANDALONE_DEBUG
 		//printf( "calling show_status \n" ) ;
 		show_status( count % ENTL_STATE_MOD, count ) ;
-		sprintf( message, "ATI%d\n", count ) ;
+		sprintf( message, "ATI_%d\n", count ) ;
 		//printf( "sending AIT %s", message ) ;
 		write_window( "#AIT\n" ) ;
 		write_window( message ) ;
@@ -536,18 +543,26 @@ int main( int argc, char *argv[] ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			//dump_regs( &entl_data ) ;
 			if( entl_data.link_state ) {
-				write_window( "#Link" ) ;
-				write_window( "UP" ) ;
+				write_window( "#Link\n" ) ;
+				write_window( "UP\n" ) ;
 			}
 			else {
-				write_window( "#Link" ) ;
-				write_window( "DOWN" ) ;
+				write_window( "#Link\n" ) ;
+				write_window( "DOWN\n" ) ;
 			}			
 		}
 #endif
+#ifndef USE_PTHREAD
+		if( read_window() ) {
+        	if( inlin[0] != '\n' ) {
+        	    printf( "got command: %s\n", inlin ) ;
+        		exec_command() ;	
+        	}
+        }
+#endif
         //write_window("#State\n") ;
         //write_window("Read\n") ;
-
+		count++ ;
  
 	}
 }
