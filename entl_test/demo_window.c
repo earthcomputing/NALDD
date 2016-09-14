@@ -417,7 +417,7 @@ int main( int argc, char *argv[] ) {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 		}
 		else {
-			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
+			//printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
 			dump_state( "current", &entl_data.state, 1 ) ;
 			//dump_regs( &entl_data ) ;
 		}
