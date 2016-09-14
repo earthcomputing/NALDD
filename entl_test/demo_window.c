@@ -44,6 +44,10 @@ static mutex_t access_mutex ;
 
 #define ENTL_STATE_MOD    9
 
+#else
+
+#include "entl_user_api.h"
+
 #endif
 
 
@@ -107,7 +111,6 @@ static void show_status( int current_state, int value )
 
 #ifndef STANDALONE_DEBUG
 
-#include "entl_user_api.h"
 
 static int sock;
 static struct entl_ioctl_data entl_data ;
@@ -532,6 +535,14 @@ int main( int argc, char *argv[] ) {
 			//printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
 			dump_state( "current", &entl_data.state, 1 ) ;
 			//dump_regs( &entl_data ) ;
+			if( entl_data.link_state ) {
+				write_window( "#Link" ) ;
+				write_window( "UP" ) ;
+			}
+			else {
+				write_window( "#Link" ) ;
+				write_window( "DOWN" ) ;
+			}			
 		}
 #endif
         //write_window("#State\n") ;
