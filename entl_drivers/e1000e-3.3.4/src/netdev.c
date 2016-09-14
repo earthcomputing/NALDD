@@ -1102,6 +1102,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 #ifndef ENTL_BUSY_RX_INTERRUPT
 		// AK: Process ENTL packet for RX data
 		if( adapter->entl_flag ) {
+			skb_put(skb, length);
 			if( !entl_device_process_rx_packet( &adapter->entl_dev, skb ) )
 			{
 				// This packet is ENTL message only. Not forward to upper layer
@@ -2172,12 +2173,14 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__E1000_DOWN, &adapter->state)) {
-		u32 ims ;
 		mod_timer(&adapter->watchdog_timer, jiffies + 1);
 		// AK: try to set E1000_IMS_LSC 
 		ew32(IMS, E1000_IMS_OTHER | E1000_IMS_LSC );
+	}
+	{
+		u32 ims ;
 		ims = er32(IMS) ;
-		ENTL_DEBUG("e1000_msix_other %s is called, triggering watchdog ims %08x \n", netdev->name, ims );
+		ENTL_DEBUG("e1000_msix_other %s is called on %d, triggering watchdog ims %08x \n", netdev->name, test_bit(__E1000_DOWN, &adapter->state), ims );
 	}
 
 	return IRQ_HANDLED;
@@ -4787,6 +4790,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 		entl_device_link_up( &adapter->entl_dev ) ;
 	}
 	else {
+		ENTL_DEBUG("e1000e_up is called on %s, calling e1000_configure\n", adapter->netdev->name );
 		e1000_configure(adapter);		
 	}
 
@@ -5881,7 +5885,7 @@ static void e1000_watchdog_task(struct work_struct *work)
 #endif /* DYNAMIC_LTR_SUPPORT */
 
 	// AK: force to read from hw
-	adapter->hw.mac.get_link_status = true ;
+	// adapter->hw.mac.get_link_status = true ;
 
 	link = e1000e_has_link(adapter);
 	if ((netif_carrier_ok(netdev)) && link) {
@@ -7096,6 +7100,8 @@ static int e1000_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
 	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
 	case SIOCDEVPRIVATE_ENTL_DO_INIT:
+	case SIOCDEVPRIVATE_ENTT_SEND_AIT:
+	case SIOCDEVPRIVATE_ENTT_READ_AIT:
 		return entl_do_ioctl(netdev, ifr, cmd);		
 	default:
 		return -EOPNOTSUPP;
@@ -8220,8 +8226,8 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	spin_lock_init( &adapter->tx_ring_lock ) ;
 	// AK: initialize entl device
 	entl_device_init( &adapter->entl_dev ) ;
-	// AK: default, entl mode is disabled
-	adapter->entl_flag = 0 ;
+	// AK: default, entl mode is enabled for testing
+	adapter->entl_flag = 1 ;
 
 	mmio_start = pci_resource_start(pdev, 0);
 	mmio_len = pci_resource_len(pdev, 0);

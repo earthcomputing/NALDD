@@ -14,7 +14,7 @@
 //
 //    ToDo:  need a mutex for the tx_ring access
 //
-static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr )
+static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int flag )
 {
 	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
 	struct net_device *netdev = adapter->netdev;
@@ -25,6 +25,8 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr )
     struct e1000_ring *tx_ring = adapter->tx_ring ;
 	unsigned char d_addr[ETH_ALEN] ;
 	u32 txd_upper = 0, txd_lower = E1000_TXD_CMD_IFCS;
+	struct entt_ioctl_ait_data* ait_data ;
+	int len ;
 
 	if (test_bit(__E1000_DOWN, &adapter->state)) return 1 ;
 	if( e1000_desc_unused(tx_ring) < 3 ) return 1 ; 
@@ -36,14 +38,31 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr )
 	d_addr[4] = l_addr >> 8;
 	d_addr[5] = l_addr ;
 
-	skb = __netdev_alloc_skb( netdev, ETH_ZLEN + ETH_FCS_LEN, GFP_ATOMIC );
+	if( flag & ENTL_ACTION_SEND_AIT ) {
+		ait_data = entl_next_AIT_message( &dev->stm ) ;
+		len = ETH_HLEN + ait_data->message_len + sizeof(u32) ;
+		if( len < ETH_ZLEN ) len = ETH_ZLEN ; // min length = 60 defined in include/uapi/linux/if_ether.h
+		len += ETH_FCS_LEN ;
+		skb = __netdev_alloc_skb( netdev, len , GFP_ATOMIC );
+	}
+	else {
+		len = ETH_ZLEN + ETH_FCS_LEN ;
+		skb = __netdev_alloc_skb( netdev, len, GFP_ATOMIC );
+	}
 	if( skb ) {
 		int i ;
 		struct ethhdr *eth = (struct ethhdr *)skb->data ;
-		skb->len = ETH_ZLEN + ETH_FCS_LEN ;     // min packet size + crc
+		unsigned char *cp = skb->data + sizeof(struct ethhdr) ;
+		skb->len = len ;     // min packet size + crc
 		memcpy(eth->h_source, netdev->dev_addr, ETH_ALEN);
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
 		eth->h_proto = 0 ; // protocol type is not used anyway
+		if( flag & ENTL_ACTION_SEND_AIT ) {
+			memcpy( cp, &ait_data->message_len, sizeof(u32)) ;
+			memcpy( cp + sizeof(u32), ait_data->data, ait_data->message_len) ;
+			ENTL_DEBUG("inject_message %02x %02x %02x %02x %02x %02x %02x %02x \n", cp[0], cp[1],cp[2],cp[3],cp[4],cp[5],cp[6],cp[7] );
+
+		}
 		i = adapter->tx_ring->next_to_use;
 		buffer_info = &tx_ring->buffer_info[i];
 		buffer_info->length = skb->len;
@@ -145,6 +164,21 @@ static void entl_watchdog_task(struct work_struct *work)
 		        send_sig_info(SIGUSR1, &info, t);
 		}
 	}
+	else if( (dev->flag & ENTL_DEVICE_FLAG_SIGNAL2) && dev->user_pid ) {
+		struct siginfo info;
+		struct task_struct *t;
+		info.si_signo=SIGIO;
+		info.si_int=1;
+		info.si_code = SI_QUEUE;        
+		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_SIGNAL2 ;
+		t= pid_task(find_vpid(dev->user_pid),PIDTYPE_PID);//user_pid has been fetched successfully
+		if(t == NULL){
+		        ENTL_DEBUG("ENTL %s no such pid, cannot send signal\n", dev->name);
+		} else {
+		        ENTL_DEBUG("ENTL %s found the task, sending SIGUSR2 signal\n", dev->name);
+		        send_sig_info(SIGUSR2, &info, t);
+		}
+	}
 	if( netif_carrier_ok(adapter->netdev) && dev->flag & ENTL_DEVICE_FLAG_HELLO ) {
 		int t ;
     	struct e1000_ring *tx_ring = adapter->tx_ring ;
@@ -159,15 +193,16 @@ static void entl_watchdog_task(struct work_struct *work)
 			ENTL_DEBUG("ENTL %s entl_watchdog_task got t = %d\n", dev->name, t );
 			goto restart_watchdog ; 
 		}
-		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT || dev->stm.current_state.current_state == ENTL_STATE_RECEIVE ) {
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT || dev->stm.current_state.current_state == ENTL_STATE_RECEIVE || dev->stm.current_state.current_state == ENTL_STATE_AM || dev->stm.current_state.current_state == ENTL_STATE_BH) {
 			__u16 u_addr ;
 			__u32 l_addr ;
-			if( entl_get_hello(&dev->stm, &u_addr, &l_addr) ){
+			int ret ;
+			if( ret = entl_get_hello(&dev->stm, &u_addr, &l_addr) ){
 				unsigned long flags;
 				int result ;
 				// attomically check to make sure we still need to send hello
 				spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
-	    		result = inject_message( dev, u_addr, l_addr ) ;
+	    		result = inject_message( dev, u_addr, l_addr, ret ) ;
 	    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    		if( result == 0 ) {
 	    			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_HELLO ;
@@ -197,10 +232,11 @@ static void entl_watchdog_task(struct work_struct *work)
 		if (test_bit(__E1000_DOWN, &adapter->state)) goto restart_watchdog ;
 		if( e1000_desc_unused(tx_ring) < 3 ) goto restart_watchdog ; 
 		spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
-	    result = inject_message( dev, dev->u_addr, dev->l_addr ) ;
+	    result = inject_message( dev, dev->u_addr, dev->l_addr, dev->action ) ;
 	    spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
 	    if( result == 0 ) {
     		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_RETRY ;
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
 			ENTL_DEBUG("ENTL %s entl_watchdog_task retry packet sent\n", dev->name );
 	    }
 	    else {
@@ -210,7 +246,7 @@ static void entl_watchdog_task(struct work_struct *work)
 	else if( dev->flag & ENTL_DEVICE_FLAG_WAITING )
 	{
 		dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
-		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT ) {
+		if( dev->stm.current_state.current_state == ENTL_STATE_HELLO || dev->stm.current_state.current_state == ENTL_STATE_WAIT || dev->stm.current_state.current_state == ENTL_STATE_RECEIVE || dev->stm.current_state.current_state == ENTL_STATE_AM || dev->stm.current_state.current_state == ENTL_STATE_BH ) {
 			dev->flag |= ENTL_DEVICE_FLAG_HELLO ;
 			ENTL_DEBUG("ENTL %s entl_watchdog_task retry message sending\n", dev->name );
 		}
@@ -282,17 +318,17 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_CURRENT:
 	{
 		u32 link;
-		int tt ;
+		//int tt ;
 		struct e1000_hw *hw = &adapter->hw;
-		tt = hw->mac.get_link_status ;
-    	hw->mac.get_link_status = 1 ; // AK force to read
-		link = e1000e_has_link(adapter);
-		hw->mac.get_link_status = tt ;
+		//tt = hw->mac.get_link_status ;
+    	//hw->mac.get_link_status = 1 ; // AK force to read
+		link = !hw->mac.get_link_status ;
+		//hw->mac.get_link_status = tt ;
 		entl_data.link_state = link ;
 		entl_read_current_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
-		entl_data.icr = er32(ICR);
-		entl_data.ctrl = er32(CTRL);
-		entl_data.ims = er32(IMS);
+		//entl_data.icr = er32(ICR);
+		//entl_data.ctrl = er32(CTRL);
+		//entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		//ENTL_DEBUG("ENTL %s ioctl reading current state on %d icr %08x ctrl %08x ims %08x\n", dev->name, link, entl_data.icr, entl_data.ctrl, entl_data.ims );
 		//dump_state( "rd current", &entl_data.state, 1 ) ;
@@ -302,18 +338,18 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCDEVPRIVATE_ENTL_RD_ERROR:
 	{
 		u32 link;
-		int tt ;
+		//int tt ;
 		struct e1000_hw *hw = &adapter->hw;
-		tt = hw->mac.get_link_status ;
-    	hw->mac.get_link_status = 1 ; // AK force to read
-		link = e1000e_has_link(adapter);
-		ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
-		hw->mac.get_link_status = tt ;
+		//tt = hw->mac.get_link_status ;
+    	//hw->mac.get_link_status = 1 ; // AK force to read
+		link = !hw->mac.get_link_status ;
+		//ENTL_DEBUG("ENTL %s ioctl reading error state on link %d\n", dev->name, link );
+		//hw->mac.get_link_status = hw->mac.get_link_status ;
 		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
-		entl_data.icr = er32(ICR);
-		entl_data.ctrl = er32(CTRL);
-		entl_data.ims = er32(IMS);
+		//entl_data.icr = er32(ICR);
+		//entl_data.ctrl = er32(CTRL);
+		//entl_data.ims = er32(IMS);
 		copy_to_user(ifr->ifr_data, &entl_data, sizeof(struct entl_ioctl_data));
 		dump_state( "current", &entl_data.state, 1 ) ;
 		dump_state( "error", &entl_data.error_state, 0 ) ;			
@@ -338,6 +374,33 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		u32 ctrl = er32(CTRL);
 		u32 ims = er32(IMS);
 		ENTL_DEBUG("ENTL %s ioctl initialized the device with icr %08x ctrl %08x ims %08x\n", dev->name, icr, ctrl, ims );
+		break ;
+	case SIOCDEVPRIVATE_ENTT_SEND_AIT:
+	{
+		struct entt_ioctl_ait_data* ait_data ;
+		int ret ;
+	    ait_data = kzalloc( sizeof(struct entt_ioctl_ait_data), GFP_ATOMIC );
+		copy_from_user(ait_data, ifr->ifr_data, sizeof(struct entt_ioctl_ait_data) ) ;
+		ret = entl_send_AIT_message( &dev->stm, ait_data ) ;
+		ENTL_DEBUG("ENTL %s ioctl send %d byte AIT, %d left\n", dev->name, ait_data->message_len, ret );
+		ait_data->num_messages = ret ; // return how many buffer left
+		copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
+		if( ret < 0 ) {
+			// error, dealloc data
+			kfree(ait_data) ;
+		}
+	}
+		break ;
+	case SIOCDEVPRIVATE_ENTT_READ_AIT:
+	{
+		struct entt_ioctl_ait_data* ait_data ;
+		ait_data = entl_read_AIT_message( &dev->stm ) ;
+		if( ait_data ) {
+			ENTL_DEBUG("ENTL %s ioctl got %d byte AIT, %d left\n", dev->name, ait_data->message_len, ait_data->num_messages );
+			copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
+			kfree(ait_data) ;
+		}
+	}
 		break ;
 	default:
 		ENTL_DEBUG("ENTL %s ioctl error: undefined cmd %d\n", dev->name, cmd);
@@ -426,37 +489,74 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
-	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
-
-    if( result == 1 ) {
-    	// need to send message
-    	// this is ISR version to get the next to send
-    	entl_next_send( &dev->stm, &d_u_addr, &d_l_addr ) ;
-    	if( (d_u_addr & (u16)ENTL_MESSAGE_MASK) != ENTL_MESSAGE_NOP_U ) {  // last minute check
-    		unsigned long flags ;
-			spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
-    		result = inject_message( dev, d_u_addr, d_l_addr ) ;
-    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
-    		// if failed to inject message, so invoke the task
-    		if( result == 1 ) {
-    			// resource error, so retry
-    			dev->u_addr = d_u_addr ;
-    			dev->l_addr = d_l_addr ;
-    			dev->flag |= ENTL_DEVICE_FLAG_RETRY ;
-				mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
-    		}
-    		else if( result == -1 ) {
-     			entl_state_error( &dev->stm, ENTL_ERROR_FATAL ) ;
-   				dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
-				mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
-    		}
-    	}
-    }
-    else if( result == -1 ) {
+	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
+    if( result == ENTL_ACTION_ERROR ) {
     	// error, need to send signal & hello, 
 		dev->flag |= ENTL_DEVICE_FLAG_HELLO | ENTL_DEVICE_FLAG_SIGNAL ;
 		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
 	}
+	else {
+		if( result & ENTL_ACTION_PROC_AIT ) {
+	    	// AIT message is received, put in to the receive buffer
+	    	struct entt_ioctl_ait_data *ait_data ;
+	    	unsigned int len = skb->len ;
+	    	char *cp = skb->data + sizeof(struct ethhdr) ;
+			//ENTL_DEBUG("entl_device_process_rx_packet %02x %02x %02x %02x %02x %02x %02x %02x \n", cp[0], cp[1],cp[2],cp[3],cp[4],cp[5],cp[6],cp[7] );
+	    	
+	    	ait_data = kzalloc( sizeof(struct entt_ioctl_ait_data), GFP_ATOMIC );
+			//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got skb len %d\n", dev->name, len );
+	    	if( len > sizeof(struct ethhdr) ) {
+	    		unsigned char *data = skb->data + sizeof(struct ethhdr) ;
+	    		memcpy( &ait_data->message_len, data, sizeof(u32)) ;
+	    		if( ait_data->message_len && ait_data->message_len < MAX_AIT_MASSAGE_SIZE ) 
+	    		{
+					//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got message_len %d\n", dev->name, ait_data->message_len );
+	    			memcpy( ait_data->data, data + sizeof(u32), ait_data->message_len ) ;
+	    		}
+	    		else {
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got too big message_len %d\n", dev->name, ait_data->message_len );
+	    			ait_data->message_len = 0 ;
+	    		}
+	    	}
+	    	entl_new_AIT_message( &dev->stm, ait_data ) ;
+			//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got ATI len %d\n", dev->name, ait_data->message_len );
+		}
+		if( result & ENTL_ACTION_SIG_AIT ) {
+			dev->flag |= ENTL_DEVICE_FLAG_SIGNAL2 ;
+		}
+	    if( result & ENTL_ACTION_SEND ) {
+	    	int ret ;
+	    	// need to send message
+	    	// this is ISR version to get the next to send
+	    	ret = entl_next_send( &dev->stm, &d_u_addr, &d_l_addr ) ;
+	    	if( (d_u_addr & (u16)ENTL_MESSAGE_MASK) != ENTL_MESSAGE_NOP_U ) {  // last minute check
+	    		unsigned long flags ;
+				spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
+	    		result = inject_message( dev, d_u_addr, d_l_addr, ret ) ;
+	    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
+	    		// if failed to inject message, so invoke the task
+	    		if( result == 1 ) {
+	    			// resource error, so retry
+	    			dev->u_addr = d_u_addr ;
+	    			dev->l_addr = d_l_addr ;
+	    			dev->action = ret ;
+	    			dev->flag |= ENTL_DEVICE_FLAG_RETRY ;
+					mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
+	    		}
+	    		else if( result == -1 ) {
+	     			entl_state_error( &dev->stm, ENTL_ERROR_FATAL ) ;
+	   				dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+					mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
+	    		}
+	    		else {
+	    			// clear watchdog flag
+					dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;
+	    		}
+	    	}		
+	    }
+
+    }
+
 
 	return ret ;
 
@@ -503,7 +603,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet\n", dev->name );
 	}
 	else {
-		entl_next_send( &dev->stm, &u_addr, &l_addr ) ;
+		entl_next_send_tx( &dev->stm, &u_addr, &l_addr ) ;
 		d_addr[0] = (u_addr >> 8) ; 
 		d_addr[1] = u_addr ;
 		d_addr[2] = l_addr >> 24 ;
@@ -511,6 +611,9 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
+		if( u_addr != ENTL_MESSAGE_NOP_U ) {
+			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;			
+		}
 		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
 	}
 
@@ -946,4 +1049,5 @@ static void entl_e1000_set_my_addr( entl_device_t *dev, const u8 *addr )
     entl_set_my_adder( &dev->stm, u_addr, l_addr ) ;
 
 }
+
 
