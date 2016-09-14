@@ -64,6 +64,7 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 	}
 #endif
 	if( flag ) {
+		char value[256] ;
 		write_window( "#State" ) ;
 		switch( st->current_state ) {
 			case ENTL_STATE_IDLE:
@@ -94,6 +95,9 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 				write_window( "BH" ) ;
 			break ;
 		}
+		sprintf( value, "%d", st->event_i_know ) ;
+		write_window( "#Value" ) ;
+		write_window( value ) ;
 	}
 }
 
