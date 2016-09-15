@@ -19,13 +19,10 @@
 
 #include "entl_user_api.h"
 
-#define MY_ADDR "192.168.99.1"
-
-#define MY_DEVICE "enp6s0"
-
 static int sock;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
+struct entt_ioctl_ait_data ait_data ;
 
 static void dump_regs( struct entl_ioctl_data *data ) {
 	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
@@ -48,6 +45,71 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 #endif
 }
 
+static void dump_ait( struct entt_ioctl_ait_data *dt ) 
+{
+	int i ;
+	int len = dt->message_len ;
+	if( dt->message_len > MAX_AIT_MASSAGE_SIZE ) {
+		printf( "dump_ait: length too long %d\n", dt->message_len ) ;
+		len = MAX_AIT_MASSAGE_SIZE ;
+		printf( "AIT data :" ) ;
+		for( i = 0 ; i < len; i++ ) {
+			printf( "%02x ", dt->data[i]) ;
+		}
+	}
+	else {
+			printf( "AIT message :" ) ;
+		for( i = 0 ; i < len; i++ ) {
+			printf( "%c", dt->data[i]) ;
+		}
+		
+	}
+
+	printf( "\n" ) ;
+}
+
+// the signal handler
+static void entl_ait_sig_handler( int signum ) {
+  if( signum == SIGUSR2 ) {
+    printf( "entl_ait_sig_handler got SIGUSR2 signal!!!\n") ;
+  	// Set parm pinter to ifr
+	memset(&ait_data, 0, sizeof(ait_data));
+  	ifr.ifr_data = (char *)&ait_data ;
+  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+	if (ioctl(sock, SIOCDEVPRIVATE_ENTT_READ_AIT, &ifr) == -1) {
+		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT failed on %s\n",ifr.ifr_name );
+	}
+	else {
+		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT successed on %s num_massage %d\n",ifr.ifr_name, ait_data.num_messages );
+		if( ait_data.message_len ) {
+			dump_ait( &ait_data ) ;
+		}
+		else {
+			printf( "  AIT Message Len is zero\n " ) ;
+		}
+	}
+  }
+  else {
+    printf( "entl_error_sig_handler got unknown %d signal.\n", signum ) ;
+  }
+}
+
+// the ait message sender
+static void entl_ait_sender( char* msg ) {
+    printf( "entl_ait_sender sending \"%s\"\n", msg ) ;
+  	// Set parm pinter to ifr
+	ait_data.message_len = strlen(msg) + 1 ;
+	sprintf( ait_data.data, "%s", msg ) ;
+  	ifr.ifr_data = (char *)&ait_data ;
+  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+	if (ioctl(sock, SIOCDEVPRIVATE_ENTT_SEND_AIT, &ifr) == -1) {
+		printf( "SIOCDEVPRIVATE_ENTT_SEND_AIT failed on %s\n",ifr.ifr_name );
+	}
+	else {
+		printf( "SIOCDEVPRIVATE_ENTT_SEND_AIT successed on %s\n",ifr.ifr_name );
+	}
+}
+
 // the signal handler
 static void entl_error_sig_handler( int signum ) {
   if( signum == SIGUSR1 ) {
@@ -66,7 +128,6 @@ static void entl_error_sig_handler( int signum ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
 			dump_regs( &entl_data ) ;
-			
 		}
 		else {
 			printf( "  Link Down!\n " ) ;
@@ -83,6 +144,8 @@ static void entl_error_sig_handler( int signum ) {
 
 int main( int argc, char *argv[] ) {
 	int count = 0 ;
+	u32 event_i_know = 0 ;
+	char *name = argv[1] ;
 
 	if( argc != 2 ) {
 		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
@@ -102,6 +165,7 @@ int main( int argc, char *argv[] ) {
 
 	// Set my handler here
 	signal(SIGUSR1, entl_error_sig_handler);
+	signal(SIGUSR2, entl_ait_sig_handler);
 
   	// Set parm pinter to ifr
 	memset(&entl_data, 0, sizeof(entl_data));
@@ -118,7 +182,6 @@ int main( int argc, char *argv[] ) {
 		//dump_state( &entl_data.state ) ;
 	}
 
-	/*
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_GEN_SIGNAL, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_GEN_SIGNAL failed on %s\n",ifr.ifr_name );
 	}
@@ -128,16 +191,12 @@ int main( int argc, char *argv[] ) {
 		printf( "sleeping 10..\n") ;
 		sleep(10) ;
 	}
-	*/
-	printf( "sleeping 10..\n") ;
-	sleep(10) ;
 
   	// Set parm pinter to ifr
 	memset(&entl_data, 0, sizeof(entl_data));
   	ifr.ifr_data = (char *)&entl_data ;
 
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-  	
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 	}
@@ -146,17 +205,14 @@ int main( int argc, char *argv[] ) {
 		dump_state( "current", &entl_data.state, 1 ) ;
 		dump_regs( &entl_data ) ;
 	}
-	
 
   	// SIOCDEVPRIVATE_ENTL_DO_INIT
-  	
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
 	}
-	
 
     while( 1 ) {
     	printf( "sleeping 5 sec on %d\n", count++ ) ;
@@ -166,7 +222,7 @@ int main( int argc, char *argv[] ) {
   		// Set parm pinter to ifr
 		memset(&entl_data, 0, sizeof(entl_data));
   		ifr.ifr_data = (char *)&entl_data ;
-  		
+
   		// SIOCDEVPRIVATE_ENTL_RD_CURRENT
 		if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
 			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
@@ -176,8 +232,17 @@ int main( int argc, char *argv[] ) {
 			printf( "  Link state : %s\n", entl_data.link_state? "UP" : "DOWN" ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_regs( &entl_data ) ;
+			if( entl_data.link_state && entl_data.state.current_state > ENTL_STATE_SEND ) 
+			{
+				if( event_i_know && entl_data.state.event_i_know > event_i_know ) {
+  					char data[MAX_AIT_MASSAGE_SIZE] ;
+  					sprintf( data, "AIT %s %d", name, entl_data.state.event_i_know ) ;
+  					entl_ait_sender( data ) ;
+				}
+				event_i_know = entl_data.state.event_i_know ;
+			}
+
 		}
-		
     }
 
     

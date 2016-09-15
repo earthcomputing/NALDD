@@ -14,12 +14,17 @@
 #define ENTL_SPEED_CHECK
 
 // State definition
-#define ENTL_STATE_IDLE 0
-#define ENTL_STATE_HELLO 1
-#define ENTL_STATE_WAIT 2
-#define ENTL_STATE_SEND 3
-#define ENTL_STATE_RECEIVE 4
-#define ENTL_STATE_ERROR 5
+#define ENTL_STATE_IDLE     0
+#define ENTL_STATE_HELLO    1
+#define ENTL_STATE_WAIT     2
+#define ENTL_STATE_SEND     3
+#define ENTL_STATE_RECEIVE  4
+#define ENTL_STATE_AM       5
+#define ENTL_STATE_BM       6
+#define ENTL_STATE_AH       7
+#define ENTL_STATE_BH       8
+
+#define ENTL_STATE_ERROR    9
  
 // Error type bits
 #define ENTL_ERROR_FLAG_SEQUENCE 0x0001
@@ -68,8 +73,11 @@ typedef struct entl_state {
 #define SIOCDEVPRIVATE_ENTL_GEN_SIGNAL      0x89F3
 #define SIOCDEVPRIVATE_ENTL_DO_INIT   0x89F4
 
+// ENTT send/read AIT ioctls 
+#define SIOCDEVPRIVATE_ENTT_SEND_AIT   0x89F5
+#define SIOCDEVPRIVATE_ENTT_READ_AIT   0x89F6
 
-/* This structure is used in all SIOCDEVPRIVATE_ENTL_xxx ioctl calls */
+/* This structure is used in all of SIOCDEVPRIVATE_ENTL_xxx ioctl calls */
 struct entl_ioctl_data {
 	int				pid;    // set own uid for signal
   int       link_state ; // 0: down, 1: up
@@ -79,6 +87,16 @@ struct entl_ioctl_data {
   u32   ctrl ;
   u32   ims ;
 };
+
+/* This structure is used in all of SIOCDEVPRIVATE_ENTT_xxx ioctl calls */
+#define MAX_AIT_MASSAGE_SIZE 256 
+
+struct entt_ioctl_ait_data {
+  u32 num_messages ;
+  u32 message_len ;
+  char data[MAX_AIT_MASSAGE_SIZE] ;
+};
+
 
 #endif
 
