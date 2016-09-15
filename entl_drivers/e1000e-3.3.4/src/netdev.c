@@ -8228,6 +8228,7 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	entl_device_init( &adapter->entl_dev ) ;
 	// AK: default, entl mode is enabled for testing
 	adapter->entl_flag = 1 ;
+	strlcpy(&adapter->entl_dev.name, pci_name(pdev), sizeof(adapter->entl_dev.name));
 
 	mmio_start = pci_resource_start(pdev, 0);
 	mmio_len = pci_resource_len(pdev, 0);

@@ -426,7 +426,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	unsigned int i = rx_ring->next_to_peek ;
 
     if( !netif_carrier_ok(adapter->netdev) ) {
-		ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
+		// ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
     	return ;
     }
     //if( i == 0 || i == 15 ) {
