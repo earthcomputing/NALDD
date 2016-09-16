@@ -6717,7 +6717,7 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 				     DIV_ROUND_UP(PAGE_SIZE,
 						  adapter->tx_fifo_limit) + 2));
 
-		// check skp 
+		// check skb 
 		{
 			struct ethhdr *eth = (struct ethhdr *)skb->data ;
 			ENTL_DEBUG("ENTL %s e1000_xmit_frame got a single packet with %02x%02x%02x%02x%02x%02x \n", netdev->name, eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);

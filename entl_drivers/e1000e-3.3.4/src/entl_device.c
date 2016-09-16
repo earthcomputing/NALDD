@@ -114,6 +114,12 @@ static int inject_message( entl_device_t *dev, __u16 u_addr, __u32 l_addr, int f
 		 */
 		mmiowb();
 		//ENTL_DEBUG("ENTL inject_message %04x %08x injected on %d\n", u_addr, l_addr, i);
+		// check skb 
+		{
+			struct ethhdr *eth = (struct ethhdr *)skb->data ;
+			ENTL_DEBUG("ENTL %s inject_message inject packet with %02x%02x%02x%02x%02x%02x \n", netdev->name, eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
+		}
+
 
 	}
 	else {
