@@ -465,6 +465,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 		staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
 	
 	}
+	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr update next_to_peek = %d\n", adapter->netdev->name, i);
 
 	rx_ring->next_to_peek = i ;
 
