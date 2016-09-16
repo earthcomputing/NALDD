@@ -596,7 +596,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 	struct ethhdr *eth = (struct ethhdr *)skb->data ;
 
 
-	if( skb_is_gso(skb) ) {
+	if( 1 ) { //   skb_is_gso(skb) ) {
 		// MSS packet can't be used for ENTL message (will use a header over multiple packets)
 		u_addr = ENTL_MESSAGE_NOP_U ;
 		l_addr = 0 ;  
@@ -607,7 +607,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
-		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet with %04x %08x\n", dev->name, u_addr, l_addr );
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a packet with %04x %08x\n", dev->name, u_addr, l_addr );
 	}
 	else {
 		entl_next_send_tx( &dev->stm, &u_addr, &l_addr ) ;
