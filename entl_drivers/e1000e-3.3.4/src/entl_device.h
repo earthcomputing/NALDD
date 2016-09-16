@@ -10,6 +10,9 @@
 
  #include "entl_state_machine.h"
 
+// handling entl message in Rx ISR
+#define ENTL_BUSY_RX_INTERRUPT
+
 // these flags are used to request tasks to service task
 #define ENTL_DEVICE_FLAG_HELLO 		1
 #define ENTL_DEVICE_FLAG_SIGNAL 	2
@@ -57,8 +60,12 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd) 
 /// send signal to the user process
 // static void entl_do_user_signal( entl_device_t *dev ) ;
 
+static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter ) ;
+
 /// process the packet upon receive
 static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
+
+static bool entl_device_check_rx_packet( entl_device_t *dev, struct sk_buff *skb ) ;
 
 /// process the packet for transmit. 
 static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *skb ) ;

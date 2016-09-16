@@ -416,6 +416,54 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 //	mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
 //}
 
+static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
+{
+	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct e1000_hw *hw = &adapter->hw;
+	union e1000_rx_desc_extended *rx_desc, *next_rxd;
+	struct e1000_buffer *buffer_info, *next_buffer;
+	u32 staterr;
+	unsigned int i = rx_ring->next_to_peek ;
+
+    if( !netif_carrier_ok(adapter->netdev) ) {
+		ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
+    	return ;
+    }
+    //if( i == 0 || i == 15 ) {
+	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
+    //}
+
+	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
+	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
+	buffer_info = &rx_ring->buffer_info[i];
+
+	while (staterr & E1000_RXD_STAT_DD) {
+		struct sk_buff *skb;
+
+		i++;
+		if (i == rx_ring->count)
+			i = 0;
+		next_rxd = E1000_RX_DESC_EXT(*rx_ring, i);
+		prefetch(next_rxd);
+
+		next_buffer = &rx_ring->buffer_info[i];
+
+		skb = buffer_info->skb;
+
+		// AK: Process ENTL packet for RX data
+		entl_device_process_rx_packet( &adapter->entl_dev, skb ) ;
+
+		rx_desc = next_rxd;
+		buffer_info = next_buffer;
+
+		staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
+	
+	}
+
+	rx_ring->next_to_peek = i ;
+
+}
+
 // process received packet, if not message only, return true to let upper side forward this packet
 //   It is assumed that this is called on ISR context.
 static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *skb )
@@ -437,12 +485,42 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
 
-	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
+<<<<<<< HEAD
+	ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
+
+    if( result == 1 ) {
+    	// need to send message
+    	// this is ISR version to get the next to send
+    	entl_next_send( &dev->stm, &d_u_addr, &d_l_addr ) ;
+    	if( (d_u_addr & (u16)ENTL_MESSAGE_MASK) != ENTL_MESSAGE_NOP_U ) {  // last minute check
+    		unsigned long flags ;
+			spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
+    		result = inject_message( dev, d_u_addr, d_l_addr ) ;
+    		spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;
+    		// if failed to inject message, so invoke the task
+    		if( result == 1 ) {
+    			// resource error, so retry
+    			dev->u_addr = d_u_addr ;
+    			dev->l_addr = d_l_addr ;
+    			dev->flag |= ENTL_DEVICE_FLAG_RETRY ;
+				mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
+    		}
+    		else if( result == -1 ) {
+     			entl_state_error( &dev->stm, ENTL_ERROR_FATAL ) ;
+   				dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+				mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
+    		}
+    	}
+    }
+    else if( result == -1 ) {
+=======
 	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got entl_received result %d\n", dev->name, result);
     if( result == ENTL_ACTION_ERROR ) {
+>>>>>>> b10049bf9cad9a8e37914dc5f0f01456b6d60989
     	// error, need to send signal & hello, 
 		dev->flag |= ENTL_DEVICE_FLAG_HELLO | ENTL_DEVICE_FLAG_SIGNAL ;
 		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
@@ -512,6 +590,23 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
 	return ret ;
 
+}
+
+
+static bool entl_device_check_rx_packet( entl_device_t *dev, struct sk_buff *skb )
+{
+	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
+	bool ret = true ;
+	struct ethhdr *eth = (struct ethhdr *)skb->data ;
+	int result ;
+
+    u16 d_u_addr; 
+
+    d_u_addr = (u16)eth->h_dest[0] << 8 | eth->h_dest[1] ;
+
+    if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
+
+    return ret ;
 }
 
 // process packet being sent. The ENTL message can only be ent over the single (non MSS) packet
@@ -936,6 +1031,8 @@ static void entl_e1000_configure(struct e1000_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	struct net_device *netdev = adapter->netdev;
 
+	adapter->p_jiffies = 0 ;
+	
 	ENTL_DEBUG("entl_e1000_configure is called\n" );
 
 	entl_e1000e_set_rx_mode(adapter->netdev);

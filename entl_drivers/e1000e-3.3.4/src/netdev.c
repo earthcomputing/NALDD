@@ -1099,6 +1099,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		total_rx_bytes += length;
 		total_rx_packets++;
 
+#ifndef ENTL_BUSY_RX_INTERRUPT
 		// AK: Process ENTL packet for RX data
 		if( adapter->entl_flag ) {
 			skb_put(skb, length);
@@ -1109,6 +1110,17 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				goto next_desc;
 			}	
 		}
+#else
+		// AK: Skip ENTL only packet 
+		if( adapter->entl_flag ) {
+			if( !entl_device_check_rx_packet( &adapter->entl_dev, skb ) )
+			{
+				// This packet is ENTL message only. Not forward to upper layer
+				buffer_info->skb = skb; // recycle
+				goto next_desc;
+			}	
+		}		
+#endif
 
 		/* code added for copybreak, this should improve
 		 * performance for small packets with large amounts
@@ -1929,6 +1941,11 @@ static void e1000_clean_rx_ring(struct e1000_ring *rx_ring)
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
+
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	rx_ring->next_to_peek = 0;
+#endif
+	
 	adapter->flags2 &= ~FLAG2_IS_DISCARDING;
 
 	writel(0, rx_ring->head);
@@ -2194,11 +2211,73 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 	struct net_device *netdev = data;
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_ring *rx_ring = adapter->rx_ring;
+	struct e1000_hw *hw = &adapter->hw;
+
 #ifndef CONFIG_E1000E_NAPI
 	int i;
-	struct e1000_hw *hw = &adapter->hw;
 #endif
 
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	// no ITR , full throttle
+	writel(0, rx_ring->itr_register);
+
+	// Processing ENTL packet
+	if( adapter->entl_flag ){
+		entl_proces_rx_ring_on_isr( adapter ) ;
+	}
+	else {
+		ENTL_DEBUG("ENTL %s e1000_intr_msix_rx entl_flag is %d\n", adapter->netdev->name, adapter->entl_flag );
+	}
+
+#ifdef CONFIG_E1000E_NAPI
+	{
+		//u32 itr = rx_ring->itr_val ?
+		//    1000000000 / (rx_ring->itr_val * 256) : 0;
+		// itr_val should have num-interrupt/sec, 
+		unsigned long nsec = rx_ring->itr_val ? (1000000000L / rx_ring->itr_val) : 0;
+		unsigned long i_nsec = (jiffies - adapter->p_jiffies) * 1000000000L / HZ ;
+		if ( adapter->p_jiffies == 0 || i_nsec > nsec ) {
+			if (napi_schedule_prep(&adapter->napi)) {
+				adapter->total_rx_bytes = 0;
+				adapter->total_rx_packets = 0;
+				__napi_schedule(&adapter->napi);
+				//ENTL_DEBUG("ENTL %s e1000_intr_msix_rx schedule napi i_nsec %lu nsec %lu itr_val %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, i_nsec, nsec, rx_ring->itr_val, jiffies, adapter->p_jiffies );
+			}
+			else {
+				//ENTL_DEBUG("ENTL %s e1000_intr_msix_rx busy napi on %lu\n", adapter->netdev->name, jiffies );
+			}
+			adapter->p_jiffies = jiffies ;
+		}
+		else {
+			//ENTL_DEBUG("ENTL %s e1000_intr_msix_rx NOT schedule napi i_nsec %lu nsec %lu itr_val %lu jiffies %lu p_jeffies %lu\n", adapter->netdev->name, i_nsec, nsec, rx_ring->itr_val, jiffies, adapter->p_jiffies );
+		}
+
+	}
+#else
+		adapter->total_rx_bytes = 0;
+		adapter->total_rx_packets = 0;
+
+		for (i = 0; i < E1000_MAX_INTR; i++) {
+			int rx_cleaned = adapter->clean_rx(rx_ring);
+			if (!rx_cleaned)
+				goto out1;
+		}
+		/* If we got here, the ring was not completely cleaned,
+		 * so fire another interrupt.
+		 */
+	// ready for next interrupt
+	ew32(ICS, rx_ring->ims_val);
+
+out1:
+
+#endif /* CONFIG_E1000E_NAPI */		
+
+	ew32(IMS, rx_ring->ims_val);
+
+	// should set IMS here here
+
+
+#else
 	/* Write the ITR value calculated at the end of the
 	 * previous interrupt.
 	 */
@@ -2231,6 +2310,7 @@ static irqreturn_t e1000_intr_msix_rx(int __always_unused irq, void *data)
 
 out:
 #endif /* CONFIG_E1000E_NAPI */
+#endif /* ENTL_BUSY_RX_INTERRUPT */
 	return IRQ_HANDLED;
 }
 
@@ -2509,10 +2589,15 @@ static void e1000_irq_disable(struct e1000_adapter *adapter)
 static void e1000_irq_enable(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
+	u32 ims ;
+
+	ENTL_DEBUG("ENTL %s e1000_irq_enable called with msix_entries %d eiac_mask %08x\n", adapter->netdev->name, adapter->msix_entries, adapter->eiac_mask );
 
 	if (adapter->msix_entries) {
 		ew32(EIAC_82574, adapter->eiac_mask & E1000_EIAC_MASK_82574);
 		ew32(IMS, adapter->eiac_mask | E1000_IMS_LSC);
+		ims = er32(IMS);
+		ENTL_DEBUG("ENTL %s e1000_irq_enable ims %08x eiac_mask %08x\n", adapter->netdev->name, ims, adapter->eiac_mask );
 	} else if ((hw->mac.type == e1000_pch_lpt) ||
 		   (hw->mac.type == e1000_pch_spt)) {
 		ew32(IMS, IMS_ENABLE_MASK | E1000_IMS_ECCER);
@@ -2672,6 +2757,11 @@ int e1000e_setup_rx_resources(struct e1000_ring *rx_ring)
 
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
+
+#ifdef ENTL_BUSY_RX_INTERRUPT
+	rx_ring->next_to_peek = 0;
+#endif
+
 	rx_ring->rx_skb_top = NULL;
 
 	return 0;
@@ -4708,6 +4798,7 @@ void e1000e_up(struct e1000_adapter *adapter)
 
 	if (adapter->msix_entries)
 		e1000_configure_msix(adapter);
+	ENTL_DEBUG("e1000e_up is calling e1000_irq_enable\n", adapter->netdev->name );
 	e1000_irq_enable(adapter);
 
 	netif_start_queue(adapter->netdev);
