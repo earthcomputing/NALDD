@@ -190,9 +190,6 @@ struct e1000_ring {
 	u16 next_to_use;
 	u16 next_to_clean;
 
-	// AK: pointer to peek buffer in ISR
-	u16 next_to_peek;
-
 	void __iomem *head;
 	void __iomem *tail;
 
@@ -239,8 +236,6 @@ struct e1000_adapter {
 	spinlock_t tx_ring_lock ;
 	// AK: This flag enables ENTL mode
 	u32 entl_flag ;
-	// AK: Keep previous jiffies value for NAPI control
-	unsigned long p_jiffies ;
 
 #ifdef HAVE_VLAN_RX_REGISTER
 	struct vlan_group *vlgrp;
