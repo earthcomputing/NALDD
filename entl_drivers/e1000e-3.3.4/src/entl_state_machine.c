@@ -664,6 +664,9 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 	unsigned long flags ;
 	struct timespec ts ;
 
+	*l_addr = 0 ;
+	*u_addr = ENTL_MESSAGE_NOP_U ;
+
 	if( mcn->error_state.error_count ) {
 		ENTL_DEBUG( "%s entl_get_hello called on error count set %d\n", mcn->name, mcn->error_state.error_count ) ;
 		return retval ;		
@@ -798,6 +801,9 @@ int entl_next_send_tx( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 	int retval = ENTL_ACTION_NOP ;
 
 	ts = current_kernel_time();
+
+	*l_addr = 0 ;
+	*u_addr = ENTL_MESSAGE_NOP_U ;
 
 	if( mcn->error_state.error_count ) {
 		ENTL_DEBUG( "%s entl_get_hello called on error count set %d\n", mcn->name, mcn->error_state.error_count ) ;
