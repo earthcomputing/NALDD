@@ -436,7 +436,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
     	return ;
     }
     //if( i == 0 || i == 15 ) {
-	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK %d\n", adapter->netdev->name, i);
+	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK next_to_peek = %d next_to_clean = %d\n", adapter->netdev->name, i, rx_ring->next_to_clean );
     //}
 
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
