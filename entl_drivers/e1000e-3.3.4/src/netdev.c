@@ -1029,6 +1029,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 
 	while (staterr & E1000_RXD_STAT_DD) {
 		struct sk_buff *skb;
+		unsigned long flags;
 
 #ifdef CONFIG_E1000E_NAPI
 		if (*work_done >= work_to_do)
@@ -1113,6 +1114,17 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 #else
 		// AK: Skip ENTL only packet 
 		if( adapter->entl_flag ) {
+
+  			spin_lock_irqsave( &adapter->rx_ring_lock, flags ) ;
+  			// AK: Handling the case when pull happens before RX isr is processed
+  			if( rx_ring->next_to_peek == i ) {
+  				ENTL_DEBUG("ENTL %s e1000_clean_rx_irq processing next_to_peek = %d\n", adapter->netdev->name, i);
+  				entl_device_process_rx_packet( &adapter->entl_dev, skb ) ;
+  				rx_ring->next_to_peek++ ;
+  				if( rx_ring->next_to_peek == rx_ring->count ) rx_ring->next_to_peek = 0 ;
+  			}
+    		spin_unlock_irqrestore( &adapter->rx_ring_lock, flags ) ;    	
+
 			if( !entl_device_check_rx_packet( &adapter->entl_dev, skb ) )
 			{
 				// This packet is ENTL message only. Not forward to upper layer
@@ -8231,6 +8243,8 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	// AK: initialize lock for tx_ring
 	spin_lock_init( &adapter->tx_ring_lock ) ;
+	// AK: initialize lock for rx_ring
+	spin_lock_init( &adapter->rx_ring_lock ) ;
 	// AK: initialize entl device
 	entl_device_init( &adapter->entl_dev ) ;
 	// AK: default, entl mode is enabled for testing

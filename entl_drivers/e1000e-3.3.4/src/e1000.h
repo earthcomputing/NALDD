@@ -241,6 +241,8 @@ struct e1000_adapter {
 	u32 entl_flag ;
 	// AK: Keep previous jiffies value for NAPI control
 	unsigned long p_jiffies ;
+	// AK: this lock is used to protect rx_ring
+	spinlock_t rx_ring_lock ;
 
 #ifdef HAVE_VLAN_RX_REGISTER
 	struct vlan_group *vlgrp;

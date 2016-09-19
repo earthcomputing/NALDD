@@ -429,12 +429,19 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	union e1000_rx_desc_extended *rx_desc, *next_rxd;
 	struct e1000_buffer *buffer_info, *next_buffer;
 	u32 staterr;
-	unsigned int i = rx_ring->next_to_peek ;
+	unsigned int i ;
+	unsigned long flags;
 
     if( !netif_carrier_ok(adapter->netdev) ) {
 		// ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr not processing on carrier not OK %d\n", adapter->netdev->name, i);
     	return ;
     }
+
+    // lock ring to protect next_to_peek 
+
+    spin_lock_irqsave( &adapter->rx_ring_lock, flags ) ;
+
+    i = rx_ring->next_to_peek ;
     //if( i == 0 || i == 15 ) {
 	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr processing on carrier OK next_to_peek = %d next_to_clean = %d\n", adapter->netdev->name, i, rx_ring->next_to_clean );
     //}
@@ -468,6 +475,7 @@ static void entl_proces_rx_ring_on_isr( struct e1000_adapter *adapter )
 	ENTL_DEBUG("ENTL %s entl_proces_rx_ring_on_isr update next_to_peek = %d\n", adapter->netdev->name, i);
 
 	rx_ring->next_to_peek = i ;
+    spin_unlock_irqrestore( &adapter->rx_ring_lock, flags ) ;    	
 
 }
 
