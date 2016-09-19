@@ -1017,12 +1017,12 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 	union e1000_rx_desc_extended *rx_desc, *next_rxd;
 	struct e1000_buffer *buffer_info, *next_buffer;
 	u32 length, staterr;
-	unsigned int i;
+	unsigned int i, j;
 	int cleaned_count = 0;
 	bool cleaned = false;
 	unsigned int total_rx_bytes = 0, total_rx_packets = 0;
 
-	i = rx_ring->next_to_clean;
+	i = j = rx_ring->next_to_clean;
 	rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
 	staterr = le32_to_cpu(rx_desc->wb.upper.status_error);
 	buffer_info = &rx_ring->buffer_info[i];
@@ -1117,8 +1117,8 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 
   			spin_lock_irqsave( &adapter->rx_ring_lock, flags ) ;
   			// AK: Handling the case when pull happens before RX isr is processed
-  			if( rx_ring->next_to_peek == i ) {
-  				ENTL_DEBUG("ENTL %s e1000_clean_rx_irq processing next_to_peek = %d\n", adapter->netdev->name, i);
+  			if( rx_ring->next_to_peek == j ) {
+  				ENTL_DEBUG("ENTL %s e1000_clean_rx_irq processing next_to_peek = %d\n", adapter->netdev->name, j);
   				entl_device_process_rx_packet( &adapter->entl_dev, skb ) ;
   				rx_ring->next_to_peek++ ;
   				if( rx_ring->next_to_peek == rx_ring->count ) rx_ring->next_to_peek = 0 ;
@@ -1131,7 +1131,9 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				buffer_info->skb = skb; // recycle
 				goto next_desc;
 			}	
-		}		
+		}
+		j = i ;
+		
 #endif
 
 		/* code added for copybreak, this should improve
