@@ -1177,6 +1177,8 @@ next_desc:
 	}
 	rx_ring->next_to_clean = i;
 
+	ENTL_DEBUG("ENTL %s e1000_clean_rx_irq update next_to_clean = %d, next_to_peek = %d\n", adapter->netdev->name, rx_ring->next_to_clean, rx_ring->next_to_peek );
+
 	cleaned_count = e1000_desc_unused(rx_ring);
 	if (cleaned_count)
 		adapter->alloc_rx_buf(rx_ring, cleaned_count, GFP_ATOMIC);
