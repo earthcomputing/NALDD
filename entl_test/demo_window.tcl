@@ -33,35 +33,38 @@ set Cyellow "yellow"
 # f_ait_state :  received AIT token
 #
 
+font create AppHighlightFont -family Helvetica -size 32 -weight bold
+font create AppLowlightFont -family Helvetica -size 24 -weight bold
+
 frame .f_info
 frame .f_sim_cntl
 frame .f_entl_state
 frame .f_ait_send
 frame .f_ait_state
 
-label .f_info.l  -text "Device:" -foreground $Clabelf -background $Clabelb
-label .f_info.name  -text $DeviceName -foreground $Clabelf -background $Ctextb -width 20
-label .f_info.link  -text " Link:" -foreground $Clabelf -background $Clabelb
-label .f_info.link_state  -text "Down" -foreground $Clabelf -background $Cred -width 20
+label .f_info.l  -text "Device:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb  -width 10 -height 5
+label .f_info.name  -text $DeviceName -font AppHighlightFont -foreground $Clabelf -background $Ctextb -width 20 -height 5
+label .f_info.link  -text " Link:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb -width 10  -height 5
+label .f_info.link_state  -text "Down"  -font AppHighlightFont -foreground $Clabelf -background $Cred -width 20  -height 5
 
-button .f_sim_cntl.bt1 -text "Start" \
+button .f_sim_cntl.bt1 -text "Start" -width 20  -height 5 \
   -foreground $Cbuttonf -background $Cbuttonb \
   -command { exec_start_command }
 
-button .f_sim_cntl.bt2 -text "Quit" \
+button .f_sim_cntl.bt2 -text "Quit" -width 20  -height 5 \
   -foreground $Cbuttonf -background $Cquitbuttonb \
   -command { exec_quit_command }
 
-label .f_entl_state.st_label -text "Idle" -foreground $Clabelf -background $Cred -width 30
-label .f_entl_state.st_value -text "0" -foreground $Clabelf -background $Centryb -width 30
+label .f_entl_state.st_label -text "Idle"  -font AppHighlightFont  -foreground $Clabelf -background $Cred -width 30  -height 5
+label .f_entl_state.st_value -text "0"  -font AppHighlightFont -foreground $Clabelf -background $Centryb -width 30  -height 5
 
 
-label .f_ait_send.ait -text "Send AIT:" -foreground $Clabelf -background $Clabelb
-entry .f_ait_send.message -textvariable Command -width 50 \
+label .f_ait_send.ait -text "Send AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb
+entry .f_ait_send.message -textvariable Command -width 60 -font AppLowlightFont \
   -foreground $Centryf -background $Centryb
 
-label .f_ait_state.ait -text "Received AIT:" -foreground $Clabelf -background $Clabelb
-label .f_ait_state.ait_get -text "-none-" -foreground $Centryf -background $Centryb
+label .f_ait_state.ait -text "Received AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb
+label .f_ait_state.ait_get -text "-none-" -font AppLowlightFont  -foreground $Centryf -background $Centryb
 
 ##### packing frames
 pack .f_info.l .f_info.name .f_info.link .f_info.link_state -side left
@@ -72,10 +75,10 @@ pack .f_ait_state.ait .f_ait_state.ait_get -side left
 
 ##Top frame
 pack .f_info  -expand 1 -fill both
-pack .f_entl_state
-pack .f_sim_cntl
-pack .f_ait_send
+pack .f_entl_state  -expand 1 -fill both
+pack .f_ait_send  -expand 1 -fill both
 pack .f_ait_state -expand 1 -fill both
+pack .f_sim_cntl 
 
 
 # Command field action
