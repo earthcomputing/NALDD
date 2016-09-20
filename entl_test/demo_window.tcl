@@ -42,29 +42,29 @@ frame .f_entl_state
 frame .f_ait_send
 frame .f_ait_state
 
-label .f_info.l  -text "Device:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb  -width 10 -height 5
-label .f_info.name  -text $DeviceName -font AppHighlightFont -foreground $Clabelf -background $Ctextb -width 20 -height 5
-label .f_info.link  -text " Link:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb -width 10  -height 5
-label .f_info.link_state  -text "Down"  -font AppHighlightFont -foreground $Clabelf -background $Cred -width 20  -height 5
+label .f_info.l  -text "Device:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb  -width 10
+label .f_info.name  -text $DeviceName -font AppHighlightFont -foreground $Clabelf -background $Ctextb -width 10 
+label .f_info.link  -text " Link:" -font AppHighlightFont  -foreground $Clabelf -background $Clabelb -width 10  
+label .f_info.link_state  -text "Down"  -font AppHighlightFont -foreground $Clabelf -background $Cred -width 10  
 
-button .f_sim_cntl.bt1 -text "Start" -width 20  -height 5 \
+button .f_sim_cntl.bt1 -text "Start" -font AppLowlightFont -width 20 \
   -foreground $Cbuttonf -background $Cbuttonb \
   -command { exec_start_command }
 
-button .f_sim_cntl.bt2 -text "Quit" -width 20  -height 5 \
+button .f_sim_cntl.bt2 -text "Quit" -font AppLowlightFont -width 20 \
   -foreground $Cbuttonf -background $Cquitbuttonb \
   -command { exec_quit_command }
 
-label .f_entl_state.st_label -text "Idle"  -font AppHighlightFont  -foreground $Clabelf -background $Cred -width 30  -height 5
-label .f_entl_state.st_value -text "0"  -font AppHighlightFont -foreground $Clabelf -background $Centryb -width 30  -height 5
+label .f_entl_state.st_label -text "Idle"  -font AppHighlightFont  -foreground $Clabelf -background $Cred -width 20  
+label .f_entl_state.st_value -text "0"  -font AppHighlightFont -foreground $Clabelf -background $Centryb -width 20  
 
 
-label .f_ait_send.ait -text "Send AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb
-entry .f_ait_send.message -textvariable Command -width 60 -font AppLowlightFont \
+label .f_ait_send.ait -text "Send AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 15
+entry .f_ait_send.message -textvariable Command -width 40 -font AppLowlightFont \
   -foreground $Centryf -background $Centryb
 
-label .f_ait_state.ait -text "Received AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb
-label .f_ait_state.ait_get -text "-none-" -font AppLowlightFont  -foreground $Centryf -background $Centryb
+label .f_ait_state.ait -text "Received AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 15
+label .f_ait_state.ait_get -text "-none-" -font AppLowlightFont  -foreground $Centryf -background $Centryb -width 40
 
 ##### packing frames
 pack .f_info.l .f_info.name .f_info.link .f_info.link_state -side left
