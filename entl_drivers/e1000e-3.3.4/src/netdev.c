@@ -1396,7 +1396,7 @@ static bool e1000_clean_tx_irq(struct e1000_ring *tx_ring)
 			}
 			// AK: dump what is in 
 			if (buffer_info->skb) {
-				struct ethhdr *eth = (struct ethhdr *)skb->data ;
+				struct ethhdr *eth = (struct ethhdr *)buffer_info->skb->data ;
     			u16 s_u_addr; 
     			u32 s_l_addr;	
    				u16 d_u_addr; 
