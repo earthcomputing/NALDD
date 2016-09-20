@@ -2228,6 +2228,8 @@ static irqreturn_t e1000_intr_msix_tx(int __always_unused irq, void *data)
 
 	adapter->total_tx_bytes = 0;
 	adapter->total_tx_packets = 0;
+	
+	ENTL_DEBUG("e1000_intr_msix_tx %s is called \n", netdev->name );
 
 	if (!e1000_clean_tx_irq(tx_ring))
 		/* Ring was not completely cleaned, so fire another interrupt */
@@ -6612,7 +6614,10 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	if (adapter->entl_flag)
 	{
 		// AK: packet modification for ENTL connection
-		entl_device_process_tx_packet( &adapter->entl_dev, skb ) ;
+		//entl_device_process_tx_packet( &adapter->entl_dev, skb ) ;
+		// Drop packet for now
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
 	}
 
 #ifdef NETIF_F_TSO
