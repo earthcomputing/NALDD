@@ -1038,6 +1038,25 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 #endif
 		dma_rmb();	/* read descriptor and rx_buffer_info after status DD */
 
+
+			// AK: dump what is in 
+		if (buffer_info->skb) {
+			struct ethhdr *eth = (struct ethhdr *)buffer_info->skb->data ;
+			u16 s_u_addr; 
+			u32 s_l_addr;	
+				u16 d_u_addr; 
+			u32 d_l_addr;	
+
+			s_u_addr = (u16)eth->h_source[0] << 8 | eth->h_source[1] ;
+			s_l_addr = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 8 | (u32)eth->h_source[5] ;
+			d_u_addr = (u16)eth->h_dest[0] << 8 | eth->h_dest[1] ;
+			d_l_addr = (u32)eth->h_dest[2] << 24 | (u32)eth->h_dest[3] << 16 | (u32)eth->h_dest[4] << 8 | (u32)eth->h_dest[5] ;
+
+
+			ENTL_DEBUG("ENTL %s e1000_clean_rx_irq rx_ring[%d] s: %04x %08x d: %04x %08x\n", netdev->name, i, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+
+		}
+
 		skb = buffer_info->skb;
 		buffer_info->skb = NULL;
 
