@@ -85,6 +85,7 @@ pack .f_sim_cntl
 # Command field action
 bind .f_ait_send.message <Key-Return> {
     global jdbSocket
+
     puts $jdbSocket "AIT $Command\n"
 }
 
