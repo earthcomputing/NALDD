@@ -7,25 +7,14 @@
  */
 // #include <linux/time.h>
 
+#include "entl_state_defs.h"
+
 #ifndef _ENTL_USER_API_H_
 #define _ENTL_USER_API_H_
 
 // Enable to calcurate speed of ENTL message exchange
 #define ENTL_SPEED_CHECK
 
-// State definition
-#define ENTL_STATE_IDLE     0
-#define ENTL_STATE_HELLO    1
-#define ENTL_STATE_WAIT     2
-#define ENTL_STATE_SEND     3
-#define ENTL_STATE_RECEIVE  4
-#define ENTL_STATE_AM       5
-#define ENTL_STATE_BM       6
-#define ENTL_STATE_AH       7
-#define ENTL_STATE_BH       8
-
-#define ENTL_STATE_ERROR    9
- 
 // Error type bits
 #define ENTL_ERROR_FLAG_SEQUENCE 0x0001
 #define ENTL_ERROR_FLAG_LINKDONW 0x0002
