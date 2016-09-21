@@ -29,22 +29,9 @@ static mutex_t access_mutex ;
 #define PRINTF printf
 #define DEFAULT_DBG_PORT  2540
 
-#ifdef STANDALONE_DEBUG
+#include "entl_state_defs.h"
 
-// State definition
-#define ENTL_STATE_IDLE     0
-#define ENTL_STATE_HELLO    1
-#define ENTL_STATE_WAIT     2
-#define ENTL_STATE_SEND     3
-#define ENTL_STATE_RECEIVE  4
-#define ENTL_STATE_AM       5
-#define ENTL_STATE_BM       6
-#define ENTL_STATE_AH       7
-#define ENTL_STATE_BH       8
-
-#define ENTL_STATE_MOD    9
-
-#else
+#ifndef STANDALONE_DEBUG
 
 #include "entl_user_api.h"
 
