@@ -466,9 +466,6 @@ int main( int argc, char *argv[] ) {
   	printf( "ENTL driver test on %s.. \n", argv[1] ) ;
 
 #ifndef STANDALONE_DEBUG
-
-
-
 	// Creating socet
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket");
