@@ -7997,7 +7997,13 @@ static int e1000_set_features(struct net_device *netdev,
 static const struct net_device_ops e1000e_netdev_ops = {
 	.ndo_open		= e1000_open,
 	.ndo_stop		= e1000_close,
+
+#ifdef ENTL_TX_ON_ENTL_ENABLE
+	.ndo_start_xmit		= entl_tx_transmit,
+#else
 	.ndo_start_xmit		= e1000_xmit_frame,
+#endif
+
 #ifdef HAVE_NDO_GET_STATS64
 	.ndo_get_stats64	= e1000e_get_stats64,
 #else /* HAVE_NDO_GET_STATS64 */
@@ -8166,7 +8172,13 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 #else
 	netdev->open = &e1000_open;
 	netdev->stop = &e1000_close;
+
+#ifdef ENTL_TX_ON_ENTL_ENABLE
+	netdev->hard_start_xmit = &entl_tx_transmit;
+#else
 	netdev->hard_start_xmit = &e1000_xmit_frame;
+#endif
+
 	netdev->get_stats = &e1000_get_stats;
 #ifdef HAVE_SET_RX_MODE
 	netdev->set_rx_mode = &e1000e_set_rx_mode;

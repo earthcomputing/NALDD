@@ -9,6 +9,31 @@
  */
  // #include "entl_device.h"
 
+
+static void init_ENTL_skb_queue( ENTL_skb_queue_t* q ) 
+{
+    q->size = E1000_DEFAULT_TXD ;
+    q->count = 0 ;
+    q->head = q->tail = 0 ;
+}
+
+static int ENTL_skb_queue_full( ENTL_skb_queue_t* q ) 
+{
+    if( q->size == q->count ) return 1 ;
+    return 0 ;
+}
+
+static int ENTL_skb_queue_has_data( ENTL_skb_queue_t* q ) 
+{
+    return q->count ;
+}
+
+static int ENTL_skb_queue_unused( ENTL_skb_queue_t* q ) 
+{
+    return q->size - q->count - 1 ;
+}
+
+
 /// function to inject min-size message for ENTL
 //    it returns 0 if success, 1 if need to retry due to resource, -1 if fatal 
 //
@@ -265,6 +290,9 @@ static void entl_device_init( entl_device_t *dev )
 	dev->watchdog_timer.function = entl_watchdog;
 	dev->watchdog_timer.data = (unsigned long)dev;
 	INIT_WORK(&dev->watchdog_task, entl_watchdog_task);
+
+	init_ENTL_skb_queue( &dev->tx_skb_queue ) ;
+	dev->queue_stopped = 0 ;
 	ENTL_DEBUG("ENTL entl_device_init done\n" );
 
 }
@@ -981,6 +1009,78 @@ static void entl_e1000_set_my_addr( entl_device_t *dev, const u8 *addr )
     l_addr = (u32)addr[2] << 24 | (u32)addr[3] << 16 | (u32)addr[4] << 8 | (u32)addr[5] ;
     entl_set_my_adder( &dev->stm, u_addr, l_addr ) ;
 
+}
+
+static int push_back_ENTL_skb_queue(ENTL_skb_queue_t* q, struct sk_buff *dt ) 
+{
+    if( q->size == q->count ) {
+    	// queue full
+    	return -1 ;
+    }
+    q->data[q->tail] = dt ;
+    q->tail = (q->tail+1) % q->size ;
+    q->count++ ;
+    return q->size - q->count ;
+}
+
+static struct sk_buff *front_ENTL_skb_queue(ENTL_skb_queue_t* q ) 
+{
+	struct sk_buff *dt ;
+	if( q->count == 0 ) return NULL ; // queue empty
+	dt = q->data[q->head] ;
+    return dt ;
+}
+
+static struct sk_buff *pop_front_ENTL_skb_queue(ENTL_skb_queue_t* q ) 
+{
+	struct sk_buff *dt ;
+	if( q->count == 0 ) return NULL ; // queue empty
+	dt = q->data[q->head] ;
+    q->head = (q->head+1) % q->size ;
+    q->count-- ;
+    return dt ;
+}
+
+
+static int entl_tx_queue_has_data( entl_device_t *dev ) 
+{
+	return ENTL_skb_queue_has_data( &dev->tx_skb_queue );
+}
+
+/// tx queue handling, replacing e1000_xmit_frame
+static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *netdev ) 
+{
+	struct e1000_adapter *adapter = netdev_priv(netdev);
+	entl_device_t *dev = &adapter->entl_dev ;
+
+	if( ENTL_skb_queue_full( &dev->tx_skb_queue ) ) {
+		ENTL_DEBUG("entl_tx_transmit Queue full!! %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
+		BUG_ON( dev->tx_skb_queue.count >= dev->tx_skb_queue.size) ;
+		return ;
+	}
+	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
+
+	if( ENTL_skb_queue_unused( &dev->tx_skb_queue ) < 2 ) {
+		netif_stop_queue(netdev);
+		dev->queue_stopped = 1 ;
+		return NETDEV_TX_BUSY;		
+	}
+	return NETDEV_TX_OK;
+
+}
+
+/// send tx queue data to tx_ring
+static void entl_tx_pull( struct net_device *netdev ) 
+{
+	entl_device_t *dev = &adapter->entl_dev ;
+	struct sk_buff *dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
+
+	e1000_xmit_frame( dt, netdev ) ;
+
+	if( dev->queue_stopped && ENTL_skb_queue_unused( &dev->tx_skb_queue ) > 2 ) {
+		netif_start_queue(adapter->netdev);
+		dev->queue_stopped = 0 ;
+	}
 }
 
 
