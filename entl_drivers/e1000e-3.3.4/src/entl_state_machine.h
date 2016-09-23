@@ -17,6 +17,9 @@
 #ifndef _ENTL_STATE_MACHINE_H_
 #define _ENTL_STATE_MACHINE_H_
 
+// TX handling enable
+#define ENTL_TX_ON_ENTL_ENABLE
+
 // Debug print control
 #define ENTL_DEBUG_PRINT_ENABLE
 
