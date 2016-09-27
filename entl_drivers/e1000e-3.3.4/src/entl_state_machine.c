@@ -716,7 +716,7 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			if( mcn->send_ATI_queue.count ) {
 				mcn->current_state.current_state = ENTL_STATE_AM ;			
 				*u_addr = ENTL_MESSAGE_AIT_U ;
-				retval = ENTL_ACTION_SEND ;
+				retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT  ;
 				ENTL_DEBUG( "%s ETL AIT Message %d requested on Send state -> Am @ %ld sec\n", mcn->name, *l_addr, ts.tv_sec ) ;			
 			}
 			else {
