@@ -49,9 +49,6 @@ void entl_state_machine_init( entl_state_machine_t *mcn )
   	init_ENTT_queue( &mcn->send_ATI_queue ) ;
   	init_ENTT_queue( &mcn->receive_ATI_queue ) ;
 
-	init_ENTL_skb_queue( &mcn->tx_skb_queue ) ;
-	mcn->queue_stopped = 0 ;
-
 } 
 
 void entl_set_my_adder( entl_state_machine_t *mcn, __u16 u_addr, __u32 l_addr ) 

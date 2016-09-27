@@ -19,12 +19,15 @@
 
 #define ENTL_DEVICE_FLAG_FATAL 0x8000
 
+ #define ENTL_DEFAULT_TXD   256
+
+
 typedef struct ENTL_skb_queue {
     u16 size ;
     u16 count ;
     u16 head ;
     u16 tail ;
-    struct sk_buff *skb[E1000_DEFAULT_TXD] ;
+    struct sk_buff *data[ENTL_DEFAULT_TXD] ;
 } ENTL_skb_queue_t ;
 
 typedef struct entl_device {
@@ -84,7 +87,7 @@ static void entl_e1000_set_my_addr( entl_device_t *dev, const u8 *addr ) ;
 static int entl_tx_queue_has_data( entl_device_t *dev ) ;
 
 /// tx queue handling
-static void entl_tx_transmit( struct sk_buff *skb, struct net_device *netdev ) ;
+static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *netdev ) ;
 
 /// send tx queue data to tx_ring
 static void entl_tx_pull( struct net_device *netdev ) ;
