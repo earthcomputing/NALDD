@@ -6538,11 +6538,22 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	if (adapter->hw.mac.tx_pkt_filtering)
 		e1000_transfer_dhcp_info(adapter, skb);
 
+#ifndef ENTL_TX_ON_ENTL_ENABLE
+	// flow control is done on tx queue side when TX_ON_ENTL_ENABLE
+
 	/* need: count + 2 desc gap to keep tail from touching
 	 * head, otherwise try next time
 	 */
-	if (e1000_maybe_stop_tx(tx_ring, count + 2))
+	if (e1000_maybe_stop_tx(tx_ring, count + 2)) {
+		if (adapter->entl_flag)
+		{
+			// AK: don't forget to unlock before returning
+	    	spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;    	
+	   	}		
 		return NETDEV_TX_BUSY;
+	}
+
+#endif
 
 #if defined(NETIF_F_HW_VLAN_TX) || defined(NETIF_F_HW_VLAN_CTAG_TX)
 	if (skb_vlan_tag_present(skb)) {

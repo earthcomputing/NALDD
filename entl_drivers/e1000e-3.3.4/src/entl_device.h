@@ -45,8 +45,8 @@ typedef struct entl_device {
 
     char name[ENTL_DEVICE_NAME_LEN] ;
 
-    ENTL_skb_queue_t tx_skb_queue ;
-    int queue_stopped ;
+  	ENTL_skb_queue_t tx_skb_queue ;
+  	int queue_stopped ;
 
 } entl_device_t ;
 
