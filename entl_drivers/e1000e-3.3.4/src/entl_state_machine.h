@@ -48,7 +48,7 @@
 #define ENTL_DEVICE_NAME_LEN 15
 
 #define MAX_ENTT_QUEUE_SIZE 32
- 
+
 typedef struct ENTT_queue {
     u16 size ;
     u16 count ;

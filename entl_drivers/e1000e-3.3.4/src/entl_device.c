@@ -11,6 +11,8 @@
 
 static int ENTL_skb_queue_has_data( ENTL_skb_queue_t* q )  ;
 static void init_ENTL_skb_queue( ENTL_skb_queue_t* q ) ;
+static struct sk_buff *pop_front_ENTL_skb_queue(ENTL_skb_queue_t* q ) ;
+static int ENTL_skb_queue_unused( ENTL_skb_queue_t* q ) ;
 
 /// function to inject min-size message for ENTL
 //    it returns 0 if success, 1 if need to retry due to resource, -1 if fatal 
@@ -491,11 +493,11 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    		// TX queue has data, so transfer with data
 				struct sk_buff *dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			while( NULL != dt && skb_is_gso(dt) ) {  // GSO can't be used for ENTL 
-					e1000_xmit_frame( dt, netdev ) ;
+					e1000_xmit_frame( dt, adapter->netdev ) ;
 					dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			}
 	    		if( dt ) {
-					e1000_xmit_frame( dt, netdev ) ;
+					e1000_xmit_frame( dt, adapter->netdev ) ;
 	    		}
 	    		else {
 	    			// tx queue becomes empty, so inject a new packet
@@ -1096,9 +1098,9 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	entl_device_t *dev = &adapter->entl_dev ;
 
-	if( ENTL_skb_queue_full( &devdev->stm.tx_skb_queue ) ) {
-		ENTL_DEBUG("entl_tx_transmit Queue full!! %d %d\n", devdev->stm.tx_skb_queue.count,  dev->stm.tx_skb_queue.size ) ;
-		BUG_ON( dev->stm.tx_skb_queue.count >= dev->stm.tx_skb_queue.size) ;
+	if( ENTL_skb_queue_full( &dev->tx_skb_queue ) ) {
+		ENTL_DEBUG("entl_tx_transmit Queue full!! %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
+		BUG_ON( dev->tx_skb_queue.count >= dev->tx_skb_queue.size) ;
 		return ;
 	}
 	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
