@@ -460,7 +460,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    	if( len > sizeof(struct ethhdr) ) {
 	    		unsigned char *data = skb->data + sizeof(struct ethhdr) ;
 	    		memcpy( &ait_data->message_len, data, sizeof(u32)) ;
-	    		if( ait_data->message_len && ait_data->message_len < MAX_AIT_MASSAGE_SIZE ) 
+	    		if( ait_data->message_len && ait_data->message_len < MAX_AIT_MESSAGE_SIZE ) 
 	    		{
 					//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got message_len %d\n", dev->name, ait_data->message_len );
 	    			memcpy( ait_data->data, data + sizeof(u32), ait_data->message_len ) ;
