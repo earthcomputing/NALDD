@@ -49,9 +49,9 @@ static void dump_ait( struct entt_ioctl_ait_data *dt )
 {
 	int i ;
 	int len = dt->message_len ;
-	if( dt->message_len > MAX_AIT_MASSAGE_SIZE ) {
+	if( dt->message_len > MAX_AIT_MESSAGE_SIZE ) {
 		printf( "dump_ait: length too long %d\n", dt->message_len ) ;
-		len = MAX_AIT_MASSAGE_SIZE ;
+		len = MAX_AIT_MESSAGE_SIZE ;
 		printf( "AIT data :" ) ;
 		for( i = 0 ; i < len; i++ ) {
 			printf( "%02x ", dt->data[i]) ;
@@ -235,7 +235,7 @@ int main( int argc, char *argv[] ) {
 			if( entl_data.link_state && entl_data.state.current_state > ENTL_STATE_SEND ) 
 			{
 				if( event_i_know && entl_data.state.event_i_know > event_i_know ) {
-  					char data[MAX_AIT_MASSAGE_SIZE] ;
+  					char data[MAX_AIT_MESSAGE_SIZE] ;
   					sprintf( data, "AIT %s %d", name, entl_data.state.event_i_know ) ;
   					entl_ait_sender( data ) ;
 				}

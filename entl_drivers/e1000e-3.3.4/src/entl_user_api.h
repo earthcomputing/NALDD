@@ -78,12 +78,12 @@ struct entl_ioctl_data {
 };
 
 /* This structure is used in all of SIOCDEVPRIVATE_ENTT_xxx ioctl calls */
-#define MAX_AIT_MASSAGE_SIZE 256 
+#define MAX_AIT_MESSAGE_SIZE 256 
 
 struct entt_ioctl_ait_data {
   u32 num_messages ;
   u32 message_len ;
-  char data[MAX_AIT_MASSAGE_SIZE] ;
+  char data[MAX_AIT_MESSAGE_SIZE] ;
 };
 
 
