@@ -12,7 +12,7 @@ SRC= entl_test_main.c entl_signal_test_main.c ifconfig.c demo_window.c
 
 OBJS = $(SRC: .c=.o)
 
-TARGETS = entl_test entl_signal_test demo_window
+TARGETS = entl_test entl_signal_test demo_window demo_web
 
 all: ${TARGETS}
 
@@ -23,6 +23,9 @@ entl_test: entl_test_main.c
 	cc -I ${INCLUDE} -o $@ $?
 
 demo_window: demo_window.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
+demo_web: demo_window.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
 clean:
