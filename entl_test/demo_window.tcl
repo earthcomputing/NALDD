@@ -24,6 +24,7 @@ set Cgreen "green"
 set Cred "red"
 set Cyellow "yellow"
 
+
 ### Window Structure ###
 # f_info : show device name
 # f_sim_cntl : < run >  <quit>
@@ -59,11 +60,11 @@ label .f_entl_state.st_label -text "Idle"  -font AppHighlightFont  -foreground $
 label .f_entl_state.st_value -text "0"  -font AppHighlightFont -foreground $Clabelf -background $Centryb -width 20  
 
 
-label .f_ait_send.ait -text "Send AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 15
+label .f_ait_send.ait -text "Send Msg via AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 25
 entry .f_ait_send.message -textvariable Command -width 40 -font AppLowlightFont \
   -foreground $Centryf -background $Centryb
 
-label .f_ait_state.ait -text "Received AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 15
+label .f_ait_state.ait -text "Received Msg via AIT:" -font AppLowlightFont -foreground $Clabelf -background $Clabelb -width 25
 label .f_ait_state.ait_get -text "-none-" -font AppLowlightFont  -foreground $Centryf -background $Centryb -width 40
 
 ##### packing frames
@@ -83,9 +84,9 @@ pack .f_sim_cntl
 
 # Command field action
 bind .f_ait_send.message <Key-Return> {
-  global jdbSocket
+    global jdbSocket
 
-  puts $jdbSocket "AIT $Command\n"
+    puts $jdbSocket "AIT $Command\n"
 }
 
 if { $SocketPort != "" } {
@@ -196,7 +197,6 @@ proc exec_read_loop { } {
 	#puts $jdbSocket "\n"
   } 
  
-
   #puts stderr "now $Line on state $ReadState"
 
 }

@@ -708,12 +708,16 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 		break ;
 		case ENTL_STATE_SEND:
 		{
+			u32 event_i_know = mcn->current_state.event_i_know ;			// last received event number 
+			u32 event_i_sent = mcn->current_state.event_i_sent ;
+
 			mcn->current_state.event_i_sent = mcn->current_state.event_send_next ;
 			mcn->current_state.event_send_next += 2 ;
 			*l_addr = mcn->current_state.event_i_sent ;
 			calc_intervals( mcn ) ;
 			memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-			if( mcn->send_ATI_queue.count ) {
+			// Avoiding to send AIT on the very first loop where other side will be in Hello state
+			if( event_i_know && event_i_sent && mcn->send_ATI_queue.count ) {
 				mcn->current_state.current_state = ENTL_STATE_AM ;			
 				*u_addr = ENTL_MESSAGE_AIT_U ;
 				retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT  ;

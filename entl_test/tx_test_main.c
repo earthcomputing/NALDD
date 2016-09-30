@@ -1,5 +1,5 @@
 /* 
- * ENTL Device Tester
+ * ENTL Device Data Tester Test
  * Copyright(c) 2016 Earth Computing.
  *
  *  Author: Atsushi Kasuya
@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <net/ethernet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -20,6 +21,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
+
+#define ETH_FRAME_LEN 1518
+
+#define ETH_P_ECLP	0xEAC0		/* Earth Computing Link Protocol [ NOT AN OFFICIALLY REGISTERED ID ] */
+#define ETH_P_ECLD	0xEAC1		/* Earth Computing Link Discovery [ NOT AN OFFICIALLY REGISTERED ID ] */
+#define ETH_P_ECLL	0xEAC2		/* Earth Computing Link Local Data  [ NOT AN OFFICIALLY REGISTERED ID ] */
 
 typedef pthread_mutex_t mutex_t;
 static mutex_t access_mutex ;
@@ -37,6 +44,7 @@ static mutex_t access_mutex ;
 
 #endif
 
+#define DUMP_WINDOW_ONLY
 
 typedef struct {
   char *name;			/* User printable name of the function. */
@@ -99,10 +107,11 @@ static void show_status( int current_state, int value )
 #ifndef STANDALONE_DEBUG
 
 
-static int sock;
+static int sock, sock_s, sock_r ;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 struct entt_ioctl_ait_data ait_data ;
+struct sockaddr_ll saddr, daddr;
 
 static void dump_regs( struct entl_ioctl_data *data ) {
 	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
@@ -110,6 +119,7 @@ static void dump_regs( struct entl_ioctl_data *data ) {
 
 static void dump_state( char *type, entl_state_t *st, int flag )
 {
+#ifndef DUMP_WINDOW_ONLY
 	printf( "%s event_i_know: %d  event_i_sent: %d event_send_next: %d current_state: %d error_flag %x p_error %x error_count %d @ %ld.%ld \n", 
 		type, st->event_i_know, st->event_i_sent, st->event_send_next, st->current_state, st->error_flag, st->p_error_flag, st->error_count, st->update_time.tv_sec, st->update_time.tv_nsec
 	) ;
@@ -122,6 +132,8 @@ static void dump_state( char *type, entl_state_t *st, int flag )
 		printf( "  max_interval_time: %ld.%ld\n", st->max_interval_time.tv_sec, st->max_interval_time.tv_nsec ) ;
 		printf( "  min_interval_time: %ld.%ld\n", st->min_interval_time.tv_sec, st->min_interval_time.tv_nsec ) ;
 	}
+#endif
+
 #endif
 	if( flag ) {
 		show_status( st->current_state, st->event_i_know ) ;
@@ -421,6 +433,8 @@ static void exec_command()
 }
 
 static pthread_t read_thread ;
+static pthread_t update_thread ;
+static pthread_t receive_thread ;
 
 static void read_task( void* me )
 {
@@ -438,13 +452,65 @@ static void read_task( void* me )
     }
 }
 
-#define USE_PTHREAD
+static void update_task( void* me )
+{
+	printf( "update_task started\n") ;
+    while(1) {
+		memset(&entl_data, 0, sizeof(entl_data));
+	  	ifr.ifr_data = (char *)&entl_data ;
+
+	  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+  		ACCESS_LOCK ;
+	  	
+		if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
+			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
+  			ACCESS_UNLOCK ;
+		}
+		else {
+  			ACCESS_UNLOCK ;
+			//printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
+			dump_state( "current", &entl_data.state, 1 ) ;
+			//dump_regs( &entl_data ) ;
+			if( entl_data.link_state ) {
+				write_window( "#Link\n" ) ;
+				write_window( "UP\n" ) ;
+			}
+			else {
+				write_window( "#Link\n" ) ;
+				write_window( "DOWN\n" ) ;
+			}			
+		}
+        sleep(1) ;
+    }
+}
+
+static void receive_task( void *me ) {
+    unsigned char *buffer=malloc(ETH_FRAME_LEN);
+    int data_size ;
+	printf( "receive_task started\n") ;
+    while(1) {
+    	data_size = recvfrom(sock_r , buffer , 65536 , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
+        if(data_size <0 )
+        {
+            printf("Recvfrom error , failed to get packets\n");
+        }
+        else{
+        	printf("Received %d bytes\n",data_size);
+        	char *data = &buffer[14] ;
+        	printf( "  data: %s", data ) ;
+        }
+    }
+}
+
 
 int main( int argc, char *argv[] ) {
 	int count = 0 ;
 	int err ;
 	//u32 event_i_know = 0 ;
 	char *name = argv[1] ;
+    unsigned char *buffer=malloc(ETH_FRAME_LEN);
+    unsigned char *data = &buffer[14] ;
+	struct ethhdr *eh = (struct ethhdr *)buffer;
 
 	if( argc != 2 ) {
 		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
@@ -452,7 +518,6 @@ int main( int argc, char *argv[] ) {
 	}
   	printf( "ENTL driver test on %s.. \n", argv[1] ) ;
 
-#ifndef STANDALONE_DEBUG
 	// Creating socet
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket");
@@ -474,80 +539,82 @@ int main( int argc, char *argv[] ) {
 
   	// SIOCDEVPRIVATE_ENTL_SET_SIGRCVR
   	ACCESS_LOCK ;
-
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_SET_SIGRCVR, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTL_SET_SIGRCVR failed on %s\n",ifr.ifr_name );
 	}
 	else {
 		printf( "SIOCDEVPRIVATE_ENTL_SET_SIGRCVR successed on %s\n",ifr.ifr_name );
-		//dump_state( &entl_data.state ) ;
 	}
   	ACCESS_UNLOCK ;
 
-#endif
+  	ACCESS_LOCK ;
+	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
+		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT failed on %s\n",ifr.ifr_name );
+	}
+	else {
+		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
+	}
+  	ACCESS_UNLOCK ;
 
 	// open window
   	com_window( name ) ;
 
-
     pthread_mutex_init( &access_mutex, NULL ) ;
-#ifdef USE_PTHREAD
     err = pthread_create( &read_thread, NULL, read_task, NULL );
-#endif
 
+    // task to read state every second
+    err = pthread_create( &update_thread, NULL, update_task, NULL );
+
+
+    // using a socket to test transfer data over ENTL link
+    //sock_s = socket( PF_PACKET , SOCK_RAW , IPPROTO_RAW) ; // sending socket
+    sock_r = socket( AF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
+
+    memset(&saddr, 0, sizeof(struct sockaddr_ll));
+    saddr.sll_family = AF_PACKET;
+    saddr.sll_protocol = htons(ETH_P_ALL);
+    saddr.sll_ifindex = if_nametoindex(name);
+    if (bind(sock_r, (struct sockaddr*) &saddr, sizeof(saddr)) < 0) {
+        printf("bind failed\n");
+        close(sock_r);
+        exit(1) ;
+    }
+    /*
+    if (setsockopt(sock_r, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
+        printf("setsockopt failed\n");
+        close(sock_r);
+        exit(1) ;
+    }
+	*/
+
+    err = pthread_create( &receive_thread, NULL, receive_task, NULL );
+
+	sleep(10) ;
 
   	while( 1 ) {
-  		char message[256] ;
+  		int send_result ;
+  		// Sending data from here
     	//printf( "sleeping 1 sec on %d\n", count ) ;
-	
-		sleep(1) ;
+		if( count > 20 ) {
+			count = 0 ;
+			sleep(1) ;
+		}
 
-#ifdef STANDALONE_DEBUG
-		//printf( "calling show_status \n" ) ;
-		show_status( count % ENTL_STATE_MOD, count ) ;
-		sprintf( message, "ATI_%d\n", count ) ;
-		//printf( "sending AIT %s", message ) ;
-		write_window( "#AIT\n" ) ;
-		write_window( message ) ;
-		//printf( "sending Link %s", (count%2)?"UP\n":"DOWN\n" ) ;
-		write_window( "#Link\n" ) ;
-		write_window( (count%2)?"UP\n":"DOWN\n") ;
-
-#else
-		memset(&entl_data, 0, sizeof(entl_data));
-	  	ifr.ifr_data = (char *)&entl_data ;
+		memset(buffer, 0, ETH_FRAME_LEN);
+		eth->h_proto = ETH_P_ECLP ;
+	  	sprintf( data, "Bare Data %d", count ) ; ;
 
 	  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-	  	
-		if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_CURRENT, &ifr) == -1) {
-			printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr.ifr_name );
+	  	send_result = write( sock_r, buffer, 64 ) ;
+
+		if (send_result < 0 ) {
+			printf( "write failed on %s at %d\n",name, count );
 		}
-		else {
-			//printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr.ifr_name );
-			dump_state( "current", &entl_data.state, 1 ) ;
-			//dump_regs( &entl_data ) ;
-			if( entl_data.link_state ) {
-				write_window( "#Link\n" ) ;
-				write_window( "UP\n" ) ;
-			}
-			else {
-				write_window( "#Link\n" ) ;
-				write_window( "DOWN\n" ) ;
-			}			
-		}
-#endif
-#ifndef USE_PTHREAD
-		if( read_window() ) {
-        	if( inlin[0] != '\n' ) {
-        	    printf( "got command: %s\n", inlin ) ;
-        		exec_command() ;	
-        	}
-        }
-#endif
         //write_window("#State\n") ;
         //write_window("Read\n") ;
 		count++ ;
- 
+
 	}
 }
+
 
