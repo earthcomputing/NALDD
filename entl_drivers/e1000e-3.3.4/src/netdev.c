@@ -8152,7 +8152,7 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	spin_lock_init( &adapter->tx_ring_lock ) ;
 	// AK: initialize entl device
 	entl_device_init( &adapter->entl_dev ) ;
-	// AK: default, entl mode is enabled for testing
+	// AK: default, entl mode is enabled 
 	adapter->entl_flag = 1 ;
 
 	mmio_start = pci_resource_start(pdev, 0);
@@ -8785,8 +8785,8 @@ module_exit(e1000_exit_module);
 // AK: including ENTL device code
 #include "entl_device.c"
 
-MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
-MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver");
+MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com> + Earth Computing");
+MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver with Earth Computing Extension");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
