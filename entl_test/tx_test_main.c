@@ -571,8 +571,8 @@ int main( int argc, char *argv[] ) {
 
 
     // using a socket to test transfer data over ENTL link
-    //sock_s = socket( PF_PACKET , SOCK_RAW , IPPROTO_RAW) ; // sending socket
-    sock_r = socket( AF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
+    sock_s = socket( PF_PACKET , SOCK_RAW , IPPROTO_RAW) ; // sending socket
+    sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
 
     memset(&saddr, 0, sizeof(struct sockaddr_ll));
     saddr.sll_family = AF_PACKET;
@@ -583,17 +583,17 @@ int main( int argc, char *argv[] ) {
 
     printf( "got ifindex %d\n", saddr.sll_ifindex ) ;
 
-    if (bind(sock_r, (struct sockaddr*) &saddr, sizeof(saddr)) < 0) {
-        printf("bind failed\n");
+    //if (bind(sock_r, (struct sockaddr*) &saddr, sizeof(saddr)) < 0) {
+    //    printf("bind failed\n");
         //close(sock_r);
         //exit(1) ;
-    }
+    //}
     
-    if (setsockopt(sock_r, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
-        printf("setsockopt failed\n");
+    //if (setsockopt(sock_r, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
+    //    printf("setsockopt failed\n");
         //close(sock_r);
         //exit(1) ;
-    }
+    //}
 	
 
     err = pthread_create( &receive_thread, NULL, receive_task, NULL );
@@ -614,13 +614,13 @@ int main( int argc, char *argv[] ) {
 	  	sprintf( data, "Bare Data %d", count ) ; ;
 
 	  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-	  	send_result = write( sock_r, buffer, 64 ) ;
+	  	send_result = sendto( sock_s, buffer, 64, 0, (struct sockaddr*)&saddr, sizeof(struct sockaddr));
 
 		if (send_result < 0 ) {
-			printf( "write failed on %s at %d\n",name, count );
+			printf( "sendto failed on %s at %d\n",name, count );
 		}
 		else {
-			printf( "written %d on %s at %d\n", send_result, name, count );
+			printf( "sent %d on %s at %d\n", send_result, name, count );
 		}
         //write_window("#State\n") ;
         //write_window("Read\n") ;
