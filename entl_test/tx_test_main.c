@@ -11,6 +11,8 @@
 #include <net/if.h>
 #include <net/ethernet.h>
 #include <sys/socket.h>
+#include <linux/if_packet.h>
+#include <linux/if_ether.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -487,12 +489,14 @@ static void update_task( void* me )
 static void receive_task( void *me ) {
     unsigned char *buffer=malloc(ETH_FRAME_LEN);
     int data_size ;
+    int saddr_size = sizeof(struct sockaddr) ;
 	printf( "receive_task started\n") ;
     while(1) {
-    	data_size = recvfrom(sock_r , buffer , 65536 , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
+    	data_size = recvfrom(sock_r , buffer , ETH_FRAME_LEN , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
         if(data_size <0 )
         {
-            printf("Recvfrom error , failed to get packets\n");
+            //printf("Recvfrom error , failed to get packets\n");
+            sleep(1) ;
         }
         else{
         	printf("Received %d bytes\n",data_size);
@@ -510,7 +514,7 @@ int main( int argc, char *argv[] ) {
 	char *name = argv[1] ;
     unsigned char *buffer=malloc(ETH_FRAME_LEN);
     unsigned char *data = &buffer[14] ;
-	struct ethhdr *eh = (struct ethhdr *)buffer;
+	struct ethhdr *eth = (struct ethhdr *)buffer;
 
 	if( argc != 2 ) {
 		printf( "%s needs <device name> (e.g. enp6s0) as the argument\n", argv[0] ) ;
@@ -574,18 +578,23 @@ int main( int argc, char *argv[] ) {
     saddr.sll_family = AF_PACKET;
     saddr.sll_protocol = htons(ETH_P_ALL);
     saddr.sll_ifindex = if_nametoindex(name);
+    //saddr.sll_hatype = ARPHRD_ETHER ;
+    saddr.sll_pkttype = PACKET_OTHERHOST ;
+
+    printf( "got ifindex %d\n", saddr.sll_ifindex ) ;
+
     if (bind(sock_r, (struct sockaddr*) &saddr, sizeof(saddr)) < 0) {
         printf("bind failed\n");
-        close(sock_r);
-        exit(1) ;
+        //close(sock_r);
+        //exit(1) ;
     }
-    /*
+    
     if (setsockopt(sock_r, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
         printf("setsockopt failed\n");
-        close(sock_r);
-        exit(1) ;
+        //close(sock_r);
+        //exit(1) ;
     }
-	*/
+	
 
     err = pthread_create( &receive_thread, NULL, receive_task, NULL );
 
@@ -609,6 +618,9 @@ int main( int argc, char *argv[] ) {
 
 		if (send_result < 0 ) {
 			printf( "write failed on %s at %d\n",name, count );
+		}
+		else {
+			printf( "written %d on %s at %d\n", send_result, name, count );
 		}
         //write_window("#State\n") ;
         //write_window("Read\n") ;

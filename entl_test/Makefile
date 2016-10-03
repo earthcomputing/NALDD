@@ -25,5 +25,8 @@ entl_test: entl_test_main.c
 demo_window: demo_window.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
+tx_test: tx_test_main.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
 clean:
 	rm ${TARGETS}
