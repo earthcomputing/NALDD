@@ -551,14 +551,14 @@ int main( int argc, char *argv[] ) {
 	}
   	ACCESS_UNLOCK ;
 
-  	ACCESS_LOCK ;
-	if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
-		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT failed on %s\n",ifr.ifr_name );
-	}
-	else {
-		printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
-	}
-  	ACCESS_UNLOCK ;
+  	//ACCESS_LOCK ;
+	//if (ioctl(sock, SIOCDEVPRIVATE_ENTL_DO_INIT, &ifr) == -1) {
+	//	printf( "SIOCDEVPRIVATE_ENTL_DO_INIT failed on %s\n",ifr.ifr_name );
+	//}
+	//else {
+	//	printf( "SIOCDEVPRIVATE_ENTL_DO_INIT successed on %s\n",ifr.ifr_name );
+	//}
+  	//ACCESS_UNLOCK ;
 
 	// open window
   	com_window( name ) ;
