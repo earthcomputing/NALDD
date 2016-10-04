@@ -64,6 +64,7 @@ static COMMAND commands[] = {
 };
 
 static void write_window( char *str ) ;
+static int entangled = 0 ;
 
 static void show_status( int current_state, int value ) 
 {
@@ -71,33 +72,42 @@ static void show_status( int current_state, int value )
 		write_window( "#State\n" ) ;
 		switch( current_state ) {
 			case ENTL_STATE_IDLE:
+				entangled = 0 ;
 				write_window( "Idle\n" ) ;
 			break ;
 			case ENTL_STATE_HELLO:
+				entangled = 0 ;
 				write_window( "Hello\n" ) ;
 			break ;
 			case ENTL_STATE_WAIT:
+				entangled = 0 ;
 				write_window( "Wait\n" ) ;
 			break ;
 			case ENTL_STATE_SEND:
+				entangled = 1 ;
 				write_window( "Send\n" ) ;
 			break ;
 			case ENTL_STATE_RECEIVE:
-				write_window( "Receive\n" ) ;
+				entangled = 1 ;
 			break ;
 			case ENTL_STATE_AM:
+				entangled = 1 ;
 				write_window( "AM\n" ) ;
 			break ;
 			case ENTL_STATE_BM:
+				entangled = 1 ;
 				write_window( "BM\n" ) ;
 			break ;
 			case ENTL_STATE_AH:
+				entangled = 1 ;
 				write_window( "AH\n" ) ;
 			break ;
 			case ENTL_STATE_BH:
+				entangled = 1 ;
 				write_window( "BH\n" ) ;
 			break ;
 			default:
+				entangled = 0 ;
 				write_window( "Unknown\n" ) ;
 			break ;
 		}
@@ -112,8 +122,8 @@ static void show_status( int current_state, int value )
 static int sock, sock_s, sock_r ;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
-struct entt_ioctl_ait_data ait_data ;
-struct sockaddr_ll saddr, daddr;
+static struct entt_ioctl_ait_data ait_data ;
+static struct sockaddr_ll saddr, daddr;
 
 static void dump_regs( struct entl_ioctl_data *data ) {
 	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
@@ -241,6 +251,7 @@ static void entl_error_sig_handler( int signum ) {
 			write_window( "UP" ) ;
 		}
 		else {
+			entangled = 0 ;
 			printf( "  Link Down!\n " ) ;
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
@@ -492,17 +503,23 @@ static void receive_task( void *me ) {
     int saddr_size = sizeof(struct sockaddr) ;
 	printf( "receive_task started\n") ;
     while(1) {
-    	data_size = recvfrom(sock_r , buffer , ETH_FRAME_LEN , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
-        if(data_size <0 )
-        {
-            //printf("Recvfrom error , failed to get packets\n");
-            sleep(1) ;
-        }
-        else{
-        	printf("Received %d bytes\n",data_size);
-        	char *data = &buffer[14] ;
-        	printf( "  data: %s", data ) ;
-        }
+    	if( entangled ) {
+	    	data_size = recvfrom(sock_r , buffer , ETH_FRAME_LEN , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
+	        if(data_size <0 )
+	        {
+	            //printf("Recvfrom error , failed to get packets\n");
+	            sleep(1) ;
+	        }
+	        else{
+	        	printf("Received %d bytes\n",data_size);
+	        	char *data = &buffer[14] ;
+	        	printf( "  data: %s", data ) ;
+	        }
+    	}
+    	else {
+    		sleep(1) ;
+    	}
+
     }
 }
 
@@ -571,8 +588,16 @@ int main( int argc, char *argv[] ) {
 
 
     // using a socket to test transfer data over ENTL link
-    sock_s = socket( PF_PACKET , SOCK_RAW , IPPROTO_RAW) ; // sending socket
+    sock_s = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // sending socket
+    if( sock_s < 0 ) {
+    	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
+    	exit(1) ;
+    }
     sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
+    if( sock_r < 0 ) {
+    	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
+    	exit(1) ;
+    }
 
     memset(&saddr, 0, sizeof(struct sockaddr_ll));
     saddr.sll_family = AF_PACKET;
@@ -605,26 +630,32 @@ int main( int argc, char *argv[] ) {
   		// Sending data from here
     	//printf( "sleeping 1 sec on %d\n", count ) ;
 		if( count > 20 ) {
-			count = 0 ;
+			//count = 0 ;
+			sleep(1) ;
+		}
+		else if( entangled ) {
+			memset(buffer, 0, ETH_FRAME_LEN);
+			eth->h_proto = ETH_P_ECLP ;
+		  	sprintf( data, "Bare Data %d", count ) ; ;
+
+		  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+		  	send_result = sendto( sock_s, buffer, 64, 0, (struct sockaddr*)&saddr, sizeof(struct sockaddr));
+
+			if (send_result < 0 ) {
+				printf( "sendto failed on %s at %d\n",name, count );
+			}
+			else {
+				printf( "sent %d on %s at %d\n", send_result, name, count );
+			}
+	        //write_window("#State\n") ;
+	        //write_window("Read\n") ;
+			count++ ;
+		}
+		else {
 			sleep(1) ;
 		}
 
-		memset(buffer, 0, ETH_FRAME_LEN);
-		eth->h_proto = ETH_P_ECLP ;
-	  	sprintf( data, "Bare Data %d", count ) ; ;
 
-	  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-	  	send_result = sendto( sock_s, buffer, 64, 0, (struct sockaddr*)&saddr, sizeof(struct sockaddr));
-
-		if (send_result < 0 ) {
-			printf( "sendto failed on %s at %d\n",name, count );
-		}
-		else {
-			printf( "sent %d on %s at %d\n", send_result, name, count );
-		}
-        //write_window("#State\n") ;
-        //write_window("Read\n") ;
-		count++ ;
 
 	}
 }

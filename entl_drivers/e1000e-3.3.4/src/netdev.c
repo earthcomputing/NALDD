@@ -1108,6 +1108,9 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				buffer_info->skb = skb; // recycle
 				goto next_desc;
 			}	
+			else {
+				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d\n", netdev->name, length );
+			}
 		}
 
 		/* code added for copybreak, this should improve

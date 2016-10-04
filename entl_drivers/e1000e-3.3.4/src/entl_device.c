@@ -493,6 +493,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    		// TX queue has data, so transfer with data
 				struct sk_buff *dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			while( NULL != dt && skb_is_gso(dt) ) {  // GSO can't be used for ENTL 
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit gso packet\n", dev->name );    				
 					e1000_xmit_frame( dt, adapter->netdev ) ;
 					dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			}
@@ -1101,11 +1102,18 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 	if( ENTL_skb_queue_full( &dev->tx_skb_queue ) ) {
 		ENTL_DEBUG("entl_tx_transmit Queue full!! %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
 		BUG_ON( dev->tx_skb_queue.count >= dev->tx_skb_queue.size) ;
-		return ;
+		return NETDEV_TX_BUSY;
 	}
+	ENTL_DEBUG("%s entl_tx_transmit got packet len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x\n", netdev->name, skb->len,
+	  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
+	  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
+	  skb->data[12], skb->data[13]
+	  ) ;
+
 	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
 
 	if( ENTL_skb_queue_unused( &dev->tx_skb_queue ) < 2 ) {
+		ENTL_DEBUG("entl_tx_transmit Queue near full, flow control %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
 		netif_stop_queue(netdev);
 		dev->queue_stopped = 1 ;
 		return NETDEV_TX_BUSY;		
