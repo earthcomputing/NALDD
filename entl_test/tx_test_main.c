@@ -66,6 +66,7 @@ static COMMAND commands[] = {
 
 static void write_window( char *str ) ;
 static int entangled = 0 ;
+static int got_ait = 0 ;
 
 static void show_status( int current_state, int value ) 
 {
@@ -192,6 +193,7 @@ static void entl_ait_sig_handler( int signum ) {
 		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT failed on %s\n",ifr.ifr_name );
 	}
 	else {
+		got_ait = 1 ;
 		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT successed on %s num_massage %d\n",ifr.ifr_name, ait_data.num_messages );
 		if( ait_data.message_len ) {
 			dump_ait( &ait_data ) ;
@@ -631,10 +633,11 @@ int main( int argc, char *argv[] ) {
   		// Sending data from here
     	//printf( "sleeping 1 sec on %d\n", count ) ;
 		if( count > 20 ) {
-			//count = 0 ;
+			got_ait = 0 ;
+			count = 0 ;
 			sleep(1) ;
 		}
-		else if( entangled ) {
+		else if( entangled && got_ait ) {
 			memset(buffer, 0, ETH_FRAME_LEN);
 			eth->h_proto = ETH_P_ECLP ;
 		  	sprintf( data, "Bare Data %d", count ) ; ;
