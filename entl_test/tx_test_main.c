@@ -23,7 +23,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
-
+#include <errno.h>
+ 
 #define ETH_FRAME_LEN 1518
 
 #define ETH_P_ECLP	0xEAC0		/* Earth Computing Link Protocol [ NOT AN OFFICIALLY REGISTERED ID ] */
@@ -639,10 +640,10 @@ int main( int argc, char *argv[] ) {
 		  	sprintf( data, "Bare Data %d", count ) ; ;
 
 		  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-		  	send_result = sendto( sock_s, buffer, 64, 0, (struct sockaddr*)&saddr, sizeof(struct sockaddr));
+		  	send_result = sendto( sock_s, buffer, 100, 0, (struct sockaddr*)&saddr, sizeof(saddr));
 
 			if (send_result < 0 ) {
-				printf( "sendto failed on %s at %d\n",name, count );
+				printf( "sendto failed on %s at %d errno:%d \n",name, count, errno );
 			}
 			else {
 				printf( "sent %d on %s at %d\n", send_result, name, count );
