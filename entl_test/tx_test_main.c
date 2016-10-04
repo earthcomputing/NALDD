@@ -502,21 +502,23 @@ static void update_task( void* me )
 
 static void receive_task( void *me ) {
     unsigned char *buffer=malloc(ETH_FRAME_LEN);
+	struct ethhdr *eth = (struct ethhdr *)buffer;
     int data_size ;
     int saddr_size = sizeof(struct sockaddr) ;
 	printf( "receive_task started\n") ;
     while(1) {
     	if( entangled ) {
+    		memset( buffer, 0, ETH_FRAME_LEN) ;
 	    	data_size = recvfrom(sock_r , buffer , ETH_FRAME_LEN , 0 ,(struct sockaddr *) &saddr , (socklen_t*)&saddr_size);
 	        if(data_size <0 )
 	        {
 	            //printf("Recvfrom error , failed to get packets\n");
 	            sleep(1) ;
 	        }
-	        else{
+	        else if( eth->h_proto == ETH_P_ECLP) {
 	        	printf("Received %d bytes\n",data_size);
 	        	char *data = &buffer[14] ;
-	        	printf( "  data: %s", data ) ;
+	        	printf( "  data: %s\n", data ) ;
 	        }
     	}
     	else {
