@@ -430,7 +430,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *skb )
 {
 	struct e1000_adapter *adapter = container_of( dev, struct e1000_adapter, entl_dev );
-	bool ret = true ;
+	bool retval = true ;
 	struct ethhdr *eth = (struct ethhdr *)skb->data ;
 	int result ;
 
@@ -444,9 +444,9 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
     d_u_addr = (u16)eth->h_dest[0] << 8 | eth->h_dest[1] ;
     d_l_addr = (u32)eth->h_dest[2] << 24 | (u32)eth->h_dest[3] << 16 | (u32)eth->h_dest[4] << 8 | (u32)eth->h_dest[5] ;
 
-    if( d_u_addr & ENTL_MESSAGE_ONLY_U ) ret = false ; // this is message only packet
+    if( d_u_addr & ENTL_MESSAGE_ONLY_U ) retval = false ; // this is message only packet
 
-	//ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got s: %04x %08x d: %04x %08x\n", dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+	else ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got %d s: %04x %08x d: %04x %08x\n", skb->len, dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
@@ -498,6 +498,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 					dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			}
 	    		if( dt ) {
+	    			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit packet len %d\n", dev->name , dt->len );    				
 					e1000_xmit_frame( dt, adapter->netdev ) ;
 	    		}
 	    		else {
@@ -567,7 +568,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
     }
 
 
-	return ret ;
+	return retval ;
 
 }
 
@@ -606,7 +607,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		if( u_addr != ENTL_MESSAGE_NOP_U ) {
 			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;			
 		}
-		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
 	}
 
 }
