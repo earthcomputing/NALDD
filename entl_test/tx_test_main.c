@@ -33,8 +33,13 @@
 
 typedef pthread_mutex_t mutex_t;
 static mutex_t access_mutex ;
+static mutex_t write_mutex ;
+
 #define ACCESS_LOCK pthread_mutex_lock( &access_mutex )  
 #define ACCESS_UNLOCK pthread_mutex_unlock( &access_mutex )
+
+#define WRITE_LOCK pthread_mutex_lock( &write_mutex )  
+#define WRITE_UNLOCK pthread_mutex_unlock( &write_mutex )
 
 #define PRINTF printf
 #define DEFAULT_DBG_PORT  2540
@@ -71,6 +76,7 @@ static int got_ait = 0 ;
 static void show_status( int current_state, int value ) 
 {
 		char value_str[256] ;
+		WRITE_LOCK ;
 		write_window( "#State\n" ) ;
 		switch( current_state ) {
 			case ENTL_STATE_IDLE:
@@ -116,6 +122,7 @@ static void show_status( int current_state, int value )
 		sprintf( value_str, "%d\n", value ) ;
 		write_window( "#Value\n" ) ;
 		write_window( value_str ) ;	
+		WRITE_UNLOCK ;
 }
 
 #ifndef STANDALONE_DEBUG
@@ -173,8 +180,10 @@ static void dump_ait( struct entt_ioctl_ait_data *dt )
 		}
 		dt->data[len] = '\n' ;
 		dt->data[len+1] = 0 ;
+		WRITE_LOCK ;
 		write_window( "#AIT\n" ) ;
 		write_window( dt->data ) ;
+		WRITE_UNLOCK ;
 
 	}
 
@@ -207,6 +216,7 @@ static void entl_ait_sig_handler( int signum ) {
     printf( "entl_error_sig_handler got unknown %d signal.\n", signum ) ;
   }
 }
+
 
 // the ait message sender
 static void entl_ait_sender( char* msg ) {
@@ -250,8 +260,10 @@ static void entl_error_sig_handler( int signum ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
 			dump_regs( &entl_data ) ;
-			write_window( "#Link" ) ;
-			write_window( "UP" ) ;
+			WRITE_LOCK ;
+			write_window( "#Link\n" ) ;
+			write_window( "UP\n" ) ;
+			WRITE_UNLOCK ;
 		}
 		else {
 			entangled = 0 ;
@@ -259,8 +271,10 @@ static void entl_error_sig_handler( int signum ) {
 			dump_state( "current", &entl_data.state, 1 ) ;
 			dump_state( "error", &entl_data.error_state, 0 ) ;
 			dump_regs( &entl_data ) ;
-			write_window( "#Link" ) ;
-			write_window( "DOWN" ) ;
+			WRITE_LOCK ;
+			write_window( "#Link\n" ) ;
+			write_window( "DOWN\n" ) ;
+			WRITE_UNLOCK ;
 		}
 	}
   }
@@ -488,12 +502,16 @@ static void update_task( void* me )
 			dump_state( "current", &entl_data.state, 1 ) ;
 			//dump_regs( &entl_data ) ;
 			if( entl_data.link_state ) {
+				WRITE_LOCK ;
 				write_window( "#Link\n" ) ;
 				write_window( "UP\n" ) ;
+				WRITE_UNLOCK ;
 			}
 			else {
+				WRITE_LOCK ;
 				write_window( "#Link\n" ) ;
 				write_window( "DOWN\n" ) ;
+				WRITE_UNLOCK ;
 			}			
 		}
         sleep(1) ;
@@ -586,6 +604,7 @@ int main( int argc, char *argv[] ) {
   	com_window( name ) ;
 
     pthread_mutex_init( &access_mutex, NULL ) ;
+    pthread_mutex_init( &write_mutex, NULL ) ;
     err = pthread_create( &read_thread, NULL, read_task, NULL );
 
     // task to read state every second
