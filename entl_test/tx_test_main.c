@@ -634,7 +634,7 @@ int main( int argc, char *argv[] ) {
   		int send_result ;
   		// Sending data from here
     	//printf( "sleeping 1 sec on %d\n", count ) ;
-		if( count > 20 ) {
+		if( count > 0 ) {
 			got_ait = 0 ;
 			count = 0 ;
 			sleep(1) ;
@@ -642,7 +642,7 @@ int main( int argc, char *argv[] ) {
 		else if( entangled && got_ait ) {
 			memset(buffer, 0, ETH_FRAME_LEN);
 			eth->h_proto = ETH_P_ECLP ;
-		  	sprintf( data, "Bare Data %d", count ) ; ;
+		  	sprintf( data, "%s Data %d", name, count ) ; ;
 
 		  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
 		  	send_result = sendto( sock_s, buffer, 100, 0, (struct sockaddr*)&saddr, sizeof(saddr));
