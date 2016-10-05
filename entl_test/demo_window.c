@@ -103,6 +103,7 @@ static int sock;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 struct entt_ioctl_ait_data ait_data ;
+static int ait_sent = 0 ;
 
 static void dump_regs( struct entl_ioctl_data *data ) {
 	printf( " icr = %08x ctrl = %08x ims = %08x\n", data->icr, data->ctrl, data->ims ) ;
@@ -171,8 +172,9 @@ static void entl_ait_sig_handler( int signum ) {
 		if( ait_data.message_len ) {
 			dump_ait( &ait_data ) ;
 		}
-		else {
-			printf( "  AIT Message Len is zero\n " ) ;
+		if( ait_sent && ait_data.num_queued == 0 ) {
+			printf( "  AIT Message send completed\n" ) ;
+			ait_sent = 0 ;
 		}
 	}
   }
@@ -190,6 +192,7 @@ static void entl_ait_sender( char* msg ) {
   	ifr.ifr_data = (char *)&ait_data ;
   	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
   	ACCESS_LOCK ;
+  	ait_sent = 1 ;
 	if (ioctl(sock, SIOCDEVPRIVATE_ENTT_SEND_AIT, &ifr) == -1) {
 		printf( "SIOCDEVPRIVATE_ENTT_SEND_AIT failed on %s\n",ifr.ifr_name );
 	}

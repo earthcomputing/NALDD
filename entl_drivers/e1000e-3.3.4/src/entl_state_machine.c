@@ -749,7 +749,7 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			*u_addr = ENTL_MESSAGE_ACK_U ;
 			calc_intervals( mcn ) ;
 			memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-			retval = ENTL_ACTION_SEND ;
+			retval = ENTL_ACTION_SEND | ENTL_ACTION_SIG_AIT ;
 			mcn->current_state.current_state = ENTL_STATE_RECEIVE ;
 			// drop the message on the top
 			ait_data = pop_front_ENTT_queue( &mcn->send_ATI_queue ) ;
@@ -877,7 +877,7 @@ int entl_next_send_tx( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			*u_addr = ENTL_MESSAGE_ACK_U ;
 			calc_intervals( mcn ) ;
 			memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
-			retval = ENTL_ACTION_SEND ;
+			retval = ENTL_ACTION_SEND | ENTL_ACTION_SIG_AIT ;
 			mcn->current_state.current_state = ENTL_STATE_RECEIVE ;
 			// drop the message on the top
 			pop_front_ENTT_queue( &mcn->send_ATI_queue ) ;		
@@ -1089,11 +1089,22 @@ struct entt_ioctl_ait_data* entl_read_AIT_message( entl_state_machine_t *mcn )
 	dt = pop_front_ENTT_queue( &mcn->receive_ATI_queue ) ;
 	if( dt ) {
 		dt->num_messages = mcn->receive_ATI_queue.count ;  // return how many left
+		dt->num_queued = mcn->send_ATI_queue.count ;
 	}
-
 	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
 
 	return dt ;	
+}
+
+u16 entl_num_queued( entl_state_machine_t *mcn ) 
+{
+	u16 ret ;
+	unsigned long flags ;
+	spin_lock_irqsave( &mcn->state_lock, flags ) ;
+	ret = mcn->send_ATI_queue.count ;
+	spin_unlock_irqrestore( &mcn->state_lock, flags ) ;
+
+	return ret ;	
 }
 
 
