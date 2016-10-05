@@ -139,4 +139,7 @@ void entl_read_current_state(entl_state_machine_t *mcn, entl_state_t *st, entl_s
 // read error state to the given state structure
 void entl_read_error_state(entl_state_machine_t *mcn, entl_state_t *st, entl_state_t *err) ;
 
+// returns number of outstanding AIT messages 
+u16 entl_num_queued( entl_state_machine_t *mcn ) ;
+
 #endif

@@ -400,6 +400,13 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 			copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
 			kfree(ait_data) ;
 		}
+		else {
+			struct entt_ioctl_ait_data dt ;
+			dt.num_messages = 0 ;
+			dt.message_len = 0 ;
+			dt.num_queued = entl_num_queued( &dev->stm ) ;
+			copy_to_user(ifr->ifr_data, &dt, sizeof(struct entt_ioctl_ait_data));
+		}
 	}
 		break ;
 	default:
@@ -481,6 +488,9 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    	// need to send message
 	    	// this is ISR version to get the next to send
 	    	ret = entl_next_send( &dev->stm, &d_u_addr, &d_l_addr ) ;
+	    	if( ret & ENTL_ACTION_SIG_AIT ) {
+				dev->flag |= ENTL_DEVICE_FLAG_SIGNAL2 ;  // AIT send completion signal
+			}
 	    	if( (d_u_addr & (u16)ENTL_MESSAGE_MASK) != ENTL_MESSAGE_NOP_U ) {  // last minute check
 	    		unsigned long flags ;
 				spin_lock_irqsave( &adapter->tx_ring_lock, flags ) ;
@@ -508,7 +518,6 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    }
 
     }
-
 
 	return ret ;
 
@@ -538,7 +547,10 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet\n", dev->name );
 	}
 	else {
-		entl_next_send_tx( &dev->stm, &u_addr, &l_addr ) ;
+	    int ret = entl_next_send_tx( &dev->stm, &u_addr, &l_addr ) ;
+	    if( ret & ENTL_ACTION_SIG_AIT ) {
+			dev->flag |= ENTL_DEVICE_FLAG_SIGNAL2 ;  // AIT send completion signal
+		}
 		d_addr[0] = (u_addr >> 8) ; 
 		d_addr[1] = u_addr ;
 		d_addr[2] = l_addr >> 24 ;

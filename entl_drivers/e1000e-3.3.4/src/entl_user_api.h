@@ -81,9 +81,10 @@ struct entl_ioctl_data {
 #define MAX_AIT_MESSAGE_SIZE 256 
 
 struct entt_ioctl_ait_data {
-  u32 num_messages ;
+  u32 num_messages ;                // number of messages left in receive queue
   u32 message_len ;
   char data[MAX_AIT_MESSAGE_SIZE] ;
+  u32 num_queued ;                  // number of messages left unsent in send queue
 };
 
 
