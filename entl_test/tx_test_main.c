@@ -538,6 +538,9 @@ static void receive_task( void *me ) {
 	        	char *data = &buffer[14] ;
 	        	printf( "  data: %s\n", data ) ;
 	        }
+	        else {
+	        	printf("Received %d bytes t: %04x\n",data_size, eth->h_proto );
+	        }
     	}
     	else {
     		sleep(1) ;
@@ -653,7 +656,7 @@ int main( int argc, char *argv[] ) {
   		int send_result ;
   		// Sending data from here
     	//printf( "sleeping 1 sec on %d\n", count ) ;
-		if( count > 0 ) {
+		if( count >= 10 ) {
 			got_ait = 0 ;
 			count = 0 ;
 			sleep(1) ;
