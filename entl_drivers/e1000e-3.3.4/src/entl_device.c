@@ -446,7 +446,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) retval = false ; // this is message only packet
 
-	else ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got %d s: %04x %08x d: %04x %08x\n", skb->len, dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr );
+	else ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got %d s: %04x %08x d: %04x %08x t:%04x\n", skb->len, dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr, eth->h_proto );
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
@@ -593,7 +593,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		d_addr[4] = l_addr >> 8;
 		d_addr[5] = l_addr ;		
 		memcpy(eth->h_dest, d_addr, ETH_ALEN);
-		//ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet\n", dev->name );
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a gso packet\n", dev->name );
 	}
 	else {
 		entl_next_send_tx( &dev->stm, &u_addr, &l_addr ) ;
@@ -607,7 +607,7 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 		if( u_addr != ENTL_MESSAGE_NOP_U ) {
 			dev->flag &= ~(__u32)ENTL_DEVICE_FLAG_WAITING ;			
 		}
-		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x\n", dev->name, u_addr );
+		ENTL_DEBUG("ENTL %s entl_device_process_tx_packet got a single packet with %04x %08x t:%04x\n", dev->name, u_addr, l_addr, eth->h_proto );
 	}
 
 }

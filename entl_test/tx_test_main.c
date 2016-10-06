@@ -202,9 +202,9 @@ static void entl_ait_sig_handler( int signum ) {
 		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT failed on %s\n",ifr.ifr_name );
 	}
 	else {
-		got_ait = 1 ;
 		printf( "SIOCDEVPRIVATE_ENTT_READ_AIT successed on %s num_massage %d\n",ifr.ifr_name, ait_data.num_messages );
 		if( ait_data.message_len ) {
+			got_ait = 1 ;
 			dump_ait( &ait_data ) ;
 		}
 		else {
