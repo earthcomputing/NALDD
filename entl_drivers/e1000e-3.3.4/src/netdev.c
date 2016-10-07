@@ -1154,7 +1154,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 
 next_desc:
 		rx_desc->wb.upper.status_error &= cpu_to_le32(~0xFF);
-		ENTL_DEBUG("%s e1000_clean_rx_irq next_desc: %d skb %p\n", netdev->name, length, skb );
+		//ENTL_DEBUG("%s e1000_clean_rx_irq next_desc: %d skb %p\n", netdev->name, length, skb );
 
 		/* return some buffers to hardware, one at a time is too slow */
 		if (cleaned_count >= E1000_RX_BUFFER_WRITE) {
