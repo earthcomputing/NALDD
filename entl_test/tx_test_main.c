@@ -128,7 +128,7 @@ static void show_status( int current_state, int value )
 #ifndef STANDALONE_DEBUG
 
 
-static int sock, sock_s, sock_r ;
+static int sock, sock_r ;
 static struct entl_ioctl_data entl_data ;
 static struct ifreq ifr;
 static struct entt_ioctl_ait_data ait_data ;
@@ -615,11 +615,11 @@ int main( int argc, char *argv[] ) {
 
 
     // using a socket to test transfer data over ENTL link
-    sock_s = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // sending socket
-    if( sock_s < 0 ) {
-    	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
-    	exit(1) ;
-    }
+    //sock_s = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // sending socket
+    //if( sock_s < 0 ) {
+    //	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
+    //	exit(1) ;
+    //}
     sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
     if( sock_r < 0 ) {
     	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
@@ -667,7 +667,7 @@ int main( int argc, char *argv[] ) {
 		  	sprintf( data, "%s Data %d", name, count ) ; ;
 
 		  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
-		  	send_result = sendto( sock_s, buffer, 100, 0, (struct sockaddr*)&saddr, sizeof(saddr));
+		  	send_result = sendto( sock_r, buffer, 100, 0, (struct sockaddr*)&saddr, sizeof(saddr));
 
 			if (send_result < 0 ) {
 				printf( "sendto failed on %s at %d errno:%d \n",name, count, errno );

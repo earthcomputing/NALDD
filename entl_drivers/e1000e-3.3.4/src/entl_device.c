@@ -1105,10 +1105,11 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 		BUG_ON( dev->tx_skb_queue.count >= dev->tx_skb_queue.size) ;
 		return NETDEV_TX_BUSY;
 	}
-	ENTL_DEBUG("%s entl_tx_transmit got packet len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x\n", netdev->name, skb->len,
+	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len,
 	  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
 	  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
-	  skb->data[12], skb->data[13]
+	  skb->data[12], skb->data[13],
+	  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
 	  ) ;
 
 	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;

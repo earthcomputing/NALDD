@@ -1109,7 +1109,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				goto next_desc;
 			}	
 			else {
-				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d\n", netdev->name, length );
+				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d skb %p\n", netdev->name, length, skb );
 			}
 		}
 
@@ -1137,6 +1137,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 			}
 			/* else just continue with the old one */
 		}
+		ENTL_DEBUG("%s e1000_clean_rx_irq end copybreak code %d skb %p\n", netdev->name, length, skb );
 		/* end copybreak code */
 		skb_put(skb, length);
 
@@ -1147,11 +1148,13 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		e1000_rx_hash(netdev, rx_desc->wb.lower.hi_dword.rss, skb);
 
 #endif
+		ENTL_DEBUG("%s e1000_clean_rx_irq calling e1000_receive_skb %d skb %p\n", netdev->name, length, skb );
 		e1000_receive_skb(adapter, netdev, skb, staterr,
 				  rx_desc->wb.upper.vlan);
 
 next_desc:
 		rx_desc->wb.upper.status_error &= cpu_to_le32(~0xFF);
+		ENTL_DEBUG("%s e1000_clean_rx_irq next_desc: %d skb %p\n", netdev->name, length, skb );
 
 		/* return some buffers to hardware, one at a time is too slow */
 		if (cleaned_count >= E1000_RX_BUFFER_WRITE) {
