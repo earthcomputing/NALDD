@@ -1099,11 +1099,22 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 {
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	entl_device_t *dev = &adapter->entl_dev ;
+	struct ethhdr *eth = (struct ethhdr *)skb->data ;
 
 	if( ENTL_skb_queue_full( &dev->tx_skb_queue ) ) {
 		ENTL_DEBUG("entl_tx_transmit Queue full!! %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
 		BUG_ON( dev->tx_skb_queue.count >= dev->tx_skb_queue.size) ;
 		return NETDEV_TX_BUSY;
+	}
+	if( eth->h_proto != ETH_P_ECLP && eth->h_proto != ETH_P_ECLD ) {
+		ENTL_DEBUG("%s entl_tx_transmit dropping non EC type %4x %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, eth->h_proto, skb, skb->len,
+		  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
+		  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
+		  skb->data[12], skb->data[13],
+		  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
+		  ) ;
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
 	}
 	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len,
 	  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
