@@ -25,7 +25,7 @@
 
 
 #ifdef ENTL_DEBUG_PRINT_ENABLE
-#define ENTL_DEBUG(fmt, args...) printk( KERN_DEBUG "ENTL:" fmt, ## args )
+#define ENTL_DEBUG(fmt, args...) printk( KERN_ALERT "ENTL:" fmt, ## args )
 #else
 #define ENTL_DEBUG(fmt, args...) /* no message */
 #endif
