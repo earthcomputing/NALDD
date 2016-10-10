@@ -1119,7 +1119,7 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 
 	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
 
-	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d count %d head %d tail %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len, dev->tx_skb_queue.count, dev->tx_skb_queue.head, dev->tx_skb_queue.tail
+	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d count %d head %d tail %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len, dev->tx_skb_queue.count, dev->tx_skb_queue.head, dev->tx_skb_queue.tail,
 	  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
 	  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
 	  skb->data[12], skb->data[13],
