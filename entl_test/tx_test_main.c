@@ -535,7 +535,7 @@ static void receive_task( void *me ) {
 	        	printf( "  data: %s\n", data ) ;
 	        }
 	        else {
-	        	printf("Received %d bytes t: %04x\n",data_size, eth->h_proto );
+	        	//printf("Received %d bytes t: %04x\n",data_size, eth->h_proto );
 	        }
     	}
     	else {
@@ -663,7 +663,9 @@ int main( int argc, char *argv[] ) {
 		  	sprintf( data, "%s Data %d", name, count ) ; ;
 
 		  	// SIOCDEVPRIVATE_ENTL_RD_CURRENT
+		  	ioctl(sock, SIOCDEVPRIVATE_ENTL_GEN_SIGNAL, &ifr) ;
 		  	send_result = sendto( sock_r, buffer, 100, 0, (struct sockaddr*)&saddr, sizeof(saddr));
+		  	ioctl(sock, SIOCDEVPRIVATE_ENTL_GEN_SIGNAL, &ifr) ;
 
 			if (send_result < 0 ) {
 				printf( "sendto failed on %s at %d errno:%d \n",name, count, errno );

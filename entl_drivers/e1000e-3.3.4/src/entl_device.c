@@ -371,9 +371,9 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		dev->user_pid = entl_data.pid ;
 		break;
 	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
-		ENTL_DEBUG("ENTL %s ioctl generating signal to user\n", dev->name );
-		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
-		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer		
+		ENTL_DEBUG("ENTL %s ioctl got SIOCDEVPRIVATE_ENTL_GEN_SIGNAL\n", dev->name );
+		//dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+		//mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer		
 		break ;		
 	case SIOCDEVPRIVATE_ENTL_DO_INIT:
 		ENTL_DEBUG("ENTL %s ioctl initialize the device\n", dev->name );
