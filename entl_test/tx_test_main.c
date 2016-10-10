@@ -616,7 +616,7 @@ int main( int argc, char *argv[] ) {
     //	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
     //	exit(1) ;
     //}
-    sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ECLP)) ; // receiveing socket
+    sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
     if( sock_r < 0 ) {
     	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
     	exit(1) ;
@@ -625,6 +625,7 @@ int main( int argc, char *argv[] ) {
     memset(&saddr, 0, sizeof(struct sockaddr_ll));
     saddr.sll_family = AF_PACKET;
     saddr.sll_protocol = htons(ETH_P_ALL);
+    //saddr.sll_protocol = htons(ETH_P_ECLP);
     saddr.sll_ifindex = if_nametoindex(name);
     //saddr.sll_hatype = ARPHRD_ETHER ;
     saddr.sll_pkttype = PACKET_OTHERHOST ;
