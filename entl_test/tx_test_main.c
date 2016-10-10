@@ -616,7 +616,7 @@ int main( int argc, char *argv[] ) {
     //	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
     //	exit(1) ;
     //}
-    sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ALL)) ; // receiveing socket
+    sock_r = socket( PF_PACKET , SOCK_RAW , htons(ETH_P_ECLP)) ; // receiveing socket
     if( sock_r < 0 ) {
     	printf( "Can't open PF_PACKET socket, should be run on su\n") ;
     	exit(1) ;
