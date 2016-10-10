@@ -8,11 +8,11 @@ SHELL :=/bin/bash
 # include headers for driver api
 INCLUDE = ../entl_drivers/e1000e-3.3.4/src/
 
-SRC= entl_test_main.c entl_signal_test_main.c ifconfig.c demo_window.c
+SRC= entl_test_main.c entl_signal_test_main.c ifconfig.c demo_window.c mm.c
 
 OBJS = $(SRC: .c=.o)
 
-TARGETS = entl_test entl_signal_test demo_window demo_web
+TARGETS = entl_test entl_signal_test demo_window demo_web mm
 
 all: ${TARGETS}
 
@@ -26,6 +26,9 @@ demo_window: demo_window.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
 demo_web: demo_window.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
+mm: mm.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
 clean:
