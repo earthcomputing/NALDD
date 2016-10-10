@@ -1112,14 +1112,15 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				struct ethhdr *eth = (struct ethhdr *)skb->data ;
 				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d skb %p\n", netdev->name, length, skb );
 				if( eth->h_proto != ETH_P_ECLP && eth->h_proto != ETH_P_ECLD ) {
-				ENTL_DEBUG("%s e1000_clean_rx_irq dropping non EC type %4x %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, eth->h_proto, skb, length,
-				  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
-				  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
-				  skb->data[12], skb->data[13],
-				  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
-				  ) ;
-				buffer_info->skb = skb; // recycle
-				goto next_desc;
+					ENTL_DEBUG("%s e1000_clean_rx_irq dropping non EC type %4x %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, eth->h_proto, skb, length,
+					  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
+					  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
+					  skb->data[12], skb->data[13],
+					  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
+					  ) ;
+					buffer_info->skb = skb; // recycle
+					goto next_desc;
+				}
 			}
 		}
 
