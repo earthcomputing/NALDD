@@ -446,7 +446,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 
     if( d_u_addr & ENTL_MESSAGE_ONLY_U ) retval = false ; // this is message only packet
 
-	else ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got %d s: %04x %08x d: %04x %08x t:%04x\n", skb->len, dev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr, eth->h_proto );
+	else ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got %d s: %04x %08x d: %04x %08x t:%04x\n", skb->len, adapter->netdev->name, s_u_addr, s_l_addr, d_u_addr, d_l_addr, eth->h_proto );
 
     result = entl_received( &dev->stm, s_u_addr, s_l_addr, d_u_addr, d_l_addr ) ;
 
@@ -475,7 +475,7 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    			memcpy( ait_data->data, data + sizeof(u32), ait_data->message_len ) ;
 	    		}
 	    		else {
-					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got too big message_len %d\n", dev->name, ait_data->message_len );
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet got too big message_len %d\n", adapter->netdev->name, ait_data->message_len );
 	    			ait_data->message_len = 0 ;
 	    		}
 	    	}
@@ -493,12 +493,12 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 	    		// TX queue has data, so transfer with data
 				struct sk_buff *dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			while( NULL != dt && skb_is_gso(dt) ) {  // GSO can't be used for ENTL 
-					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit gso packet\n", dev->name );    				
+					ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit gso packet\n", adapter->netdev->name );    				
 					e1000_xmit_frame( dt, adapter->netdev ) ;
 					dt = pop_front_ENTL_skb_queue( &dev->tx_skb_queue );
     			}
 	    		if( dt ) {
-	    			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit packet len %d\n", dev->name , dt->len );    				
+	    			ENTL_DEBUG("ENTL %s entl_device_process_rx_packet emit packet len %d count %d head %d tail %d\n", adapter->netdev->name , dt->len, dev->tx_skb_queue.count, dev->tx_skb_queue.head, dev->tx_skb_queue.tail );    				
 					e1000_xmit_frame( dt, adapter->netdev ) ;
 	    		}
 	    		else {
@@ -1116,14 +1116,15 @@ static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *net
 		dev_kfree_skb_any(skb);
 		return NETDEV_TX_OK;
 	}
-	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len,
+
+	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
+
+	ENTL_DEBUG("%s entl_tx_transmit got packet %p len %d count %d head %d tail %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, skb, skb->len, dev->tx_skb_queue.count, dev->tx_skb_queue.head, dev->tx_skb_queue.tail
 	  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
 	  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
 	  skb->data[12], skb->data[13],
 	  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
 	  ) ;
-
-	push_back_ENTL_skb_queue( &dev->tx_skb_queue, skb ) ;
 
 	if( ENTL_skb_queue_unused( &dev->tx_skb_queue ) < 2 ) {
 		ENTL_DEBUG("entl_tx_transmit Queue near full, flow control %d %d\n", dev->tx_skb_queue.count,  dev->tx_skb_queue.size ) ;
