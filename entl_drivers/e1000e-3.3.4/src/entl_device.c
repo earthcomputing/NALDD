@@ -367,22 +367,22 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		break;
 	case SIOCDEVPRIVATE_ENTL_SET_SIGRCVR:
 		copy_from_user(&entl_data, ifr->ifr_data, sizeof(struct entl_ioctl_data) ) ;
-		ENTL_DEBUG("ENTL %s ioctl user_pid %d is set\n", dev->name, entl_data.pid );
+		ENTL_DEBUG("ENTL %s ioctl user_pid %d is set\n", netdev->name, entl_data.pid );
 		dev->user_pid = entl_data.pid ;
 		break;
 	case SIOCDEVPRIVATE_ENTL_GEN_SIGNAL:
-		ENTL_DEBUG("ENTL %s ioctl got SIOCDEVPRIVATE_ENTL_GEN_SIGNAL\n", dev->name );
+		ENTL_DEBUG("ENTL %s ioctl got SIOCDEVPRIVATE_ENTL_GEN_SIGNAL\n", netdev->name );
 		//dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
 		//mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer		
 		break ;		
 	case SIOCDEVPRIVATE_ENTL_DO_INIT:
-		ENTL_DEBUG("ENTL %s ioctl initialize the device\n", dev->name );
+		ENTL_DEBUG("ENTL %s ioctl initialize the device\n", netdev->name );
 		adapter->entl_flag = 1 ;
 		entl_e1000_configure( adapter ) ;
 		u32 icr = er32(ICR);
 		u32 ctrl = er32(CTRL);
 		u32 ims = er32(IMS);
-		ENTL_DEBUG("ENTL %s ioctl initialized the device with icr %08x ctrl %08x ims %08x\n", dev->name, icr, ctrl, ims );
+		ENTL_DEBUG("ENTL %s ioctl initialized the device with icr %08x ctrl %08x ims %08x\n", netdev->name, icr, ctrl, ims );
 		break ;
 	case SIOCDEVPRIVATE_ENTT_SEND_AIT:
 	{
@@ -391,7 +391,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	    ait_data = kzalloc( sizeof(struct entt_ioctl_ait_data), GFP_ATOMIC );
 		copy_from_user(ait_data, ifr->ifr_data, sizeof(struct entt_ioctl_ait_data) ) ;
 		ret = entl_send_AIT_message( &dev->stm, ait_data ) ;
-		ENTL_DEBUG("ENTL %s ioctl send %d byte AIT, %d left\n", dev->name, ait_data->message_len, ret );
+		ENTL_DEBUG("ENTL %s ioctl send %d byte AIT, %d left\n", netdev->name, ait_data->message_len, ret );
 		ait_data->num_messages = ret ; // return how many buffer left
 		copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
 		if( ret < 0 ) {
@@ -405,14 +405,14 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		struct entt_ioctl_ait_data* ait_data ;
 		ait_data = entl_read_AIT_message( &dev->stm ) ;
 		if( ait_data ) {
-			ENTL_DEBUG("ENTL %s ioctl got %d byte AIT, %d left\n", dev->name, ait_data->message_len, ait_data->num_messages );
+			ENTL_DEBUG("ENTL %s ioctl got %d byte AIT, %d left\n", netdev->name, ait_data->message_len, ait_data->num_messages );
 			copy_to_user(ifr->ifr_data, ait_data, sizeof(struct entt_ioctl_ait_data));
 			kfree(ait_data) ;
 		}
 	}
 		break ;
 	default:
-		ENTL_DEBUG("ENTL %s ioctl error: undefined cmd %d\n", dev->name, cmd);
+		ENTL_DEBUG("ENTL %s ioctl error: undefined cmd %d\n", netdev->name, cmd);
 		break;
 	}
 	return 0 ;
