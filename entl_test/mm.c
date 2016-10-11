@@ -31,6 +31,7 @@ static mutex_t access_mutex ;
 
 #define NUM_INTERFACES 4
 static int sock;
+//static int sock[NUM_INTERFACES];
 static struct entl_ioctl_data entl_data[NUM_INTERFACES] ;
 static struct ifreq ifr[NUM_INTERFACES];
 struct entt_ioctl_ait_data ait_data[NUM_INTERFACES] ;
@@ -52,7 +53,7 @@ void toCurl(char *json) {
   char comm[4096];
   sprintf (comm, "curl -v -H \"Content-Type: application/json\" -X PUT -d \'%s\' http://localhost:3000/earthUpdate", json);
   printf("%s\n", comm); 
-  //execlp("curl", "-H \"Content-Type: application/json\"", "-X" "PUT", "-d" ,json,  "http://localhost:3000/earthUpdate", (char*) NULL);
+
   system(comm);
 }
 
@@ -106,9 +107,14 @@ int main (int argc, char **argv){
   for (i=0; i<NUM_INTERFACES; i++) {
     links[i].name = name[i];
     lenObj[i] = toJSON(&links[i]);
-  }
   
-  // Creating socket
+  
+    // Creating socket
+    /* if ((sock[i] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+      perror("cannot create socket");
+      return 0;
+    }*/
+  }
   if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("cannot create socket");
     return 0;
@@ -138,10 +144,10 @@ int main (int argc, char **argv){
       links[i].entlCount=entl_data[i].state.event_i_know;
       links[i].linkState=entl_data[i].link_state;
       
-      lenObj[i] = toJSON(&links[0]);
-      lenPut[i] = toPutString(lenObj[i],links[i].json, putString);
+      lenObj[i] = toJSON(&links[i]);
+      //lenPut[i] = toPutString(lenObj[i],links[i].json, putString);
       //write(putString,lenPut);
-      printf("bytes = %d\n%s\n", lenPut[i], putString);
+      //printf("bytes = %d\n%s\n", lenPut[i], putString);
       toCurl(links[i].json);
     }
     ACCESS_UNLOCK ;
@@ -163,7 +169,7 @@ int main (int argc, char **argv){
 	links[i].entlCount=entl_data[i].state.event_i_know;
 	links[i].linkState=entl_data[i].link_state;
 	
-	lenObj[i] = toJSON(&links[0]);
+	lenObj[i] = toJSON(&links[i]);
 	lenPut[i] = toPutString(lenObj[i],links[i].json, putString);
 	//write(putString,lenPut);
 	//printf("bytes = %d\n%s\n", lenPut[i], putString);
