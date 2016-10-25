@@ -31,6 +31,7 @@ typedef u64 ecnl_table_entry ;
 struct entl_driver_funcs {
 	netdev_tx_t		(*start_xmit)(struct sk_buff *skb, struct net_device *dev);
 	int (*send_AIT_message)( struct net_device *dev, struct entt_ioctl_ait_data* data ) ;
+	struct ioctl_ait_data* (*retrieve_AIT_message)( struct net_device *dev ) ;
 	struct ioctl_ait_data* (*next_AIT_message)( struct net_device *dev ) ;
 } ;
 
