@@ -11,6 +11,7 @@
 #include <net/if.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +44,7 @@ static struct sockaddr_in sockaddr, w_sockaddr ;
 static int sin_port ;
 
 static int open_socket( char *addr ) {
+  int flag = 1 ;
   int st = -1 ;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if( sockfd < 0 ) {
@@ -94,7 +96,7 @@ char *machine_name = NULL ;
 static int toJSON(struct link_device *dev) {
   int size = 0; 
   if (NULL != dev) {
-    size = sprintf( dev->json,"{\"machineName\": \"%s\", \"deviceName\": \"%s\", \"linkState\":\"%s\",\"entlState\": \"%s\", \"entlCount\": \"%d\",\"AITSent\": \"%s\",\"AITRecieved\": \"%s\"}",
+    size = sprintf( dev->json,"{\"machineName\":\"%s\", \"deviceName\":\"%s\", \"linkState\":\"%s\", \"entlState\":\"%s\", \"entlCount\":\"%d\", \"AITSent\":\"%s\", \"AITRecieved\": \"%s\"}\n",
 	     machine_name, dev->name,
 	     ((dev->linkState)?"UP":"DOWN"),
 	     ((dev->entlState<9)?entlStateString[dev->entlState]:"UNKNOWN"),
@@ -107,6 +109,7 @@ static int toJSON(struct link_device *dev) {
 
 static void toServer(char *json) {
   write( w_socket, json, strlen(json) ) ;
+  printf( "toServer:%s",json) ;
 }
 
 void entl_error_sig_handler(int signum) {
@@ -205,6 +208,7 @@ int main (int argc, char **argv){
   int count = 0 ;
   int ait_port = 0 ;
   int port ;
+  int flag = 1 ;
 
   pthread_mutex_init( &access_mutex, NULL ) ;
 
@@ -223,6 +227,7 @@ int main (int argc, char **argv){
     return 0 ;
   }
   w_socket =  sockfd ; // accept( sockfd, (struct sockaddr *)&w_sockaddr, &a_len ) ;
+  //setsockopt( w_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int)) ;
 
   //for (i=0; i<1; i++) {
   for (i=0; i<NUM_INTERFACES; i++) {
