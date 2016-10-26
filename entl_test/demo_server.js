@@ -14,6 +14,10 @@ var server = net.createServer(function(socket) {
     connected = 1 ;
 });
 
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+
 var client = net.createServer(function(socket) {
     console.log('Client connected');
 
@@ -22,17 +26,31 @@ var client = net.createServer(function(socket) {
 
     socket.on('data', function (data) {
         data = data.toString();
-        console.log('client sent the folowing string:'+data);
-        var obj = JSON.parse(data) ;
-        console.log( "entlCount:", obj.entlCount) ;
-        if( obj.machineName ) {
-            json_data[obj.machineName] = data ;
-            console.log( 'machine['+obj.machineName+'] = '+json_data[obj.machineName]) ;
-            if( connected ) {
-                s_socket.write(data) ;
-                console.log('Sent data to targert');
+                  console.log('data:'+data);
+        var jd = data.split("\n") ;
+        for( var i = 0, len = jd.length; i < len; i++ ) {
+            var d = jd[i] ;
+
+            if(!isBlank(d)) {
+                console.log('split:'+d);
+
+                var obj = JSON.parse(d) ;
+                if( obj ) {
+                    console.log( "entlCount:", obj.entlCount) ;
+                    if( obj.machineName ) {
+                        json_data[obj.machineName] = d ;
+                        console.log( 'machine['+obj.machineName+'] = '+json_data[obj.machineName]) ;
+                        if( connected ) {
+                            s_socket.write(d+'\n') ;
+                            console.log('Sent data to targert');
+                        }
+                    }                
+                }
             }
+
+
         }
+
    });
 
 });
