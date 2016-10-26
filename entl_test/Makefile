@@ -31,5 +31,11 @@ demo_web: demo_window.c
 mm: mm.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
+demo_server_test: demo_server_test.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
+demo_client: demo_client.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
 clean:
 	rm ${TARGETS}
