@@ -34,18 +34,23 @@ var client = net.createServer(function(socket) {
             if(!isBlank(d)) {
                 console.log('split:'+d);
 
-                var obj = JSON.parse(d) ;
-                if( obj ) {
-                    console.log( "entlCount:", obj.entlCount) ;
-                    if( obj.machineName ) {
-                        json_data[obj.machineName] = d ;
-                        console.log( 'machine['+obj.machineName+'] = '+json_data[obj.machineName]) ;
-                        if( connected ) {
-                            s_socket.write(d+'\n') ;
-                            console.log('Sent data to targert');
-                        }
-                    }                
+                try {
+                    var obj = JSON.parse(d) ;
+                    if( obj ) {
+                        console.log( "entlCount:", obj.entlCount) ;
+                        if( obj.machineName ) {
+                            json_data[obj.machineName] = d ;
+                            console.log( 'machine['+obj.machineName+'] = '+json_data[obj.machineName]) ;
+                            if( connected ) {
+                                s_socket.write(d+'\n') ;
+                                console.log('Sent data to targert');
+                            }
+                        }                
+                    }
+                } catch(e) {
+                    console.log('error:'+e) ;
                 }
+
             }
 
 
