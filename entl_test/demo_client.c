@@ -315,7 +315,7 @@ int main (int argc, char **argv){
       if( count > 10 && ait_port == i && links[i].linkState && links[i].entlState >= 3 &&  links[i].entlState <= 6 ) {
         count = 0 ;
         ait_port = (ait_port+1) % NUM_INTERFACES ;
-        sprintf( links[i].AITMessageS, "AIT message from %s on %d", links[i].name, links[i].entlCount ) ;
+        sprintf( links[i].AITMessageS, "AIT %s.%s on %d", machine_name, links[i].name, links[i].entlCount ) ;
         entl_ait_sender( i, links[i].AITMessageS ) ;
         modified = 1 ;
       }

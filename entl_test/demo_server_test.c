@@ -104,13 +104,13 @@ void main( int argc, char *argv[] ) {
 	int count = 0 ;
 	int err ;
 
-  if( argc != 2 ) {
-    printf( "%s needs <server address> (e.g. 127.0.0.1) as the argument\n", argv[0] ) ;
-    return ;
-  }
-  printf( "Server Address: %s \n", argv[1] ) ;
+  //if( argc != 2 ) {
+  //  printf( "%s needs <server address> (e.g. 127.0.0.1) as the argument\n", argv[0] ) ;
+  //  return ;
+  //}
+  //printf( "Server Address: %s \n", argv[1] ) ;
 
-	port = open_socket( argv[1] ) ;
+	port = open_socket( "127.0.0.1" ) ;
 
   if( !port ) {
 	    printf( "Can't open socket\n" ) ;

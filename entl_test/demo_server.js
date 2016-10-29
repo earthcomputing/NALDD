@@ -5,14 +5,35 @@ var net = require('net');
 
 var json_data = {};
 var connected = 0 ;
-
 var s_socket ;
 
-var server = net.createServer(function(socket) {
-    console.log('Target connected');
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+
+
+app.get('/', function(req, res){
+  res.sendFile(__dirname + '/index.html');
+});
+
+io.on('connection', function(socket){
     s_socket = socket ;
     connected = 1 ;
+  socket.on('ait message', function(msg){
+    console.log('AIT'+msg);
+  });
 });
+
+http.listen(s_port, function(){
+  console.log('listening on *:'+s_port);
+});
+
+
+//var server = net.createServer(function(socket) {
+//    console.log('Target connected');
+//    s_socket = socket ;
+//    connected = 1 ;
+//});
 
 function isBlank(str) {
     return (!str || /^\s*$/.test(str));
@@ -42,7 +63,8 @@ var client = net.createServer(function(socket) {
                             json_data[obj.machineName] = d ;
                             console.log( 'machine['+obj.machineName+'] = '+json_data[obj.machineName]) ;
                             if( connected ) {
-                                s_socket.write(d+'\n') ;
+                                io.emit('state message', d);
+                                //s_socket.write(d+'\n') ;
                                 console.log('Sent data to targert');
                             }
                         }                
@@ -64,5 +86,5 @@ var client = net.createServer(function(socket) {
 
 
 //server.listen(port, '127.0.0.1');
-server.listen(s_port);
-client.listen(c_port);
+//server.listen(s_port);
+client.listen(c_port, '127.0.0.1');
