@@ -212,15 +212,15 @@ int main (int argc, char **argv){
 
   pthread_mutex_init( &access_mutex, NULL ) ;
 
-  if( argc != 3 ) {
-    printf( "Usage %s <server address> <machine_name> (e.g. %s 127.0.0.1 foobar )\n", argv[0], argv[0] ) ;
+  if( argc != 2 ) {
+    printf( "Usage %s <machine_name> (e.g. %s foobar )\n", argv[0], argv[0] ) ;
     return 0 ;
   }
-  printf( "Server Address: %s Machine Name %s\n", argv[1], argv[2] ) ;
+  printf( "Server Address: Machine Name %s\n", argv[1] ) ;
 
-  machine_name = argv[2] ;
+  machine_name = argv[1] ;
 
-  port = open_socket( argv[1] ) ;
+  port = open_socket( "127.0.0.1" ) ;
 
   if( !port ) {
     printf( "Can't open socket\n" ) ;
@@ -295,7 +295,7 @@ int main (int argc, char **argv){
 	      ACCESS_UNLOCK ;
         printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT failed on %s\n",ifr[i].ifr_name );
       } else {
-      	printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s\n",ifr[i].ifr_name );
+      	printf( "SIOCDEVPRIVATE_ENTL_RD_CURRENT successed on %s state %d\n",ifr[i].ifr_name, entl_data[i].state.current_state );
       	if( links[i].entlState != entl_data[i].state.current_state ||
             links[i].entlCount != entl_data[i].state.event_i_know ||
             links[i].linkState != entl_data[i].link_state
