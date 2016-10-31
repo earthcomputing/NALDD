@@ -37,5 +37,8 @@ demo_server_test: demo_server_test.c
 demo_client: demo_client.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
+tx_test: tx_test_main.c
+	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+
 clean:
 	rm ${TARGETS}

@@ -17,12 +17,15 @@
 #ifndef _ENTL_STATE_MACHINE_H_
 #define _ENTL_STATE_MACHINE_H_
 
+// TX handling enable
+#define ENTL_TX_ON_ENTL_ENABLE
+
 // Debug print control
 #define ENTL_DEBUG_PRINT_ENABLE
 
 
 #ifdef ENTL_DEBUG_PRINT_ENABLE
-#define ENTL_DEBUG(fmt, args...) printk( KERN_DEBUG "ENTL:" fmt, ## args )
+#define ENTL_DEBUG(fmt, args...) printk( KERN_ALERT "ENTL:" fmt, ## args )
 #else
 #define ENTL_DEBUG(fmt, args...) /* no message */
 #endif
@@ -45,7 +48,7 @@
 #define ENTL_DEVICE_NAME_LEN 15
 
 #define MAX_ENTT_QUEUE_SIZE 32
- 
+
 typedef struct ENTT_queue {
     u16 size ;
     u16 count ;
@@ -74,10 +77,10 @@ typedef struct entl_state_machine {
 
   __u32 state_count ;
 
-    struct entt_ioctl_ait_data* receive_buffer ;
+  struct entt_ioctl_ait_data* receive_buffer ;
 
-    ENTT_queue_t send_ATI_queue ;
-    ENTT_queue_t receive_ATI_queue ;
+  ENTT_queue_t send_ATI_queue ;
+  ENTT_queue_t receive_ATI_queue ;
 
   char name[ENTL_DEVICE_NAME_LEN] ;
 
@@ -102,6 +105,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 #define ENTL_ACTION_SEND_AIT    0x02
 #define ENTL_ACTION_PROC_AIT    0x04
 #define ENTL_ACTION_SIG_AIT     0x08
+#define ENTL_ACTION_SEND_DAT    0x10
 #define ENTL_ACTION_ERROR       -1
 
 // On Received message, this should be called with the massage (MAC source & destination addr)

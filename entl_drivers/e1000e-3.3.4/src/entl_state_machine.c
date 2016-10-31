@@ -321,7 +321,12 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 					mcn->current_state.event_i_know = l_daddr ;
 					mcn->current_state.event_send_next = l_daddr + 1 ;
 					mcn->current_state.current_state = ENTL_STATE_SEND ;
-					retval = ENTL_ACTION_SEND ;
+					if( mcn->send_ATI_queue.count ) {  // AIT has priority
+						retval = ENTL_ACTION_SEND ;
+					}
+					else {
+						retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_DAT ;  // data send as optional
+					}
 					memcpy( &mcn->current_state.update_time, &ts, sizeof(struct timespec)) ;
 					//ENTL_DEBUG( "%s ETL message %d received on Receive -> Send @ %ld sec\n", mcn->name, l_daddr, ts.tv_sec ) ;			
 				}
@@ -715,13 +720,13 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr )
 			if( event_i_know && event_i_sent && mcn->send_ATI_queue.count ) {
 				mcn->current_state.current_state = ENTL_STATE_AM ;			
 				*u_addr = ENTL_MESSAGE_AIT_U ;
-				retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT ;
+				retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_AIT  ;
 				ENTL_DEBUG( "%s ETL AIT Message %d requested on Send state -> Am @ %ld sec\n", mcn->name, *l_addr, ts.tv_sec ) ;			
 			}
 			else {
 				mcn->current_state.current_state = ENTL_STATE_RECEIVE ;			
 				*u_addr = ENTL_MESSAGE_EVENT_U ;
-				retval = ENTL_ACTION_SEND ;
+				retval = ENTL_ACTION_SEND | ENTL_ACTION_SEND_DAT ;  // data send as optional
 			}
 			//ENTL_DEBUG( "%s ETL Message %d requested on Send state -> Receive @ %ld sec\n", mcn->name, *l_addr, ts.tv_sec ) ;			
 

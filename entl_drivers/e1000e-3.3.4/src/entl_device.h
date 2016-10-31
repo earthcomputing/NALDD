@@ -19,6 +19,17 @@
 
 #define ENTL_DEVICE_FLAG_FATAL 0x8000
 
+ #define ENTL_DEFAULT_TXD   256
+
+
+typedef struct ENTL_skb_queue {
+    u16 size ;
+    u16 count ;
+    u16 head ;
+    u16 tail ;
+    struct sk_buff *data[ENTL_DEFAULT_TXD] ;
+} ENTL_skb_queue_t ;
+
 typedef struct entl_device {
 	entl_state_machine_t stm ;              /// the state machine structure
 
@@ -36,6 +47,10 @@ typedef struct entl_device {
     int action ;
 
     char name[ENTL_DEVICE_NAME_LEN] ;
+
+  	ENTL_skb_queue_t tx_skb_queue ;
+  	int queue_stopped ;
+
 } entl_device_t ;
 
 // entl_device.c is also included in the netdev.c code so all functions are declared static here
@@ -67,6 +82,15 @@ static void entl_device_process_tx_packet( entl_device_t *dev, struct sk_buff *s
 static void entl_e1000_configure(struct e1000_adapter *adapter) ;
 
 static void entl_e1000_set_my_addr( entl_device_t *dev, const u8 *addr ) ;
+
+
+static int entl_tx_queue_has_data( entl_device_t *dev ) ;
+
+/// tx queue handling
+static netdev_tx_t entl_tx_transmit( struct sk_buff *skb, struct net_device *netdev ) ;
+
+/// send tx queue data to tx_ring
+static void entl_tx_pull( struct net_device *netdev ) ;
 
 #endif    /* _IN_NETDEV_C_ */
 

@@ -1108,6 +1108,20 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 				buffer_info->skb = skb; // recycle
 				goto next_desc;
 			}	
+			else {
+				struct ethhdr *eth = (struct ethhdr *)skb->data ;
+				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d skb %p\n", netdev->name, length, skb );
+				if( eth->h_proto != ETH_P_ECLP && eth->h_proto != ETH_P_ECLD ) {
+					ENTL_DEBUG("%s e1000_clean_rx_irq dropping non EC type %4x %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, eth->h_proto, skb, length,
+					  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
+					  skb->data[6], skb->data[7], skb->data[8], skb->data[9], skb->data[10], skb->data[11], 
+					  skb->data[12], skb->data[13],
+					  skb->data[14], skb->data[15], skb->data[16], skb->data[17], skb->data[18], skb->data[19]
+					  ) ;
+					buffer_info->skb = skb; // recycle
+					goto next_desc;
+				}
+			}
 		}
 
 		/* code added for copybreak, this should improve
@@ -1134,6 +1148,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 			}
 			/* else just continue with the old one */
 		}
+		ENTL_DEBUG("%s e1000_clean_rx_irq end copybreak code %d skb %p\n", netdev->name, length, skb );
 		/* end copybreak code */
 		skb_put(skb, length);
 
@@ -1144,11 +1159,13 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		e1000_rx_hash(netdev, rx_desc->wb.lower.hi_dword.rss, skb);
 
 #endif
+		ENTL_DEBUG("%s e1000_clean_rx_irq calling e1000_receive_skb %d skb %p\n", netdev->name, length, skb );
 		e1000_receive_skb(adapter, netdev, skb, staterr,
 				  rx_desc->wb.upper.vlan);
 
 next_desc:
 		rx_desc->wb.upper.status_error &= cpu_to_le32(~0xFF);
+		//ENTL_DEBUG("%s e1000_clean_rx_irq next_desc: %d skb %p\n", netdev->name, length, skb );
 
 		/* return some buffers to hardware, one at a time is too slow */
 		if (cleaned_count >= E1000_RX_BUFFER_WRITE) {
@@ -6538,11 +6555,22 @@ static netdev_tx_t e1000_xmit_frame(struct sk_buff *skb,
 	if (adapter->hw.mac.tx_pkt_filtering)
 		e1000_transfer_dhcp_info(adapter, skb);
 
+#ifndef ENTL_TX_ON_ENTL_ENABLE
+	// flow control is done on tx queue side when TX_ON_ENTL_ENABLE
+
 	/* need: count + 2 desc gap to keep tail from touching
 	 * head, otherwise try next time
 	 */
-	if (e1000_maybe_stop_tx(tx_ring, count + 2))
+	if (e1000_maybe_stop_tx(tx_ring, count + 2)) {
+		if (adapter->entl_flag)
+		{
+			// AK: don't forget to unlock before returning
+	    	spin_unlock_irqrestore( &adapter->tx_ring_lock, flags ) ;    	
+	   	}		
 		return NETDEV_TX_BUSY;
+	}
+
+#endif
 
 #if defined(NETIF_F_HW_VLAN_TX) || defined(NETIF_F_HW_VLAN_CTAG_TX)
 	if (skb_vlan_tag_present(skb)) {
@@ -7997,7 +8025,13 @@ static int e1000_set_features(struct net_device *netdev,
 static const struct net_device_ops e1000e_netdev_ops = {
 	.ndo_open		= e1000_open,
 	.ndo_stop		= e1000_close,
+
+#ifdef ENTL_TX_ON_ENTL_ENABLE
+	.ndo_start_xmit		= entl_tx_transmit,
+#else
 	.ndo_start_xmit		= e1000_xmit_frame,
+#endif
+
 #ifdef HAVE_NDO_GET_STATS64
 	.ndo_get_stats64	= e1000e_get_stats64,
 #else /* HAVE_NDO_GET_STATS64 */
@@ -8135,7 +8169,7 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	spin_lock_init( &adapter->tx_ring_lock ) ;
 	// AK: initialize entl device
 	entl_device_init( &adapter->entl_dev ) ;
-	// AK: default, entl mode is enabled for testing
+	// AK: default, entl mode is enabled 
 	adapter->entl_flag = 1 ;
 
 	mmio_start = pci_resource_start(pdev, 0);
@@ -8166,7 +8200,13 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 #else
 	netdev->open = &e1000_open;
 	netdev->stop = &e1000_close;
+
+#ifdef ENTL_TX_ON_ENTL_ENABLE
+	netdev->hard_start_xmit = &entl_tx_transmit;
+#else
 	netdev->hard_start_xmit = &e1000_xmit_frame;
+#endif
+
 	netdev->get_stats = &e1000_get_stats;
 #ifdef HAVE_SET_RX_MODE
 	netdev->set_rx_mode = &e1000e_set_rx_mode;
@@ -8762,8 +8802,8 @@ module_exit(e1000_exit_module);
 // AK: including ENTL device code
 #include "entl_device.c"
 
-MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
-MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver");
+MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com> + Earth Computing");
+MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver with Earth Computing Extension");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
