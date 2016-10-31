@@ -173,7 +173,7 @@ int entl_received( entl_state_machine_t *mcn, __u16 u_saddr, __u32 l_saddr, __u1
 
 	if( mcn->error_state.error_count ) {
 		ENTL_DEBUG( "%s message %04x received on error count set %d\n", mcn->name, u_daddr, mcn->error_state.error_count ) ;
-		return retval ;		
+		return ENTL_ACTION_SIG_ERR ;		
 	}
 
 	spin_lock_irqsave( &mcn->state_lock, flags ) ;

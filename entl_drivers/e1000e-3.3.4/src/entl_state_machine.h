@@ -106,6 +106,7 @@ int entl_get_hello( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 #define ENTL_ACTION_PROC_AIT    0x04
 #define ENTL_ACTION_SIG_AIT     0x08
 #define ENTL_ACTION_SEND_DAT    0x10
+#define ENTL_ACTION_SIG_ERR     0x20
 #define ENTL_ACTION_ERROR       -1
 
 // On Received message, this should be called with the massage (MAC source & destination addr)

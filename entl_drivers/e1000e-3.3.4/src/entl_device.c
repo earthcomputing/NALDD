@@ -463,6 +463,10 @@ static bool entl_device_process_rx_packet( entl_device_t *dev, struct sk_buff *s
 		dev->flag |= ENTL_DEVICE_FLAG_HELLO | ENTL_DEVICE_FLAG_SIGNAL ;
 		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer
 	}
+	else if( result == ENTL_ACTION_SIG_ERR ) {  // request for signal as error flag is set
+		dev->flag |= ENTL_DEVICE_FLAG_SIGNAL ;
+		mod_timer( &dev->watchdog_timer, jiffies + 1 ) ; // trigger timer		
+	}
 	else {
 		if( result & ENTL_ACTION_PROC_AIT ) {
 	    	// AIT message is received, put in to the receive buffer
