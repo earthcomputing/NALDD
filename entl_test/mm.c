@@ -74,7 +74,7 @@ void entl_error_sig_handler(int signum) {
       ifr[i].ifr_data = (char *) &(entl_data[i]);
       ACCESS_LOCK;
       
-      if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr) == -1) {
+      if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr[i]) == -1) {
 	ACCESS_UNLOCK;
 	printf("SIOCDEVPRIVATE_ENTL_RD_ERROR failed on %s\n", ifr[i].ifr_name);
 	
