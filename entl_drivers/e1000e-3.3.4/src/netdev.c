@@ -1110,7 +1110,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 			}	
 			else {
 				struct ethhdr *eth = (struct ethhdr *)skb->data ;
-				ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d skb %p\n", netdev->name, length, skb );
+				//ENTL_DEBUG("%s e1000_clean_rx_irq got message_len %d skb %p\n", netdev->name, length, skb );
 				if( eth->h_proto != ETH_P_ECLP && eth->h_proto != ETH_P_ECLD ) {
 					ENTL_DEBUG("%s e1000_clean_rx_irq dropping non EC type %4x %p len %d d: %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x  %02x%02x %02x %02x %02x %02x %02x %02x\n", netdev->name, eth->h_proto, skb, length,
 					  skb->data[0], skb->data[1], skb->data[2], skb->data[3], skb->data[4], skb->data[5], 
@@ -1148,7 +1148,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 			}
 			/* else just continue with the old one */
 		}
-		ENTL_DEBUG("%s e1000_clean_rx_irq end copybreak code %d skb %p\n", netdev->name, length, skb );
+		//ENTL_DEBUG("%s e1000_clean_rx_irq end copybreak code %d skb %p\n", netdev->name, length, skb );
 		/* end copybreak code */
 		skb_put(skb, length);
 
@@ -1159,7 +1159,7 @@ static bool e1000_clean_rx_irq(struct e1000_ring *rx_ring)
 		e1000_rx_hash(netdev, rx_desc->wb.lower.hi_dword.rss, skb);
 
 #endif
-		ENTL_DEBUG("%s e1000_clean_rx_irq calling e1000_receive_skb %d skb %p\n", netdev->name, length, skb );
+		//ENTL_DEBUG("%s e1000_clean_rx_irq calling e1000_receive_skb %d skb %p\n", netdev->name, length, skb );
 		e1000_receive_skb(adapter, netdev, skb, staterr,
 				  rx_desc->wb.upper.vlan);
 
@@ -2177,11 +2177,11 @@ static irqreturn_t e1000_msix_other(int __always_unused irq, void *data)
 		// AK: try to set E1000_IMS_LSC 
 		ew32(IMS, E1000_IMS_OTHER | E1000_IMS_LSC );
 	}
-	{
-		u32 ims ;
-		ims = er32(IMS) ;
-		ENTL_DEBUG("e1000_msix_other %s is called on %d, triggering watchdog ims %08x \n", netdev->name, test_bit(__E1000_DOWN, &adapter->state), ims );
-	}
+	//{
+	//	u32 ims ;
+	//	ims = er32(IMS) ;
+	//	ENTL_DEBUG("e1000_msix_other %s is called on %d, triggering watchdog ims %08x \n", netdev->name, test_bit(__E1000_DOWN, &adapter->state), ims );
+	//}
 
 	return IRQ_HANDLED;
 }
