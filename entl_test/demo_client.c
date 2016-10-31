@@ -124,7 +124,7 @@ void entl_error_sig_handler(int signum) {
       ifr[i].ifr_data = (char *) &(entl_data[i]);
       ACCESS_LOCK;
       
-      if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr) == -1) {
+      if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr[i]) == -1) {
       	ACCESS_UNLOCK;
       	printf("SIOCDEVPRIVATE_ENTL_RD_ERROR failed on %s\n", ifr[i].ifr_name);
 	
@@ -281,7 +281,27 @@ int main (int argc, char **argv){
       //toServer(links[i].json);
     }
     ACCESS_UNLOCK ;
+
   }
+
+
+
+
+  for(i= 0; i<NUM_INTERFACES; i++) {
+    
+    memset(&entl_data[i],0, sizeof(entl_data[i]));
+    ifr[i].ifr_data = (char *) &(entl_data[i]);
+    ACCESS_LOCK;
+    
+    if (ioctl(sock, SIOCDEVPRIVATE_ENTL_RD_ERROR, &ifr[i]) == -1) {
+      printf("SIOCDEVPRIVATE_ENTL_RD_ERROR failed on %s\n", ifr[i].ifr_name);
+
+    } else {
+      printf("SIOCDEVPRIVATE_ENTL_RD_ERROR succeded on %s\n", ifr[i].ifr_name);
+    }
+    ACCESS_UNLOCK;
+  }
+
   while (1) {
     //for (i=0; i<1; i++) {
     for (i=0; i<NUM_INTERFACES; i++) {
