@@ -249,13 +249,16 @@ int main (int argc, char **argv){
     perror("cannot create socket");
     return 0;
   }
+
+  signal(SIGUSR1, entl_error_sig_handler);
+  signal(SIGUSR2, entl_ait_sig_handler);
+
   
   for (i=0; i<NUM_INTERFACES; i++) {
     memset(&ifr[i], 0, sizeof(ifr[i]));
     strncpy(ifr[i].ifr_name, port_name[i], sizeof(ifr[i].ifr_name));
     
     // Set my handler here
-    signal(SIGUSR1, entl_error_sig_handler);
     //signal(SIGUSR2, entl_ait_sig_handler);
     memset(&entl_data[i], 0, sizeof(entl_data[i]));
     
