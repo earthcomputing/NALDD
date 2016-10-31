@@ -160,7 +160,7 @@ void main( int argc, char *argv[] ) {
     count++ ;
 
 		write( w_socket, message, strlen(message) ) ;
-		printf( "message %s\n", message ) ;
+		printf( "%s\n", message ) ;
 
 	}
 

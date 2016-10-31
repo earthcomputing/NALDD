@@ -65,7 +65,7 @@ var client = net.createServer(function(socket) {
                             if( connected ) {
                                 io.emit('state message', d);
                                 //s_socket.write(d+'\n') ;
-                                console.log('Sent data to targert');
+                                //console.log('Sent data to targert');
                             }
                         }                
                     }
