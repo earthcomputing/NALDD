@@ -288,9 +288,10 @@ int main (int argc, char **argv){
   }
 
 
+  printf("Processing SIOCDEVPRIVATE_ENTL_RD_ERROR \n" );
 
 
-  for(i= 0; i<NUM_INTERFACES; i++) {
+  for(i = 0; i<NUM_INTERFACES; i++) {
     
     memset(&entl_data[i],0, sizeof(entl_data[i]));
     ifr[i].ifr_data = (char *) &(entl_data[i]);
@@ -304,6 +305,8 @@ int main (int argc, char **argv){
     }
     ACCESS_UNLOCK;
   }
+
+  printf("Entering app loop \n" );
 
   while (1) {
     //for (i=0; i<1; i++) {
