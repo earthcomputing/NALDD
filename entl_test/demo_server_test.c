@@ -149,13 +149,14 @@ void main( int argc, char *argv[] ) {
 
 		sleep(1) ;
 
-    sprintf( message ,"{\"machineName\": \"%s\", \"deviceName\": \"%s\", \"linkState\":\"%s\",\"entlState\": \"%s\", \"entlCount\": \"%d\",\"AITSent\": \"%s\",\"AITRecieved\": \"%s\"}",
-       "demo_machine", "enp6s0",
+    sprintf( message ,"{\"machineName\": \"%s\", \"deviceName\": \"enp%ds0\", \"linkState\":\"%s\",\"entlState\": \"%s\", \"entlCount\": \"%d\",\"AITSent\": \"%s\",\"AITRecieved\": \"%s %d\"}",
+       "demo_machine", (count%4)+6,
        ((count & 1)?"UP":"DOWN"),
        (((count % 11)<9)?entlStateString[count % 11]:"UNKNOWN"),
        count,
        "AIT sent",
-       "Hello AIT");
+       "Hello AIT",
+       count);
 
     count++ ;
 

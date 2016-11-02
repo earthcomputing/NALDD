@@ -35,10 +35,12 @@ struct entl_driver_funcs {
 	struct ioctl_ait_data* (*next_AIT_message)( struct net_device *dev ) ;
 } ;
 
+#define ENTL_NAME_MAX_LEN 80 ;
+
 struct entl_driver {
 	unsigned char *name ;
 	struct net_device *device ;
-	struct entl_driver_funcs funcs ;
+	struct entl_driver_funcs *funcs ;
 } ;
 
 #define ECNL_TABLE_MAX 16
@@ -61,7 +63,8 @@ struct ecnl_device
 
 int ecnl_table_lookup( u16 upper, u32 lower ) ; 
 
+int encl_register_driver( unsigned char *name, struct net_device *device, struct entl_driver_funcs *funcs ) ;
 
-
+void encl_deregister_driver( struct entl_driver* dev ) ;
 
 #endif

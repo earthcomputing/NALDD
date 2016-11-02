@@ -221,22 +221,39 @@ static const struct genl_ops nl_ecnl_ops[] = {
 static struct ecnl_device this_device ;
 static int device_busy = 0 ;
 
-static int register_entl_driver( unsigned char *name, struct net_device *device, netdev_tx_t (*start_xmit)(struct sk_buff *skb, struct net_device *dev) ) 
+int encl_register_driver( unsigned char *name, struct net_device *device, struct entl_driver_funcs *funcs )
 {
 	unsigned long flags ;
-	this_device.
+	int index ;
 	spin_lock_irqsave( &this_device.drivers_lock, flags ) ;
+
 	ECNL_DEBUG( "register_entl_driver %s on %d\n", name, this_device.num_drivers ) ;
 	if( this_device.num_drivers < ECNL_DRIVER_MAX ) {
+		index = this_device.num_driver ;
 		this_device.drivers[this_device.num_drivers].name = name ;
 		this_device.drivers[this_device.num_drivers].device = device ;
-		this_device.drivers[this_device.num_drivers++].start_xmit = start_xmit ;		
+		this_device.drivers[this_device.num_drivers++].funcs = funcs ;		
 	}
 	else {
 		ECNL_DEBUG( "register_entl_driver driver table overflow %d\n", this_device.num_drivers ) ;
+		return NULL ;
 	}
 	spin_unlock_irqrestore( &this_device.drivers_lock, flags ) ;
-	return 0 ;
+	return index ;
+}
+
+void encl_deregister_driver( int index )
+{
+	unsigned long flags ;
+	int i ;
+	spin_lock_irqsave( &this_device.drivers_lock, flags ) ;
+	if( this_device.num_drivers && index < this_device.num_drivers ) {
+		this_device.num_drivers-- ;
+		for( i = index ; i < this_device.num_drivers  ; i++ ) {
+			this_device.drivers[i] = this_device.drivers[i+1] ;
+		}
+	}
+	spin_unlock_irqrestore( &this_device.drivers_lock, flags ) ;
 }
 
 static int ecnl_receive_skb(struct sk_buff *skb) {

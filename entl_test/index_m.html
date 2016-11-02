@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--<meta http-equiv="refresh" content="0;url=index.html">-->
+  
+  <script src="js/d3.min.js" type="text/Javascript"></script>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+
+  <!--<script src="enode-client.js" type="text/Javascript"></script>-->
+  <title>Earth Admin</title>
+  <!-- <script language="javascript">
+       window.location.href = "pages/index.html"
+       </script> -->
+  <style>
+    .entl-device {
+    font-family: "Arial Black", sans-serif;
+    font-size: 36px;
+    }
+    
+    .UP {
+    background-color: #55FF55;
+    bgcolor:#5FF55;
+    }
+    
+    .DOWN {
+    background-color: #FF5555;
+    bgcolor:#FF5555;
+    } 
+    
+    .IDLE {
+    background-color: #FF5555;
+    bgcolor:#FF5555;
+    } 
+
+    .RECEIVE {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+
+    .SEND {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+    
+    .AM {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+
+    .AH {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+
+    .BM {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+
+    .BH {
+    background-color: #55FF55;
+    bgcolor:#FF5555;
+    } 
+
+    .WAIT {
+    background-color: #FFDD00;
+    bgcolor:#FF8800;
+    }
+    
+    .HELLO {
+    background-color: #FFDD00;
+    bgcolor:#FF8800;
+    } 
+    
+  </style>
+</head>
+<body>
+<!--  <div>
+    <svg class="DOWN" id="enp2s0" style="height=200px;width=200px" />
+    enp2s0
+  </div> -->
+  <br/>
+  <br/>
+
+  <div class="entl-device" >
+    <table id="earth-enp6s0" border="1" >
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Device:</td>
+	<td id="device-name" align="center"> enp6s0 </td>
+	<td bgcolor="#AAAAFF" align="center"> Link:</td>
+	<td class="DOWN" id="link-status" align="center">DOWN </td>
+      </tr>
+      <tr>
+	<td id="entl-status" class="IDLE" align="center">Idle</td>
+	<td id="entl-count" colspan="3" align="right">0</td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
+	<td id="send-message" colspan="3" align="center"><input></input> </td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
+	<td id="recieved-message" colspan="3" align="center" >-none-</td>
+      </tr>
+      </table>
+    <!--    <svg class="DOWN" id="earth" style="height=200px;width=200px" />-->
+  </div>
+  <div class="entl-device" >
+    <table id="earth-enp7s0" border="1" >
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Device:</td>
+	<td id="device-name" align="center"> enp7s0 </td>
+	<td bgcolor="#AAAAFF" align="center"> Link:</td>
+	<td class="DOWN" id="link-status" align="center">DOWN </td>
+      </tr>
+      <tr>
+	<td id="entl-status" class="IDLE" align="center">Idle</td>
+	<td id="entl-count" colspan="3" align="right">0</td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
+	<td id="send-message" colspan="3" align="center"><input></input> </td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
+	<td id="recieved-message" colspan="3" align="center" >-none-</td>
+      </tr>
+      </table>
+<!--    <svg class="DOWN" id="earth" style="height=200px;width=200px" /> -->
+  </div>
+  <div class="entl-device" >
+    <table id="earth-enp8s0" border="1" >
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Device:</td>
+	<td id="device-name" align="center"> enp8s0 </td>
+	<td bgcolor="#AAAAFF" align="center"> Link:</td>
+	<td class="DOWN" id="link-status" align="center">DOWN </td>
+      </tr>
+      <tr>
+	<td id="entl-status" class="DOWN" align="center">Idle</td>
+	<td id="entl-count" colspan="3" align="right">0</td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
+	<td id="send-message" colspan="3" align="center"><input></input> </td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
+	<td id="recieved-message" colspan="3" align="center" >-none-</td>
+      </tr>
+      </table>
+<!--    <svg class="DOWN" id="earth" style="height=200px;width=200px" /> -->
+  </div>
+  <div class="entl-device" >
+    <table id="earth-enp9s0" border="1" >
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Device:</td>
+	<td id="device-name" align="center"> enp9s0 </td>
+	<td bgcolor="#AAAAFF" align="center"> Link:</td>
+	<td class="DOWN" id="link-status" align="center">DOWN </td>
+      </tr>
+      <tr>
+	<td id="entl-status" class="IDLE" align="center">IDLE</td>
+	<td id="entl-count" colspan="3" align="right">0</td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
+	<td colspan="3" align="center"><input  id="send-message" type="text" onblur="sendMessage(this.value, 'enp9s0')" onclick="this.value=''"></input> </td>
+      </tr>
+      <tr>
+	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
+	<td id="recieved-message" colspan="3" align="center" >-none-</td>
+      </tr>
+      </table>
+<!--    <svg class="DOWN" id="earth" style="height=200px;width=200px" />-->
+  </div>
+  <script type="text/Javascript">
+    
+   // <!---d3.select("#enp2s0").append("circle").attr("r", 50).attr("cx",150).attr("cy", 75).style("stroke", "black").style("stroke-width", "2px").style("fill", "blue");
+   // d3.select("#earth").append("circle").attr("r", 50).attr("cx",150).attr("cy", 75).style("stroke", "black").style("stroke-width", "2px").style("fill", "red");-->
+
+    var socket = io();
+
+    console.log(socket);
+    
+    socket.on("enp2s0-update", function(data) {
+    console.log(data);
+    d3.select("#enp2s0").attr("class", data.linkState);
+    });
+
+   socket.on("earth-update", function(data) {
+    data = data.toString();
+    data = JSON.parse(data) ;
+
+    console.log(data.AITRecieved);
+   
+    d3.select("#earth-"+data.deviceName).select("#device-name").text(data.deviceName);
+    d3.select("#earth-"+data.deviceName).select("#link-status").attr("class", data.linkState);
+    d3.select("#earth-"+data.deviceName).select("#link-status").text(data.linkState);
+    d3.select("#earth-"+data.deviceName).select("#entl-status").attr("class", data.entlState);
+    d3.select("#earth-"+data.deviceName).select("#entl-status").text(data.entlState);
+    d3.select("#earth-"+data.deviceName).select("#entl-count").text(data.entlCount);
+
+    d3.select("#earth-"+data.deviceName).select("#recieved-message").text(data.AITRecieved);
+   });
+
+   function sendMessage(message, i) {
+   var data = {"message": message, "port" : i};
+   console.log(data);
+   console.log(socket);
+   socket.emit("aitMessage", data);
+   }
+</script>
+</body>
+</html>
