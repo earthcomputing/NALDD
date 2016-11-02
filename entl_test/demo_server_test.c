@@ -103,6 +103,7 @@ void main( int argc, char *argv[] ) {
 	int port, a_len ;
 	int count = 0 ;
 	int err ;
+  int link[4] = {0,1,0,1} ;
 
   //if( argc != 2 ) {
   //  printf( "%s needs <server address> (e.g. 127.0.0.1) as the argument\n", argv[0] ) ;
@@ -145,18 +146,20 @@ void main( int argc, char *argv[] ) {
 
 	while( 1 ) {
 		char message[512] ;
+    int port = (count%4) ;
   	//printf( "sleeping 1 sec on %d\n", count ) ;
 
 		sleep(1) ;
 
     sprintf( message ,"{\"machineName\": \"%s\", \"deviceName\": \"enp%ds0\", \"linkState\":\"%s\",\"entlState\": \"%s\", \"entlCount\": \"%d\",\"AITSent\": \"%s\",\"AITRecieved\": \"%s %d\"}",
-       "demo_machine", (count%4)+6,
-       ((count & 1)?"UP":"DOWN"),
+       "demo_machine", port+6,
+       ((link[port])?"UP":"DOWN"),
        (((count % 11)<9)?entlStateString[count % 11]:"UNKNOWN"),
        count,
        "AIT sent",
        "Hello AIT",
        count);
+    link[port] = (link[port]+1) & 1 ;
 
     count++ ;
 
