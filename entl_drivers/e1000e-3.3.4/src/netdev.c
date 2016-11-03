@@ -50,9 +50,9 @@
 #include "e1000.h"
 
 #ifdef CONFIG_E1000E_NAPI
-#define DRV_EXTRAVERSION "-NAPI-ENTL"
+#define DRV_EXTRAVERSION "-NAPI-ENTL4"
 #else
-#define DRV_EXTRAVERSION "-ENTL"
+#define DRV_EXTRAVERSION "-ENTL4"
 #endif
 
 #define DRV_VERSION "3.3.4" DRV_EXTRAVERSION
@@ -8803,7 +8803,7 @@ module_exit(e1000_exit_module);
 #include "entl_device.c"
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com> + Earth Computing");
-MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver with Earth Computing Extension");
+MODULE_DESCRIPTION("Intel(R) PRO/1000 Network Driver with Earth Computing Extension Demo4");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
