@@ -35,10 +35,10 @@ mm: mm.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
 demo_server_test: demo_server_test.c
-	cc -pthread -lpthread -lm -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}
+	cc -pthread -lpthread -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}  -lm 
 
 demo_client: demo_client.c
-	cc -pthread -lpthread -lm -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}
+	cc -pthread -lpthread -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}  -lm
 
 tx_test: tx_test_main.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
