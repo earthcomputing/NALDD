@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#include "cJSON.h"
+
 #include "entl_user_api.h"
 
 typedef struct link_device {
@@ -200,6 +202,52 @@ static void entl_ait_sender( int i, char* msg ) {
 
 static char *port_name[NUM_INTERFACES] = {"enp6s0","enp7s0","enp8s0","enp9s0"};
 
+#define INMAX 1024
+static char inlin[INMAX];
+
+static int read_window() {
+  int rr, n;
+    n = INMAX;
+    //printf( "calling read\n" ) ;
+    rr = read(w_socket,inlin,n);
+    //printf( "done read with %d \n", rr ) ;
+    if (rr <= 0) {
+        rr = 0;
+    }
+    inlin[rr] = '\0';
+    // printf( "got %s\n", inlin ) ;
+    return rr ;
+}
+
+static pthread_t read_thread ;
+
+static void read_task( void* me )
+{
+  printf( "read_task started\n") ;
+    while(1) {
+      if( read_window() ) {
+          if( inlin[0] != '\n' ) {
+            cJSON * root = cJSON_Parse(inlin);
+            if( root ) {
+              int i ;
+              char *port = cJSON_GetObjectItem(root,"port")->valuestring ;
+              char *message = cJSON_GetObjectItem(root,"message")->valuestring ;
+              for( i = 0 ; i<NUM_INTERFACES; i++) {
+                if( !strcmp(port, port_name[i]) ) {
+                  printf( "port %s index %d message %s\n", port, i, message) ;
+                  entl_ait_sender(i, message) ;
+                  break ;
+                }
+              }
+              cJSON_Delete(root);
+            }
+          }
+        }
+        else {
+          sleep(1) ;
+        }
+    }
+}
 
 int main (int argc, char **argv){
   int i = 0;
@@ -306,6 +354,8 @@ int main (int argc, char **argv){
     ACCESS_UNLOCK;
   }
 
+  pthread_create( &read_thread, NULL, read_task, NULL );
+
   printf("Entering app loop \n" );
 
   while (1) {
@@ -338,6 +388,7 @@ int main (int argc, char **argv){
       	//printf("bytes = %d\n%s\n", lenPut[i], putString);
         ACCESS_UNLOCK ;
       }
+      /*
       if( count > 10 && ait_port == i && links[i].linkState && links[i].entlState >= 3 &&  links[i].entlState <= 6 ) {
         count = 0 ;
         ait_port = (ait_port+1) % NUM_INTERFACES ;
@@ -345,6 +396,7 @@ int main (int argc, char **argv){
         entl_ait_sender( i, links[i].AITMessageS ) ;
         modified = 1 ;
       }
+      */
       if( modified) {
           lenObj[i] = toJSON(&links[i]);
           toServer(links[i].json);

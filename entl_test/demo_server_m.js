@@ -5,7 +5,7 @@ var net = require('net');
 
 var json_data = {};
 var connected = 0 ;
-var s_socket ;
+var c_socket ;
 var express = require('express');
 var path = require('path');
 
@@ -21,10 +21,12 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
     console.log('io connected')
-    s_socket = socket ;
     connected = 1 ;
-  socket.on('ait message', function(msg){
-    console.log('AIT'+msg);
+  socket.on('aitMessage', function(msg){
+    var message = msg.message ;
+    var port = msg.port ;
+    console.log('AIT ' + port + ' ' + message);
+    c_socket.write( '{ \"port\": \"' + port + '\", \"message\":\"' + message + '\" }')
   });
 });
 
@@ -79,6 +81,7 @@ function isBlank(str) {
 }
 
 var client = net.createServer(function(socket) {
+    c_socket = socket ;
     console.log('Client connected');
 
     //socket.write('Echo server\r\n');

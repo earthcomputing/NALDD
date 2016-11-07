@@ -28,7 +28,7 @@
 #define DRV_NAME	"ecnl"
 #define DRV_VERSION	"1.0"
 
-#define DRV_VERSION "0.0.1" 
+// #define DRV_VERSION "0.0.1" 
 
 char ecnl_driver_name[] = DRV_NAME ;
 const char ecnl_driver_version[] = DRV_VERSION ;
@@ -68,7 +68,6 @@ static const struct genl_multicast_group nl_ecnd_mcgrps[] = {
 static const struct nla_policy nl_ecnl_policy[NL_ECND_ATTR_MAX+1] = {
 	[NL_ECND_ATTR_DEVICE_NAME] = { .type = NLA_NUL_STRING, .len = 20-1 },
 	[NL_ECND_ATTR_LINK_STATE] = { .type = NLA_U32 },
-	[NL_ECND_ATTR_LINK_STATE] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_LINK_NUMBER] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_ERROR_FLAG] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_TIME_SEC] = { .type = NLA_U64 },
@@ -95,7 +94,7 @@ static void nl_ecnl_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
 
 static int nl_ecnl_get_state(struct sk_buff *skb, struct genl_info *info)
 {
-
+	
 	return 0 ;
 }
 

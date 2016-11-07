@@ -96,7 +96,12 @@
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
-	<td id="send-message" colspan="3" align="center"><input></input> </td>
+   <td colspan="3" align="center">
+    <FORM NAME="myform6" ACTION="" METHOD="GET">
+      <INPUT TYPE="text" NAME="inputbox" VALUE="">
+      <INPUT TYPE="button" NAME="button" Value="send" onClick="sendMessage(this.form, 'enp6s0')">
+    </FORM>
+  </td>
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
@@ -119,7 +124,12 @@
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
-	<td id="send-message" colspan="3" align="center"><input></input> </td>
+  <td colspan="3" align="center">
+    <FORM NAME="myform7" ACTION="" METHOD="GET">
+      <INPUT TYPE="text" NAME="inputbox" VALUE="">
+      <INPUT TYPE="button" NAME="button" Value="send" onClick="sendMessage(this.form, 'enp7s0')">
+    </FORM>
+  </td>
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
@@ -142,7 +152,12 @@
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
-	<td id="send-message" colspan="3" align="center"><input></input> </td>
+  <td colspan="3" align="center">
+    <FORM NAME="myform8" ACTION="" METHOD="GET">
+      <INPUT TYPE="text" NAME="inputbox" VALUE="">
+      <INPUT TYPE="button" NAME="button" Value="send" onClick="sendMessage(this.form, 'enp8s0')">
+    </FORM>
+  </td>
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
@@ -165,7 +180,12 @@
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="right"> Send Message via AIT:</td>
-	<td colspan="3" align="center"><input  id="send-message" type="text" onblur="sendMessage(this.value, 'enp9s0')" onclick="this.value=''"></input> </td>
+	  <td colspan="3" align="center">
+    <FORM NAME="myform9" ACTION="" METHOD="GET">
+      <INPUT TYPE="text" NAME="inputbox" VALUE="">
+      <INPUT TYPE="button" NAME="button" Value="send" onClick="sendMessage(this.form, 'enp9s0')">
+    </FORM>
+    </td>
       </tr>
       <tr>
 	<td bgcolor="#AAAAFF" align="center"> Recieved Message via AIT:</td>
@@ -183,6 +203,12 @@
 
     console.log(socket);
     
+    //$('form').submit(function(){
+    //    socket.emit('ait message', $('#m').val());
+    //    $('#m').val('');
+    //    return false;
+    //});
+
     socket.on("enp2s0-update", function(data) {
     console.log(data);
     d3.select("#enp2s0").attr("class", data.linkState);
@@ -204,12 +230,14 @@
     d3.select("#earth-"+data.deviceName).select("#recieved-message").text(data.AITRecieved);
    });
 
-   function sendMessage(message, i) {
+   function sendMessage(formi, i) {
+    var message = formi.inputbox.value ;
+    formi.inputbox.value = '' ;
    var data = {"message": message, "port" : i};
    console.log(data);
    console.log(socket);
    socket.emit("aitMessage", data);
-   }
+   }  
 </script>
 </body>
 </html>

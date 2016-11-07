@@ -8,6 +8,9 @@ SHELL :=/bin/bash
 # include headers for driver api
 INCLUDE = ../entl_drivers/e1000e-3.3.4/src/
 
+CJSON = ../cJSON/
+CJSON_SRC = ../cJSON/cJSON.c
+
 SRC= entl_test_main.c entl_signal_test_main.c ifconfig.c demo_window.c mm.c
 
 OBJS = $(SRC: .c=.o)
@@ -32,10 +35,10 @@ mm: mm.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
 
 demo_server_test: demo_server_test.c
-	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+	cc -pthread -lpthread -lm -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}
 
 demo_client: demo_client.c
-	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?
+	cc -pthread -lpthread -lm -I ${INCLUDE} -I ${CJSON} -o $@ $? ${CJSON_SRC}
 
 tx_test: tx_test_main.c
 	cc -pthread -lpthread -I ${INCLUDE} -o $@ $?

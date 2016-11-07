@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#include "cJSON.h"
+
 static int sockfd, w_socket ;
 static struct sockaddr_in sockaddr, w_sockaddr ;
 
@@ -28,6 +30,9 @@ static int sin_port ;
 
 #define PRINTF printf
 #define DEFAULT_DBG_PORT  1337
+#define NUM_INTERFACES 4
+
+static char *port_name[NUM_INTERFACES] = {"enp6s0","enp7s0","enp8s0","enp9s0"};
 
 static int open_socket( char *addr ) {
   	int st = -1 ;
@@ -76,7 +81,7 @@ static int read_window() {
       	rr = 0;
    	}
    	inlin[rr] = '\0';
-   	// printf( "got %s\n", inlin ) ;
+   	printf( "got %s\n", inlin ) ;
    	return rr ;
 }
 
@@ -88,7 +93,22 @@ static void read_task( void* me )
     while(1) {
     	if( read_window() ) {
         	if( inlin[0] != '\n' ) {
-        	    printf( "got data: %s\n", inlin ) ;
+        	    //printf( "got data: %s\n", inlin ) ;
+              cJSON * root = cJSON_Parse(inlin);
+              if( root ) {
+                int i ;
+                char *port = cJSON_GetObjectItem(root,"port")->valuestring ;
+                char *message = cJSON_GetObjectItem(root,"message")->valuestring ;
+                for( i = 0 ; i<NUM_INTERFACES; i++) {
+                  if( !strcmp(port, port_name[i]) ) {
+                    printf( "port %s index %d message %s\n", port, i, message) ;
+
+                    break ;
+                  }
+                }                
+                  cJSON_Delete(root);
+              }
+
         	}
         }
         else {
@@ -164,7 +184,7 @@ void main( int argc, char *argv[] ) {
     count++ ;
 
 		write( w_socket, message, strlen(message) ) ;
-		printf( "%s\n", message ) ;
+		//printf( "%s\n", message ) ;
 
 	}
 
