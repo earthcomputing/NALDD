@@ -18,11 +18,15 @@
     }
     
     .UP {
+    table-layout: fixed;
+    width: 200px;
     background-color: #55FF55;
     bgcolor:#5FF55;
     }
     
     .DOWN {
+    table-layout: fixed;
+    width: 200px;      
     background-color: #FF5555;
     bgcolor:#FF5555;
     } 
@@ -88,7 +92,7 @@
 	<td bgcolor="#AAAAFF" align="center"> Device:</td>
 	<td id="device-name" align="center"> enp6s0 </td>
 	<td bgcolor="#AAAAFF" align="center"> Link:</td>
-	<td class="DOWN" id="link-status" align="center">DOWN </td>
+	<td class="DOWN" colspan="10" id="link-status" align="center">DOWN</td>
       </tr>
       <tr>
 	<td id="entl-status" class="IDLE" align="center">Idle</td>
