@@ -17,7 +17,7 @@ table, td {  border: 1px solid black; }
 // http://172.16.1.67:3000/   // homer
 var cells=[
   {
-    machineName:"Marge",   // machineName
+    machineName:"Maggie",   // machineName
     ports:["enp6s0","a","b","c"],
     color:'yellow',
     dataURL:'http://172.16.1.40:3000/'
@@ -39,7 +39,7 @@ cells.forEach(function(d){
   table.append($('<tr>').append(td));
 
 //var url=document.URL.split('/').slice(0,-1).join('+') + '/' + "cell.html";
-  var url="cell.html";  // we don't need the full path
+  var url=d.dataURL ; //"cell.html";  // we don't need the full path
   var url2=url+'?'+'machineName='+d.machineName+'&'+'color='+d.color;
   td.append($('<a>').addClass("cell-link").attr('href',url2).html(d.machineName));
 });
