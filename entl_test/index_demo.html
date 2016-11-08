@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<!-- http://www.cssfontstack.com/Arial-Black -->
+<style>
+table, td {  border: 1px solid black; }
+.cell-link   { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+  font-size:30px; font-style:normal; font-variant:normal; font-weight:500; line-height:15.4px;
+}
+</style>
+<script type='text/javascript' src='https://code.jquery.com/jquery-1.12.1.js'></script>
+<script src="datamock.js"></script>
+<H1>Earth Computing</H1>
+<h2>cells:</H2>
+<table></table>
+<script> 
+// http://172.16.1.40:3000/   // marge
+// http://172.16.1.67:3000/   // homer
+var cells=[
+  {
+    machineName:"Marge",   // machineName
+    ports:["enp6s0","a","b","c"],
+    color:'yellow',
+    dataURL:'http://172.16.1.40:3000/'
+   },
+   {
+    machineName:"Homer",
+    ports:["enp6s0","a","b","c"],
+    color:'aqua',
+    dataURL:'http://172.16.1.67:3000/'
+   }
+];
+
+var table=$('body').append($('<table>'));
+
+
+cells.forEach(function(d){
+  var td=$('<td>').attr({ align:"center", valign:"middle", width:300, height:100 })
+                  .css({background:d.color  });
+  table.append($('<tr>').append(td));
+
+//var url=document.URL.split('/').slice(0,-1).join('+') + '/' + "cell.html";
+  var url="cell.html";  // we don't need the full path
+  var url2=url+'?'+'machineName='+d.machineName+'&'+'color='+d.color;
+  td.append($('<a>').addClass("cell-link").attr('href',url2).html(d.machineName));
+});
+
+// url decoding 
+// var kv=document.URL.split('?')[1].split('&').map(function(d){ return d.split('='); });
+//var o={}; kv.forEach(function(d){ o[d[0]]=d[1]; }); // convert to a hash
+
+</script>
+
