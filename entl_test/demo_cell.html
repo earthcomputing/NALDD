@@ -126,8 +126,8 @@ var processPacket=(function(){
 		var revs=Math.floor(val/fullScale); // not used - needed when multiple rotations during animation
 		if(kill){ return; }
 		var reading=(val%fullScale)/fullScale;
-
-		$('#svg_'+port+' circle').css({ fill: packet.entlState=="UNKNOWN" ? 'red' : 'green' });
+		var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
+		$('#svg_'+port+' circle').css({ fill: clr });
 		$('#counter_'+port).html(val%100);
 		if(revs0[packet.deviceName]!=undefined && revs0[packet.deviceName]<revs){
 		  var v0=revs0[packet.deviceName] ? revs0[packet.deviceName] : 0;
@@ -169,7 +169,10 @@ socket.on("earth-update", function(data) {
 });
 
 var deviceName2port={   // zzzz how get port ids for a cell
-  enp6s0:'2'  // 2 would be the 2nd column
+  enp6s0:'1',  // 2 would be the 2nd column
+  enp7s0:'4',  // 2 would be the 2nd column
+  enp8s0:'2',  // 2 would be the 2nd column
+  enp9s0:'3'  // 2 would be the 2nd column
 }
 // =============================== the mock stuff
 
