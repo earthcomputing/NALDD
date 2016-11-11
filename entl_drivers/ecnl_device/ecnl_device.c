@@ -94,7 +94,7 @@ static void nl_ecnl_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
 
 static int nl_ecnl_get_state(struct sk_buff *skb, struct genl_info *info)
 {
-	
+
 	return 0 ;
 }
 
@@ -256,16 +256,39 @@ void encl_deregister_driver( int index )
 }
 
 static int ecnl_receive_skb(struct sk_buff *skb) {
-	if( this_device.fw_enable && current_table ) {
-		struct ethhdr *eth = (struct ethhdr *)skb->data ;
-
-		u32 index = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 8 | (u32)eth->h_source[5] ;
+	unsigned long flags ;
+	struct ethhdr *eth = (struct ethhdr *)skb->data ;
+	u32 index = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 8 | (u32)eth->h_source[5] ;
+	u32 in = index >> 4 ;
+	u32 off = index & 0xf ;
+	spin_lock_irqsave( &this_device.drivers_lock, flags ) ;
+	if( fw_enable && current_table ) {
 		if( index > this_device.current_table_size ) {
+			spin_unlock_irqrestore( &this_device.drivers_lock, flags ) ;
 			ECNL_DEBUG( "ecnl_receive_skb table index overflow %d > %d\n", index, this_device.current_table_size ) ;
 		}
 		else {
 			ecnl_table_entry e = this_device.current_table[in]
+			spin_unlock_irqrestore( &this_device.drivers_lock, flags ) ;
+			u8 dest = (e >> (off*4)) & 0xf ;  // 16 entries per 64 bit, 4 bit per entry
+			if( dest == 0 ) {
+				// send to this host
+				
+			}
+			else {
+				struct net_device *nexthop = drivers_map.drivers_map[dest-1].device ;
+				struct entl_driver_funcs *funcs = drivers_map.drivers_map[dest-1].func ;
+				if( nexthop && funcs ) {
+					// forwarding to next driver
+					funcs->start_xmit(skb, nexthop) ;
+				}
+			}
+
+
 		}
+	}
+	else {
+		spin_unlock_irqrestore( &this_device.drivers_lock, flags ) ;
 	}
 	return 0 ; 
 }

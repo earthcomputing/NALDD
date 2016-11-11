@@ -5,7 +5,7 @@ var net = require('net');
 
 var json_data = {};
 var connected = 0 ;
-var s_socket ;
+var c_socket ;
 
 var app = require('express')();
 var http = require('http').Server(app);
@@ -17,7 +17,6 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function(socket){
-    s_socket = socket ;
     connected = 1 ;
   socket.on('ait message', function(msg){
     console.log('AIT'+msg);
@@ -40,6 +39,7 @@ function isBlank(str) {
 }
 
 var client = net.createServer(function(socket) {
+    c_socket = socket ;
     console.log('Client connected');
 
     //socket.write('Echo server\r\n');
