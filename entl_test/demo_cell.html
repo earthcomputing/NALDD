@@ -32,10 +32,10 @@ path  {
 }
 
 </style>
-<script type='text/javascript' src='https://code.jquery.com/jquery-1.12.1.js'></script>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="https://d3js.org/d3-selection-multi.v0.4.min.js">implements .attrs for d3.v4 GGG</script>
-<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script type='text/javascript' src='node_modules/jquery/dist/jquery.js'></script>
+<script src="js/d3.min.js" type="text/Javascript"></script>
+<script src="node_modules/d3-selection-multi/build/d3-selection-multi.min.js" type="text/Javascript">implements .attrs for d3.v4 GGG</script>
+<script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js" type="text/Javascript"></script>
 <script src="datamock.js"></script>
 <H1>Earth Computing</H1>
 
@@ -234,8 +234,11 @@ var processPacket=(function(){
 	var duration=400;
 	return function(packet){
 		var val=parseInt(packet.entlCount);
-    animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
-    val0[packet.deviceName]=val;
+		var port=deviceName2port[packet.deviceName];
+    	animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
+    	val0[packet.deviceName]=val;
+    	var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
+		$('#svg_'+port+' circle').css({ fill: clr });
 	};
 })();
 
@@ -256,7 +259,10 @@ socket.on("earth-update", function(data) {
 });
 
 var deviceName2port={   // zzzz how get port ids for a cell
-  enp6s0:'2'  // 2 would be the 2nd column
+  enp6s0:'1',  
+  enp7s0:'4',  
+  enp8s0:'2',  
+  enp9s0:'3' 
 }
 // =============================== the mock stuff
 
