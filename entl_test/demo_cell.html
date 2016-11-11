@@ -111,7 +111,7 @@ var TableWith3Rows=function(parent){
 		        setTimeout(function(){ if($("#AITMsgBody")[0].value==oldString){ $("#AITMsgBody")[0].value=''; } },3000);
 		    //    alert('socket: '+$(this).data('id')+'___'+$("#AITMsgBody")[0].value); 
 		    
-		        sendPacket(parseInt(id)>4 ? 1 : parseInt(id)+1, $("#AITMsgBody")[0].value);
+		        sendPacket(parseInt(id), $("#AITMsgBody")[0].value);
 		      })
 		  )
 		);
@@ -143,12 +143,6 @@ var TableWith3Rows=function(parent){
   return self;
 };
 
-var sendPacket=function(destination,msg){
-
-  $('#recvBody_'+destination).html(msg);
-  $('#recv_'+destination).css({"background-color":"pink"});
-  setTimeout(function(){ $('#recv_'+destination).css({"background-color":"transparent"}); },1500);
-};
 
 $().ready(function(){
   $('body').css({background:machineColor});
@@ -228,17 +222,25 @@ var animateRot=function(val0,val,$select){
     .on("end",function(){ deg(0,1).on("end",function(){ rot(durationEaRot,rots,finishFn); }); }); // do the rots & end
 };
 
-
+var p_messages = [ "", "", "", "" ] ;
 var processPacket=(function(){
 	var val0={};
 	var duration=400;
 	return function(packet){
 		var val=parseInt(packet.entlCount);
 		var port=deviceName2port[packet.deviceName];
-    	animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
-    	val0[packet.deviceName]=val;
-    	var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
+    animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
+    val0[packet.deviceName]=val;
+    var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
 		$('#svg_'+port+' circle').css({ fill: clr });
+    var msg = packet.AITRecieved ;
+    if( p_messages[port] != msg ) {
+        $('#recvBody_'+port).html(msg);
+        $('#recv_'+port).css({"background-color":"pink"});
+        setTimeout(function(){ $('#recv_'+port).css({"background-color":"transparent"}); },1500);
+        p_messages[port] = msg;
+    }
+  
 	};
 })();
 
@@ -264,6 +266,38 @@ var deviceName2port={   // zzzz how get port ids for a cell
   enp8s0:'2',  
   enp9s0:'3' 
 }
+
+var port2deviceName={   // zzzz how get port ids for a cell
+  1:'enp6s0',  
+  4:'enp7s0',  
+  2:'enp8s0',  
+  3:'enp9s0' 
+}
+
+var sendPacket=function(source,msg){
+
+  //$('#recvBody_'+destination).html(msg);
+  //$('#recv_'+destination).css({"background-color":"pink"});
+  //setTimeout(function(){ $('#recv_'+destination).css({"background-color":"transparent"}); },1500);
+    var port=port2deviceName[source];
+
+   var data = {"message": msg, "port" : port};
+   console.log(data);
+   console.log(socket);
+
+   socket.emit("aitMessage", data);
+
+};
+
+function sendMessage(formi, i) {
+    var message = formi.inputbox.value ;
+    formi.inputbox.value = '' ;
+   var data = {"message": message, "port" : i};
+   console.log(data);
+   console.log(socket);
+   socket.emit("aitMessage", data);
+}  
+
 // =============================== the mock stuff
 
 var runMockData=function(data){  // 
