@@ -155,6 +155,10 @@ $().ready(function(){
   table.addColumn('4');
   
   var inp=$("<input>").attr({ id:"AITMsgBody", class:"med" });
+  inp.css('border','6px solid #999');
+  inp.css('border-radius','10px');
+  inp.css('margin-left','100px');
+  inp.css('padding-left','10px');
   $('body')
     .append('<br/>').append('<br/>').append('<br/>').append('<br/>')
     .append(inp);
