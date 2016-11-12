@@ -180,7 +180,7 @@ var tau = 2 * Math.PI; // http://tauday.com/tau-manifesto
 var animateRot=function(val0,val,$select){
   var tau = 2 * Math.PI; // http://tauday.com/tau-manifesto
 
-  var deg=function(val,dur){ return $select.transition().duration(dur?dur:2000).attrTween("d",arcTween((val/360)*tau)); };
+  var deg=function(val,dur){ return $select.transition().duration(dur?dur:500).attrTween("d",arcTween((val/360)*tau)); };
 
   var rot=function(rotTime,cnt,finiFn){ 
     if(cnt>0){
@@ -192,8 +192,8 @@ var animateRot=function(val0,val,$select){
 		}
   };
   
-  var duration=900;  // might need to up this
-  var fullScale=100; // one revolution is 10
+  var duration=500;  // might need to up this
+  var fullScale=1000; // one revolution is 10
 	
   var revs0=Math.floor(val0/fullScale);
   var revs =Math.floor( val/fullScale);
