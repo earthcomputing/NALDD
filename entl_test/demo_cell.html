@@ -229,6 +229,7 @@ var processPacket=(function(){
 	return function(packet){
 		var val=parseInt(packet.entlCount);
 		var port=deviceName2port[packet.deviceName];
+		$('#counter_'+port).html(val%10000);
     animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
     val0[packet.deviceName]=val;
     var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
