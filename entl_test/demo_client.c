@@ -360,8 +360,8 @@ int main (int argc, char **argv){
 
   printf("Entering app loop \n" );
 
-  ts.tv_sec = 0;
-  ts.tv_nsec = 3000000; // 300 ms
+  //ts.tv_sec = 0;
+  //ts.tv_nsec = 3000000; // 300 ms
 
   while (1) {
     //for (i=0; i<1; i++) {
@@ -409,8 +409,8 @@ int main (int argc, char **argv){
     }
     count++ ;
 
-    nanosleep(&ts, NULL);
-    // sleep(1);    
+    //nanosleep(&ts, NULL);
+    sleep(1);    
   }  
   return 0;
 }
