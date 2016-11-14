@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <time.h>   // for nanosleep
 
 #include "cJSON.h"
 
@@ -257,6 +258,7 @@ int main (int argc, char **argv){
   int ait_port = 0 ;
   int port ;
   int flag = 1 ;
+  struct timespec ts;
 
   pthread_mutex_init( &access_mutex, NULL ) ;
 
@@ -358,6 +360,9 @@ int main (int argc, char **argv){
 
   printf("Entering app loop \n" );
 
+  ts.tv_sec = 0;
+  ts.tv_nsec = 3000000; // 300 ms
+
   while (1) {
     //for (i=0; i<1; i++) {
     for (i=0; i<NUM_INTERFACES; i++) {
@@ -404,7 +409,8 @@ int main (int argc, char **argv){
     }
     count++ ;
 
-    sleep(1);    
+    nanosleep(&ts, NULL);
+    // sleep(1);    
   }  
   return 0;
 }
