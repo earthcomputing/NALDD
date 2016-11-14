@@ -15,7 +15,7 @@ This note shows the step by step procedure to bring up an Ubuntu system for deve
 6.	Click restart now when it’s done
 7.	Connect to the Internet somehow. I use physical Ethernet on enp2s0
 8.	Open terminal and say “uname –r’ to heck the OS version
-9.	Follow the process to recompile Linux kernel 
+9.	Follow the process to recompile linux kernel 
 10.	Type: sudo apt-set update
 11.	Create dir : mkdir kernel
 12.	cd kernel
@@ -32,13 +32,13 @@ This note shows the step by step procedure to bring up an Ubuntu system for deve
  (use your github id and password)
  Now, comfirm git branch is on develop. (If not, type: git checkout develop)
 19.	Replace e1000e driver code to ENTL version (*)
-mv ~/kernel/Linux-4.4.0/drivers/net/ethernet/intel/e1000e/ ~
-cp -r NALDD/entl_drivers/ e1000e-3.3.4/src ~/kernel/Linux-4.4.0/drivers/net/ethernet/intel/e1000e/
+mv ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ ~
+cp -r NALDD/entl_drivers/ e1000e-3.3.4/src ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/
 20.	Replace Makefile for kernel build (*)
-cd ~/kernel/Linux-4.4.0/drivers/net/ethernet/intel/e1000e/ 
+cd ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ 
 mv Makefile.k Makefile
-21.	cd ~/kernel/Linux-4.4.0
-22.	Type: sudo apt-get install nurses-dev (*)
+21.	cd ~/kernel/linux-4.4.0
+22.	Type: sudo apt-get install ncurses-dev (*)
 23.	Type: 
 chmod a+x debian/rules 
 chmod a+x debian/scripts/*
