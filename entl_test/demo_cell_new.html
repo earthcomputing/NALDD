@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<!-- http://www.cssfontstack.com/Arial-Black -->
+<style>
+table     { background:'red'; cellspacing:0; }
+table, td {  border: 0px solid black; background:'none'; }
+.count     { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+	font-size: 45px; font-style: normal; font-variant: normal;	font-weight: 500;	line-height: 15.4px;
+}
+.med     { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+	font-size: 35px; font-style: normal; font-variant: normal;	font-weight: 500;	line-height: 30.4px;
+
+	 fill:none;
+}
+h2     { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+	font-size: 60px; font-style: normal; font-variant: normal;	font-weight: 500;	line-height: 15.4px;
+}
+path  {
+  fill:'blue'
+  
+}
+
+.btn-lg, .btn-group-lg>.btn {
+    padding: 10px 16px;
+    font-size: 18px;
+    line-height: 1.33;
+    border-radius: 6px;
+}
+
+.r45 {
+    transform: rotate(60deg);
+}
+
+</style>
+<script type='text/javascript' src='https://code.jquery.com/jquery-1.12.1.js'></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-selection-multi.v0.4.min.js">implements .attrs for d3.v4 GGG</script>
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="datamock.js"></script>
+<H1>Earth Computing</H1>
+
+<h2>cells:</H2>
+<script>  // https://bl.ocks.org/mbostock/5100636
+
+var kv=document.URL.split('?')[1].split('&').map(function(d){ return d.split('='); });
+var o={}; kv.forEach(function(d){ o[d[0]]=d[1]; }); // convert to a hash
+
+$('h2').html('Cell: '+o.machineName);
+var machineColor=o.color; 
+
+var tau = 2 * Math.PI; // http://tauday.com/tau-manifesto
+
+var siz=150;
+var wid=siz, ht=siz;
+var svg;
+
+var boxColor="#c0cfd3";
+
+// computes path string from endAngle
+var arc = d3.arc().innerRadius(Math.floor(0.5*siz/2)).outerRadius(Math.floor(0.8*siz/2)).startAngle(0); 
+
+/*
+{"machineName": "demo_machine", "deviceName": "enp6s0", "linkState":"UP",
+"entlState": "RECEIVE", "entlCount": "15",
+"AITSent": "AIT sent",
+"AITRecieved": "Hello AIT"
+},
+*/
+/*  TBD  
+  1) full circle
+  2) delay for 0.200 sec and accumulate
+*/
+
+
+var  background,arcTop,center;  // very kludgy
+var TableWith3Rows=function(parent){
+  var r1=$('<tr>'), r2=$('<tr>'), r3=$('<tr>'), r4=$('<tr>');
+  var table=$('<table>').attr({cellspacing:0});
+  $('body').append(table);
+  table.append(r1).append(r2).append(r3).append(r4).css({ background:boxColor });
+  table.css({ background:'none'});       // doesnt work
+//  $('table').css({ background:'none'});  // works
+
+  var self= {
+	  addColumn:function(id){ // adds a column to the table for a port's data
+		cell11=$('<td>').attr({ id:"count_"+id, class:'column'+id+" tdForCount", align:"center", valign:"middle" })
+		                                                                    .css({ background:boxColor });
+		cell21=$('<td>').attr({ id:"meter_"+id,class:'column'+id }).css({ background:boxColor });
+		cell31=$('<td>').attr({ id:"send_"+id ,class:'column'+id+" tdForButton", align:"center", valign:"middle" });
+		cell41=$('<td>').attr({ id:"recv_"+id ,class:'column'+id+" tdForRecv"  , align:"center", valign:"middle" });
+		r1.append(cell11);
+		r2.append(cell21);
+		r3.append(cell31);
+		r4.append(cell41);
+		$('td').css({width:siz});
+      $('.tdForCount' ).attr({ height:50});  // height is a min value
+      $('.tdForButton').attr({ height:70});  // height is a min value       
+      $('.tdForRecv'  ).attr({ height:150});
+		if(id==undefined){ return; }   // kludge
+		// init content  NOT part of the table layout
+		cell11.append($('<div>').attr({id:"counter_"+id, class:"count" }).html(" --- "));
+		cell31.append(
+		  $('<div>').attr({id:"counter_"+id, class:"count" }).append(
+		    $('<button>').data('id',id).attr({id:"sendButton_"+id, class:"med" }).css({height:45}).html('Send')
+		      .on('click',function(d){ 
+		        var clr=$(this).css("background-color"); // is a string, we need the rbg fn
+		        $(this).css({ "background-color":'pink'});
+		        var obj=$(this);
+		        var oldString=$("#AITMsgBody")[0].value;
+		        setTimeout(function(){ obj.css({"background-color":clr}); },1500);
+		        setTimeout(function(){ if($("#AITMsgBody")[0].value==oldString){ $("#AITMsgBody")[0].value=''; } },3000);
+		    //    alert('socket: '+$(this).data('id')+'___'+$("#AITMsgBody")[0].value); 
+		    
+		        sendPacket(parseInt(id)>4 ? 1 : parseInt(id)+1, $("#AITMsgBody")[0].value);
+		      })
+		  )
+		);
+		cell41.append(
+		  $('<div>').attr({id:"recvBody_"+id, class:"r45  med" }).html("-----")
+		);
+		$('#recv_undefined').html('RECV:').attr({class:'med'})
+		
+		// $.data(elm,k,json)
+		
+		// tbd: http://bootsnipp.com/snippets/featured/rounded-buttons  get this working
+		// http://stackoverflow.com/questions/11689427/resizing-a-button
+		// http://jsfiddle.net/dzb8d/3/
+		
+		// https://codepen.io/palimadra/pen/jHodC  this is nice
+		// http://cssdeck.com/labs/large-pressable-css-button also nice
+		
+		var svg=d3.select("#meter_"+id).append("svg").attrs({ id:"svg_"+id,width: wid, height: ht });
+		var g = svg.append("g").attr("transform", "translate("+ svg.attr("width")/2 +","+ svg.attr("height")/2 +")"); // origin at center  
+		background=g.append("path"  ).style("fill","#ddd").datum({endAngle:tau}).attr("d",arc); // datum is used by ard 
+	
+		arcTop    =g.append("path"  ).datum({endAngle:       0}).style("fill","orange").attrs({class:"gauge", "d":arc});
+	
+		center    =g.append("circle").attrs({cx:0, cy:0, r:0.5*siz/2 }).style('fill','red');  
+		
+        return self; // instead of returning self,  maybe want fns to access the cells of the columns
+	  }  // addColumn
+  };
+  return self;
+};
+
+var sendPacket=function(destination,msg){
+
+  $('#recvBody_'+destination).html(msg);
+  $('#recv_'+destination).css({"background-color":"pink"});
+  setTimeout(function(){ $('#recv_'+destination).css({"background-color":"transparent"}); },1500);
+};
+
+$().ready(function(){
+  $('body').css({background:machineColor});
+  
+  var table=TableWith3Rows($('body'));
+  table.addColumn();   // kludge, add left column just to space things over a bit  
+  table.addColumn('1');
+  table.addColumn('2');  // enp6s0
+  table.addColumn('3');
+  table.addColumn('4');
+  
+  var inp=$("<input>").attr({ id:"AITMsgBody", class:"med" });
+  $('body')
+    .append('<br/>').append('<br/>').append('<br/>').append('<br/>')
+    .append(inp);
+  
+});
+
+// http://www.w3schools.com/cssref/css3_pr_transform.asp
+
+/*
+http://stackoverflow.com/questions/12717652/making-an-arc-in-d3-js
+var arc = d3.svg.arc().innerRadius(50).outerRadius(70)
+    .startAngle(45 * (Math.PI/180)) 
+    .endAngle(  90 * (Math.PI/180)) 
+svg.append("path").attr("d", arc).attr("transform", "translate(200,200)")
+
+var arc = d3.arc().innerRadius(50).outerRadius(70)
+    .startAngle(45 * (Math.PI/180)) 
+    .endAngle(  90 * (Math.PI/180)) 
+svg.append("path").attr("d", arc).attr("transform", "translate(200,200)")
+
+*/
+
+var animateRot=function(val0,val,$select){
+  var tau = 2 * Math.PI; // http://tauday.com/tau-manifesto
+
+  var deg=function(val,dur){ return $select.transition().duration(dur?dur:2000).attrTween("d",arcTween((val/360)*tau)); };
+
+  var rot=function(rotTime,cnt,finiFn){ 
+    if(cnt>0){
+			$select.transition().duration(rotTime).attrTween("d", arcTween(tau))
+			.on("end",function(){ deg(0,1).on("end",function(){ rot(rotTime,cnt-1,finiFn); }); }); 
+		}
+		else {
+			finiFn();
+		}
+  };
+  
+  var duration=2000;  // might need to up this
+  var fullScale=10; // one revolution is 10
+	
+  var revs0=Math.floor(val0/fullScale);
+  var revs =Math.floor( val/fullScale);
+  var rots=revs-revs0-1; // 360 rotations
+    
+  if(revs0==revs){  
+	  $select.transition().duration(duration).attrTween("d", arcTween((val%fullScale)/fullScale*tau)); // deg
+	  return;
+  }
+  if(rots>2){ rots=2; }
+  
+  var startAng=val0%fullScale;  // fraction of 360deg sweep
+  var finiAng =val %fullScale;
+//var deltaAng=val%fullScale - val0%fullScale; // when no rotation
+  var deltaAng= (fullScale-val0%fullScale) + rots*fullScale + val%fullScale; 
+  // break up the duration by how much sweep occurs
+  var durationTilTau  = duration*(fullScale-val0%fullScale)/deltaAng;
+  var durationEaRot   = (rots==0) ? 0 : duration*(         (rots*fullScale)/deltaAng)/rots;
+  var durationAfterTau= duration*(           val%fullScale /deltaAng);
+  //console.log(rots,'--',durationTilTau,durationEaRot,durationAfterTau);
+  
+  var finishFn=function(){  // .on("end',.. does not allow passing back an obj, so we must pass this fn in
+    $select.transition().duration(durationAfterTau).attrTween("d", arcTween((val%fullScale)/fullScale*tau)); // deg
+  }; 
+  $select.transition().duration(durationTilTau).attrTween("d", arcTween(tau)) // do the start
+    .on("end",function(){ deg(0,1).on("end",function(){ rot(durationEaRot,rots,finishFn); }); }); // do the rots & end
+};
+
+
+var processPacket=(function(){
+	var val0={};
+	var duration=400;
+	return function(packet){
+		var val=parseInt(packet.entlCount);
+    animateRot(val0[packet.deviceName],val,d3.select(".column"+deviceName2port[packet.deviceName]+" .gauge"));
+    val0[packet.deviceName]=val;
+	};
+})();
+
+// =============================== the real stuff
+var socket = io();
+socket.on("earth-update", function(data) {
+	data = JSON.parse(data.toString()) ;
+	processPacket(data);
+	/*
+	d3.select("#earth-"+data.deviceName).select("#device-name"     ).text(data.deviceName);
+	d3.select("#earth-"+data.deviceName).select("#link-status"     ).attr("class", data.linkState);
+	d3.select("#earth-"+data.deviceName).select("#link-status"     ).text(data.linkState);
+	d3.select("#earth-"+data.deviceName).select("#entl-status"     ).attr("class", data.entlState);
+	d3.select("#earth-"+data.deviceName).select("#entl-status"     ).text(data.entlState);
+	d3.select("#earth-"+data.deviceName).select("#entl-count"      ).text(data.entlCount);
+	d3.select("#earth-"+data.deviceName).select("#recieved-message").text(data.AITRecieved);
+	*/
+});
+
+var deviceName2port={   // zzzz how get port ids for a cell
+  enp6s0:'2'  // 2 would be the 2nd column
+}
+// =============================== the mock stuff
+
+var runMockData=function(data){  // 
+    var len=data.length;  
+	var cntr=0;  // takes ea item from buffer
+	var fn=function(){
+	    processPacket(data[cntr]);
+		cntr++
+	  }
+	var randomDelays=function(){ setTimeout(function(){ fn();randomDelays(); },Math.random()*2000); };
+	randomDelays();
+};
+//runMockData(data);  // data is from file datamock.js
+
+/*
+// http://stackoverflow.com/questions/30420357/how-to-call-a-callback-function-after-all-transition-done
+// http://stackoverflow.com/questions/10692100/invoke-a-callback-at-the-end-of-a-transition  ****
+
+// AOK:
+// d3.select('body').append("svg").attrs({ width: wid, height: ht });
+//$('body').append($('<div>').html('foo'));
+//$('body').append($('<svg width="50" height="50">'));
+
+// http://stackoverflow.com/questions/28045107/how-to-convert-a-jquery-object-into-a-d3-object  ***
+// d3.selectAll("svg").attr("height","100px")  changes all the svgs, but the last svg is still 0x0
+
+// $('body').append($('<svg>').attr({width:"50", height:"50"})) 
+
+// bar=d3.selectAll("svg")
+// bar.attrs({width:'300'})  does not work on the 0x0 svg, but will be applied to new svgs from d3
+
+
+//  see http://mywebbasedcomputer.com/users/johngslater/tech/graphics/svg/demo3_interaction.html
+// which uses a ns to make an svg elem
+*/
+
+
+
+function arcTween(newAngle) {
+  // Returns a tween for a transition’s "d" attribute,
+  // transitioning any selected arcs from their current angle to the specified new angle.
+  
+  // This fn passed to attrTween, and is invoked for ea selected element when the transition starts, 
+  // and for each element returns the interpolator to use over the course of transition.
+  // This fn is thus responsible for determining the starting angle of the transition 
+  // (which is pulled from the element’s bound datum, d.endAngle), 
+  // and the ending angle (simply the newAngle argument to the enclosing function).
+  return function(d) {
+    // To interpolate between the two angles, we use the default d3.interpolate.
+    // (Internally, this maps to d3.interpolateNumber, since both of the
+    // arguments to d3.interpolate are numbers.) The returned function takes a
+    // single argument t and returns a number between the starting angle and the
+    // ending angle. When t = 0, it returns d.endAngle; when t = 1, it returns
+    // newAngle; and for 0 < t < 1 it returns an angle in-between.
+    var interpolate = d3.interpolate(d.endAngle, newAngle);
+
+    // The return value of the attrTween is also a function: the function that
+    // we want to run for each tick of the transition. Because we used
+    // attrTween("d"), the return value of this last function will be set to the
+    // "d" attribute at every tick. (It’s also possible to use transition.tween
+    // to run arbitrary code for every tick, say if you want to set multiple
+    // attributes from a single function.) The argument t ranges from 0, at the
+    // start of the transition, to 1, at the end.
+    return function(t) { // Calculate the current arc angle based on the transition time, t.
+
+      // Since the t for the transition and the t for the interpolate both range from 0 to 1, 
+      // we can pass t directly to the interpolator.
+      //
+      // Note that the interpolated angle is written into the element’s bound data object!
+      // This is important: it means that if the transition were interrupted, 
+      // the data bound to the element would still be consistent with its appearance. 
+      // Whenever we start a new arc transition, the correct starting angle can be inferred from the data.
+      d.endAngle = interpolate(t);
+
+      // Compute the arc path given the updated data! 
+      // the data (specifically the end angle) is interpolated rather than the path string itself.
+      // Interpolating the angles in polar crds, rather than the raw path string, produces valid intermediate arcs.
+      return arc(d);
+    };
+  };
+}
+
+</script>

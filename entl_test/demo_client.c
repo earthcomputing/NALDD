@@ -284,8 +284,8 @@ int main (int argc, char **argv){
     memset(&links[i], 0, sizeof(links[i])) ;
     links[i].name = port_name[i];
     links[i].entlState = 100 ; // unknown
-    sprintf( links[i].AITMessageS, "- not sent -") ;
-    sprintf( links[i].AITMessageR, "- not received -") ;
+    sprintf( links[i].AITMessageS, " ") ;
+    sprintf( links[i].AITMessageR, " ") ;
     lenObj[i] = toJSON(&links[i]);
     toServer(links[i].json) ;
     
