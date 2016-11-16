@@ -163,6 +163,7 @@ $().ready(function(){
     .append('<br/>').append('<br/>').append('<br/>').append('<br/>')
     .append(inp);
   
+  attachSpinners(); // should only do this once
 });
 
 // http://www.w3schools.com/cssref/css3_pr_transform.asp
@@ -243,7 +244,7 @@ var Spinner=function(parent,cx,cy,r){
   var spinProcess;
   return {
     start:function(){
-      console.log(spinProcess)
+  //console.log(spinProcess)
       if(!spinProcess){
 	      spinProcess=setInterval(
 					function(){  
@@ -262,12 +263,13 @@ var Spinner=function(parent,cx,cy,r){
   };
 };
 
-// giant kludge:
 var spinners=[];
-$.map([1,2,3,4],function(port){ 
-  d3.selectAll('#svg_'+port+' path').remove();
-  spinners[port]=Spinner(d3.select('#svg_'+port+' g'),0,0,50);
-}); 
+var attachSpinners=function(){
+	$.map([1,2,3,4],function(port){ 
+		d3.selectAll('#svg_'+port+' path').remove();
+		spinners[port]=Spinner(d3.select('#svg_'+port+' g'),0,0,50);
+	});
+};
 var p_messages = [ "", "", "", "" ] ;
 var processPacket=(function(){
 	var val0={};
@@ -304,8 +306,6 @@ var processPacket=(function(){
         setTimeout(function(){ $('#recv_'+port).css({"background-color":"transparent"}); },1500);
         p_messages[port] = msg;
     }
-    
-  
 	};
 })();
 
@@ -347,8 +347,8 @@ var sendPacket=function(source,msg){
     var port=port2deviceName[source];
 
    var data = {"message": msg, "port" : port};
-   console.log(data);
-   console.log(socket);
+//console.log(data);
+//console.log(socket);
 
    socket.emit("aitMessage", data);
 
