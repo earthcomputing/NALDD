@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <time.h>   // for nanosleep
 
 typedef pthread_mutex_t mutex_t;
 static mutex_t access_mutex ;
@@ -446,6 +447,8 @@ static void read_task( void* me )
 int main( int argc, char *argv[] ) {
 	int count = 0 ;
 	int err ;
+    struct timespec ts;
+
 	//u32 event_i_know = 0 ;
 	char *name = argv[1] ;
 
@@ -498,12 +501,15 @@ int main( int argc, char *argv[] ) {
     err = pthread_create( &read_thread, NULL, read_task, NULL );
 #endif
 
+    ts.tv_sec = 0;
+    ts.tv_nsec = 3000000; // 300 ms
 
   	while( 1 ) {
   		char message[256] ;
     	//printf( "sleeping 1 sec on %d\n", count ) ;
 	
-		sleep(1) ;
+		// sleep(1) ;
+    	nanosleep(&ts, NULL);
 
 #ifdef STANDALONE_DEBUG
 		//printf( "calling show_status \n" ) ;

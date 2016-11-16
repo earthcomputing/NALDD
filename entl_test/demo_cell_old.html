@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<!-- http://www.cssfontstack.com/Arial-Black -->
+<style>
+table, td {  border: 0px solid black; }
+.count     { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+	font-size: 45px; font-style: normal; font-variant: normal;	font-weight: 500;	line-height: 15.4px;
+}
+h2     { font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+	font-size: 60px; font-style: normal; font-variant: normal;	font-weight: 500;	line-height: 15.4px;
+}
+path  {
+  fill:'blue'
+  
+}
+</style>
+<script type='text/javascript' src='node_modules/jquery/dist/jquery.js'></script>
+  <script src="js/d3.min.js" type="text/Javascript"></script>
+<script src="node_modules/d3-selection-multi/build/d3-selection-multi.min.js" type="text/Javascript">implements .attrs for d3.v4 GGG</script>
+  <script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js" type="text/Javascript"></script>
+<script src="datamock.js"></script>
+<H1>Earth Computing</H1>
+
+<h2>cells:</H2>
+<script>  // https://bl.ocks.org/mbostock/5100636
+
+var kv=document.URL.split('?')[1].split('&').map(function(d){ return d.split('='); });
+var o={}; kv.forEach(function(d){ o[d[0]]=d[1]; }); // convert to a hash
+
+$('h2').html('Cell: '+o.machineName);
+var machineColor=o.color; 
+
+var tau = 2 * Math.PI; // http://tauday.com/tau-manifesto
+
+var siz=150;
+var wid=siz, ht=siz;
+var svg;
+
+var boxColor="#c0cfd3";
+
+// computes path string from endAngle
+var arc = d3.arc().innerRadius(Math.floor(0.5*siz/2)).outerRadius(Math.floor(0.8*siz/2)).startAngle(0); 
+
+/*
+{"machineName": "demo_machine", "deviceName": "enp6s0", "linkState":"UP",
+"entlState": "RECEIVE", "entlCount": "15",
+"AITSent": "AIT sent",
+"AITRecieved": "Hello AIT"
+},
+*/
+/*  TBD  
+  1) full circle
+  2) delay for 0.200 sec and accumulate
+*/
+
+
+var  background,arcTop,center;  // very kludgy
+var TableWith2Rows=function(parent){
+  var r1=$('<tr>');
+  var r2=$('<tr>');
+  $('body').append($('<table>').append(r1).append(r2).css({ background:boxColor }));
+  
+  var self= {
+	  addColumn:function(column){ // adds a column to the table for a port's data
+		cell11=$('<td>').attr({ id:"count_"+column, class:'column'+column+" tdForCount", align:"center" });
+		cell21=$('<td>').attr({ id:"meter_"+column ,class:'column'+column });
+		r1.append(cell11);
+		r2.append(cell21);
+		$('td').css({width:siz});
+        $('.tdForCount').attr({ height:50});  // height is a min value
+        	
+		if(!column){ return; }   // kludge
+		// init content  NOT part of the table layout
+		cell11.append($('<div>').attr({id:"counter_"+column, class:"count" }).html(" --- "));
+		var svg=d3.select("#meter_"+column).append("svg").attrs({ id:"svg_"+column,width: wid, height: ht });
+		var g = svg.append("g").attr("transform", "translate("+ svg.attr("width")/2 +","+ svg.attr("height")/2 +")"); // origin at center  
+		background=g.append("path"  ).style("fill","#ddd").datum({endAngle:tau}).attr("d",arc); // datum is used by ard 
+	
+		arcTop    =g.append("path"  ).datum({endAngle:       0}).style("fill","orange").attrs({class:"gauge", "d":arc});
+	
+		center    =g.append("circle").attrs({cx:0, cy:0, r:0.5*siz/2 }).style('fill','red');  
+		
+        return self; // instead of returning self,  maybe want fns to access the cells of the columns
+	  }  // addColumn
+  };
+  return self;
+};
+
+$().ready(function(){
+  $('body').css({background:machineColor});
+  
+  var table=TableWith2Rows($('body'));
+  table.addColumn();   // kludge, add left column just to space things over a bit
+  table.addColumn('1');
+  table.addColumn('2');  // enp6s0
+  table.addColumn('3');
+  table.addColumn('4');
+});
+
+
+
+/*
+http://stackoverflow.com/questions/12717652/making-an-arc-in-d3-js
+var arc = d3.svg.arc().innerRadius(50).outerRadius(70)
+    .startAngle(45 * (Math.PI/180)) 
+    .endAngle(  90 * (Math.PI/180)) 
+svg.append("path").attr("d", arc).attr("transform", "translate(200,200)")
+
+var arc = d3.arc().innerRadius(50).outerRadius(70)
+    .startAngle(45 * (Math.PI/180)) 
+    .endAngle(  90 * (Math.PI/180)) 
+svg.append("path").attr("d", arc).attr("transform", "translate(200,200)")
+
+*/
+
+var processPacket=(function(){
+	var reading0={};
+	var revs0={};
+	var val0={};
+	var fullScale=10; // one revolution is 10
+	var kill=false;  // for debug only
+	var duration=400;
+	return function(packet){
+		var port=deviceName2port[packet.deviceName];
+		var val=parseInt(packet.entlCount);
+		var revs=Math.floor(val/fullScale); // not used - needed when multiple rotations during animation
+		if(kill){ return; }
+		var reading=(val%fullScale)/fullScale;
+		var clr = ( packet.entlState=="UNKNOWN" ||  packet.entlState=="IDLE" )? 'red' : ( ( packet.entlState=="HELLO" ||  packet.entlState=="WAIT" ) ? 'yellow' : 'green' ) ;
+		$('#svg_'+port+' circle').css({ fill: clr });
+		$('#counter_'+port).html(val%100);
+		if(revs0[packet.deviceName]!=undefined && revs0[packet.deviceName]<revs){
+		  var v0=revs0[packet.deviceName] ? revs0[packet.deviceName] : 0;
+		  console.log(((revs*tau)-v0)/(val-v0),v0,val,revs);
+		  var tilTau= ((revs*tau)-v0)/(val-v0) * duration;   // what fraction of time is below LAST rollover
+		  d3.select(".column"+port+" .gauge").transition().duration(tilTau).attrTween("d", arcTween(0.999*tau))
+		  .on("end",function(){  //    .each("end", in d3 v3
+		//d3.select(".column"+port+" .gauge").attr('d',arc.endAngle(.1)); // permanently sets the value, causes a gap
+		  d3.select(".column"+port+" .gauge").attr('d',arc({endAngle:0.1})); // not permanent, tweening is still wrong
+
+		  });
+	//		  kill=true;
+		}
+		else {		
+		  d3.select(".column"+port+" .gauge").transition().duration(duration).attrTween("d", arcTween(reading*tau));
+		}
+
+		reading0[packet.deviceName]=reading;
+		revs0[packet.deviceName]=revs;
+		val0[packet.deviceName]=val;
+	};
+})();
+
+// =============================== the real stuff
+var socket = io();
+console.log(socket);
+socket.on("earth-update", function(data) {
+	data = JSON.parse(data.toString()) ;
+	processPacket(data);
+	/*
+	d3.select("#earth-"+data.deviceName).select("#device-name"     ).text(data.deviceName);
+	d3.select("#earth-"+data.deviceName).select("#link-status"     ).attr("class", data.linkState);
+	d3.select("#earth-"+data.deviceName).select("#link-status"     ).text(data.linkState);
+	d3.select("#earth-"+data.deviceName).select("#entl-status"     ).attr("class", data.entlState);
+	d3.select("#earth-"+data.deviceName).select("#entl-status"     ).text(data.entlState);
+	d3.select("#earth-"+data.deviceName).select("#entl-count"      ).text(data.entlCount);
+	d3.select("#earth-"+data.deviceName).select("#recieved-message").text(data.AITRecieved);
+	*/
+});
+
+var deviceName2port={   // zzzz how get port ids for a cell
+  enp6s0:'1',  // 2 would be the 2nd column
+  enp7s0:'4',  // 2 would be the 2nd column
+  enp8s0:'2',  // 2 would be the 2nd column
+  enp9s0:'3'  // 2 would be the 2nd column
+}
+// =============================== the mock stuff
+
+var runMockData=function(data){  // 
+    var len=data.length;  
+	var cntr=0;  // takes ea item from buffer
+	var fn=function(){
+	    processPacket(data[cntr]);
+		cntr++
+	  }
+	var randomDelays=function(){ setTimeout(function(){ fn();randomDelays(); },Math.random()*2000); };
+	randomDelays();
+};
+//runMockData(data);  // data is from file datamock.js
+
+/*
+// http://stackoverflow.com/questions/30420357/how-to-call-a-callback-function-after-all-transition-done
+// http://stackoverflow.com/questions/10692100/invoke-a-callback-at-the-end-of-a-transition  ****
+
+// AOK:
+// d3.select('body').append("svg").attrs({ width: wid, height: ht });
+//$('body').append($('<div>').html('foo'));
+//$('body').append($('<svg width="50" height="50">'));
+
+// http://stackoverflow.com/questions/28045107/how-to-convert-a-jquery-object-into-a-d3-object  ***
+// d3.selectAll("svg").attr("height","100px")  changes all the svgs, but the last svg is still 0x0
+
+// $('body').append($('<svg>').attr({width:"50", height:"50"})) 
+
+// bar=d3.selectAll("svg")
+// bar.attrs({width:'300'})  does not work on the 0x0 svg, but will be applied to new svgs from d3
+
+
+//  see http://mywebbasedcomputer.com/users/johngslater/tech/graphics/svg/demo3_interaction.html
+// which uses a ns to make an svg elem
+*/
+
+function arcTween(newAngle) {
+  // Returns a tween for a transition’s "d" attribute,
+  // transitioning any selected arcs from their current angle to the specified new angle.
+  
+  // This fn passed to attrTween, and is invoked for ea selected element when the transition starts, 
+  // and for each element returns the interpolator to use over the course of transition.
+  // This fn is thus responsible for determining the starting angle of the transition 
+  // (which is pulled from the element’s bound datum, d.endAngle), 
+  // and the ending angle (simply the newAngle argument to the enclosing function).
+  return function(d) {
+    // To interpolate between the two angles, we use the default d3.interpolate.
+    // (Internally, this maps to d3.interpolateNumber, since both of the
+    // arguments to d3.interpolate are numbers.) The returned function takes a
+    // single argument t and returns a number between the starting angle and the
+    // ending angle. When t = 0, it returns d.endAngle; when t = 1, it returns
+    // newAngle; and for 0 < t < 1 it returns an angle in-between.
+    var interpolate = d3.interpolate(d.endAngle, newAngle);
+
+    // The return value of the attrTween is also a function: the function that
+    // we want to run for each tick of the transition. Because we used
+    // attrTween("d"), the return value of this last function will be set to the
+    // "d" attribute at every tick. (It’s also possible to use transition.tween
+    // to run arbitrary code for every tick, say if you want to set multiple
+    // attributes from a single function.) The argument t ranges from 0, at the
+    // start of the transition, to 1, at the end.
+    return function(t) { // Calculate the current arc angle based on the transition time, t.
+
+      // Since the t for the transition and the t for the interpolate both range from 0 to 1, 
+      // we can pass t directly to the interpolator.
+      //
+      // Note that the interpolated angle is written into the element’s bound data object!
+      // This is important: it means that if the transition were interrupted, 
+      // the data bound to the element would still be consistent with its appearance. 
+      // Whenever we start a new arc transition, the correct starting angle can be inferred from the data.
+      d.endAngle = interpolate(t);
+
+      // Compute the arc path given the updated data! 
+      // the data (specifically the end angle) is interpolated rather than the path string itself.
+      // Interpolating the angles in polar crds, rather than the raw path string, produces valid intermediate arcs.
+      return arc(d);
+    };
+  };
+}
+
+</script>
+
