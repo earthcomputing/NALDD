@@ -79,6 +79,7 @@ struct entl_ioctl_data {
   u32   icr ;
   u32   ctrl ;
   u32   ims ;
+  u32 num_queued ;                  // number of messages left unsent in send queue
 };
 
 /* This structure is used in all of SIOCDEVPRIVATE_ENTT_xxx ioctl calls */

@@ -335,6 +335,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		//hw->mac.get_link_status = tt ;
 		entl_data.link_state = link ;
 		entl_read_current_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
+		entl_data.num_queued = entl_num_queued( &dev->stm ) ;
 		//entl_data.icr = er32(ICR);
 		//entl_data.ctrl = er32(CTRL);
 		//entl_data.ims = er32(IMS);
@@ -356,6 +357,7 @@ static int entl_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		//hw->mac.get_link_status = hw->mac.get_link_status ;
 		entl_data.link_state = link ;
 		entl_read_error_state( &dev->stm, &entl_data.state, &entl_data.error_state ) ;
+		entl_data.num_queued = entl_num_queued( &dev->stm ) ;
 		//entl_data.icr = er32(ICR);
 		//entl_data.ctrl = er32(CTRL);
 		//entl_data.ims = er32(IMS);

@@ -28,28 +28,31 @@ This note shows the step by step procedure to bring up an Ubuntu system for deve
   mkdir earthcomputing 
   cd earthcomputing
 18.	get NALLDD from github: (*)
- git clone https://github.com/earthcomputing/NALDD.git
- (use your github id and password)
- Now, comfirm git branch is on develop. (If not, type: git checkout develop)
+  git clone https://github.com/earthcomputing/NALDD.git
+    (use your github id and password)
+   Now, type: 
+      git branch
+   and comfirm git branch is on develop. (If not, type: git checkout develop)
 19.	Replace e1000e driver code to ENTL version (*)
-mv ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ ~
-cp -r NALDD/entl_drivers/ e1000e-3.3.4/src ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/
+   mv ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ ~
+   cp -r NALDD/entl_drivers/ e1000e-3.3.4/src ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/
 20.	Replace Makefile for kernel build (*)
-cd ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ 
-mv Makefile.k Makefile
+   cd ~/kernel/linux-4.4.0/drivers/net/ethernet/intel/e1000e/ 
+   mv Makefile.k Makefile
 21.	cd ~/kernel/linux-4.4.0
 22.	Type: sudo apt-get install ncurses-dev (*)
 23.	Type: 
-chmod a+x debian/rules 
-chmod a+x debian/scripts/*
-chmod a+x debian/scripts/misc/*
-fakeroot debian/rules clean
-fakeroot debian/rules editconfigs
-    Configure i386/amd64 related ones (just ‘save’ & ‘exit’)
+  chmod a+x debian/rules 
+  chmod a+x debian/scripts/*
+  chmod a+x debian/scripts/misc/*
+  fakeroot debian/rules clean
+  fakeroot debian/rules editconfigs
+     Configure i386/amd64 related ones (just ‘save’ & ‘exit’)
 24.	fakeroot debian/rules clean
-25.	fakeroot debian/rules binary-headers binary-generic (This will compile the new kernel)
+25.	fakeroot debian/rules binary-headers binary-generic 
+    (This will compile the new kernel, will take long hours)
 26.	cd ..
 27.	Installing new kernel: 
   sudo dpkg –i linux*.deb
 28.	Reboot system to run new kernel
- sudo reboot
+  sudo reboot

@@ -39,6 +39,9 @@ static int nl_ecnl_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
 static void nl_ecnl_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
 			       struct genl_info *info);
 
+static struct ecnl_device this_device ;
+static int device_busy = 0 ;
+
 /* the netlink family */
 static struct genl_family nl_ecnd_fam = {
 	.id = GENL_ID_GENERATE,		/* don't bother with a hardcoded ID */
@@ -68,10 +71,18 @@ static const struct genl_multicast_group nl_ecnd_mcgrps[] = {
 static const struct nla_policy nl_ecnl_policy[NL_ECND_ATTR_MAX+1] = {
 	[NL_ECND_ATTR_DEVICE_NAME] = { .type = NLA_NUL_STRING, .len = 20-1 },
 	[NL_ECND_ATTR_LINK_STATE] = { .type = NLA_U32 },
-	[NL_ECND_ATTR_LINK_NUMBER] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_CURRENT_STATE] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_CURRENT_I_KNOW] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_CURRENT_I_SENT] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_ERROR_FLAG] = { .type = NLA_U32 },
-	[NL_ECND_ATTR_TIME_SEC] = { .type = NLA_U64 },
-	[NL_ECND_ATTR_TIME_NSEC] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_PFLAG] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_STATE] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_I_KNOW] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_I_SENT] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_FLAG] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_ERROR_TIME_SEC] = { .type = NLA_U64 },
+	[NL_ECND_ATTR_ERROR_TIME_NSEC] = { .type = NLA_U32 },
+	[NL_ECND_ATTR_NUM_AIT_MESSAGES] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_TABLE_SIZE] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_TABLE_ID] = { .type = NLA_U32 },
 	[NL_ECND_ATTR_TABLE_LOCATION] = { .type = NLA_U32 },
@@ -92,11 +103,63 @@ static void nl_ecnl_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
 	return 0 ;
 }
 
+static int add_link_state( struct sk_buff *skb, char *name, struct entl_ioctl_data *state)
+{
+	int rc;
+  	rc = nla_put_string(skb, NL_ECND_ATTR_DEVICE_NAME, name);
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_STATE, state->link_state) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_KNOW, state->state.event_i_know ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_KNOW, state->state.event_i_know ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_SENT, state->state.event_i_sent ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_ERROR_COUNT, state->error_state.error_count ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_ERROR_FLAG, state->error_state.error_flag ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_ERROR_PFLAG, state->error_state.p_error_flag ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_ERROR_STATE, state->error_state.event_i_know ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_KNOW, state->error_state.event_i_know ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_KNOW, state->error_state.event_i_know ) ;
+  	rc = nla_put_u32(skb, NL_ECND_ATTR_LINK_I_KNOW, state->error_state.event_i_know ) ;
+
+	NL_ECND_ATTR_ERROR_STATE,
+	NL_ECND_ATTR_ERROR_I_KNOW,
+	NL_ECND_ATTR_ERROR_I_SENT,
+	NL_ECND_ATTR_ERROR_TIME_SEC,
+	NL_ECND_ATTR_ERROR_TIME_NSEC,
+	NL_ECND_ATTR_NUM_AIT_MESSAGES,
+}
+
 static int nl_ecnl_get_state(struct sk_buff *skb, struct genl_info *info)
 {
+	struct nlattr *na;
+	char *dev_name ;
+	na = info->attrs[NL_ECND_ATTR_DEVICE_NAME];
+	if (na) {
+		dev_name = (char *)nla_data(na);
+		if( dev_name ) {
+			int i ;
+			for( i = 0 ; i < this_device.num_drivers ; i++ ) {
+				struct entl_driver *driver = &this_device.drivers[i] ;
+				if( strcmp(driver->name, dev_name) == 0 ) {
+					struct entl_ioctl_data state ;
+					int err = driver->funcs->get_entl_state(driver, &state ) ;
+					if( !err ) {
+						// return data packet back to caller
+  						struct sk_buff *skb;
+  						skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+						if ( skb ) {
+							int rc;
+							msg_head = genlmsg_put(skb, 0, info->snd_seq + 1, &nl_ecnd_fam, 0, NL_ECND_CMD_GET_STATE);
+							add_link_state(skb, dev_name, &state) ;
 
+						}
+					}
+					break ;
+				}
+			}
+		}
+	}
 	return 0 ;
 }
+	int (*get_entl_state) (  struct net_device *dev, struct entl_ioctl_data *state) ;
 
 static int nl_ecnl_alloc_table(struct sk_buff *skb, struct genl_info *info)
 {
@@ -216,9 +279,6 @@ static const struct genl_ops nl_ecnl_ops[] = {
 	},
 
 };
-
-static struct ecnl_device this_device ;
-static int device_busy = 0 ;
 
 int encl_register_driver( unsigned char *name, struct net_device *device, struct entl_driver_funcs *funcs )
 {
