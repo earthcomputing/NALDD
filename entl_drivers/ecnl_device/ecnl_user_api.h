@@ -90,6 +90,7 @@ enum nl_ecnd_commands {
 	NL_ECNL_CMD_STOP_FORWARDING,
 
 	NL_ECNL_CMD_SEND_AIT_MESSAGE,
+	NL_ECNL_CMD_SIGNAL_AIT_MESSAGE,
 	NL_ECNL_CMD_RETRIEVE_AIT_MESSAGE,
 
 	NL_ECNL_CMD_WRITE_ALO_REGISTER,
@@ -111,9 +112,9 @@ typedef struct ecnl_table_entry
 			unsigned int parent : 4 ;
 			unsigned int port_vector : 16 ;
 		} ;
-		u32 raw_vector ;
+		uint32_t raw_vector ;
 	} info ;
-	u32 nextID[ENCL_FW_TABLE_ENTRY_ARRAY] ;
+	uint32_t nextID[ENCL_FW_TABLE_ENTRY_ARRAY] ;
 } ecnl_table_entry_t ;
 
 

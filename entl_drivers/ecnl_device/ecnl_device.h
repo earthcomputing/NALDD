@@ -35,7 +35,7 @@
 struct entl_driver_funcs {
 	netdev_tx_t		(*start_xmit)(struct sk_buff *skb, struct net_device *dev);
 	int (*get_entl_state) (  struct net_device *dev, ec_state_t *state) ;
-	int (*send_AIT_message)( struct net_device *dev, ec_ait_data_t* data ) ;
+	int (*send_AIT_message)( struct sk_buff *skb, struct net_device *dev ) ;
 	int (*retrieve_AIT_message)( struct net_device *dev, ec_ait_data_t* data ) ;
 	int (*write_alo_reg)( struct net_device *dev, ec_alo_reg_t* reg ) ;
 	int (*read_alo_regs)( struct net_device *dev, ec_alo_regs_t* regs ) ;
@@ -86,7 +86,8 @@ struct ecnl_device_funcs {
 	int (*receive_skb)(int encl_id, int drv_index, struct sk_buff *skb) ;
 	//int (*receive_dsc)(int encl_id, int drv_index, struct sk_buff *skb) ;
 	void (*link_status_update)( int encl_id, int drv_index, struct ec_state *state ) ;
-	void (*got_ait_message)( int encl_id, int drv_index, struct ec_ait_data* data ) ;
+	void (*forward_ait_message)( int encl_id, int drv_index, struct sk_buff *skb ) ;
+	void (*got_ait_massage)( int encl_id, int drv_index, int num_message ) ;
 	void (*got_alo_update)( int encl_id, int drv_index ) ;
 	void (*deregister_ports)( int encl_id ) ;
 } ;

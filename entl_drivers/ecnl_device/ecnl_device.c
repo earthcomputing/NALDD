@@ -94,6 +94,7 @@ static const struct nla_policy nl_ecnl_policy[NL_ECNL_ATTR_MAX+1] = {
 	[NL_ECNL_ATTR_PORT_RECOVERED_COUNTER] = { .type = NLA_U64 },
 	[NL_ECNL_ATTR_PORT_ENTT_COUNT] = { .type = NLA_U64 },
 	[NL_ECNL_ATTR_PORT_AOP_COUNT] = { .type = NLA_U64 },
+	[NL_ECNL_ATTR_NUM_AIT_MESSAGES] = { .type = NLA_U32 },
 	[NL_ECNL_ATTR_TABLE_SIZE] = { .type = NLA_U32 },
 	[NL_ECNL_ATTR_TABLE_ID] = { .type = NLA_U32 },
 	[NL_ECNL_ATTR_TABLE_LOCATION] = { .type = NLA_U32 },
@@ -1028,6 +1029,12 @@ static const struct genl_ops nl_ecnl_ops[] = {
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
+		.cmd = NL_ECNL_CMD_SIGNAL_AIT_MESSAGE,
+		.doit = nl_ecnl_send_ait_message,  // dummy func
+		.policy = nl_ecnl_policy,
+		.flags = GENL_ADMIN_PERM,
+	},
+	{
 		.cmd = NL_ECNL_CMD_RETRIEVE_AIT_MESSAGE,
 		.doit = nl_ecnl_retrieve_ait_message,
 		.policy = nl_ecnl_policy,
@@ -1306,31 +1313,126 @@ static void encl_link_status_update( int encl_id, int index, struct ec_state *st
 
 }
 
-static void encl_got_ait_message( int encl_id, int index, struct ec_ait_data* ait_data ) 
+static void encl_forward_ait_message( int encl_id, int drv_index, struct sk_buff *skb ) 
+{
+	int rc = -1 ;
+	unsigned long flags ;
+	struct sk_buff *rskb;
+	//struct ethhdr *eth = (struct ethhdr *)skb->data ;
+	struct ethhdr *eth = (struct ethhdr *)skb->data ;
+	struct ecnl_device *dev ;
+	ecnl_table_entry_t entry ;
+	u32 id ;
+	u8 direction ;
+	u8 host_on_backward ;
+	u8 parent ;
+	u8 to_host ;
+	u32 nextID ;
+	u32 alo_command = (uint32_t)eth->h_dest[2] << 8 | (uint32_t)eth->h_dest[3] ; 
+
+	dev = (struct ecnl_device*)netdev_priv(ecnl_devices[encl_id]) ;
+
+	if( eth->h_dest[0] & 0x80 != 0 ) {  // fw bit set
+		id = (u32)eth->h_source[2] << 24 | (u32)eth->h_source[3] << 16 | (u32)eth->h_source[4] << 8 | (u32)eth->h_source[5] ;
+		direction = eth->h_source[0] & 0x80 ;
+		host_on_backward = eth->h_source[0] & 0x40 ;
+		if( dev->fw_enable && dev->current_table && dev->current_table_size < id ) {
+			u16 port_vector ;
+			spin_lock_irqsave( &dev->drivers_lock, flags ) ;
+			memcpy( &entry, &dev->current_table[id], sizeof(ecnl_table_entry_t)) ;
+			spin_unlock_irqrestore( &dev->drivers_lock, flags ) ;
+			port_vector = entry.info.port_vector ;
+			if( direction == 0 ) {  // forward direction
+				if( port_vector == 0 ) {
+					ECNL_DEBUG( "encl_got_ait_message no forward bit on %d %08x\n", encl_id, drv_index  ) ;
+					to_host = 1 ;				
+				}
+				else {
+					int i ;
+					if( port_vector & 1 ) to_host = 1 ;
+					port_vector &= ~(u16)(1 << drv_index) ; // avoid to send own port
+					port_vector = (port_vector >> 1) ;  // reduce host bit
+					for( i = 0 ; i < 15 && port_vector > 0; i++ ) {
+						if( port_vector & 1 ) {  
+							int id = dev->fw_map[i] ;
+							struct net_device *nexthop = dev->drivers[id].device ;
+							struct entl_driver_funcs *funcs = dev->drivers[id].funcs ;
+						    nextID = entry.nextID[id] ;
+							if( nexthop && funcs ) {
+								struct sk_buff *skbc = skb_clone( skb, GFP_ATOMIC ) ;
+								set_next_id( skbc, nextID ) ;
+								funcs->send_AIT_message( nexthop, skbc ) ;
+							}
+						}
+						port_vector = (port_vector >> 1) ;
+					}
+				}
+			}
+			else {
+				// backword transfer
+				parent = entry.info.parent ;
+				if( parent == 0 || host_on_backward ) {
+					to_host = 1 ;
+				}
+				if( parent > 0 && dev->index != parent ) {
+					int id = dev->fw_map[parent] ;
+					struct net_device *nexthop = dev->drivers[id].device ;
+					struct entl_driver_funcs *funcs = dev->drivers[id].funcs ;
+				    nextID = entry.nextID[id] ;
+					if( nexthop && funcs ) {
+						struct sk_buff *skbc = skb_clone( skb, GFP_ATOMIC ) ;
+						set_next_id( skbc, nextID ) ;
+						funcs->send_AIT_message( nexthop, skbc ) ;
+					}
+				}
+			}
+		}
+	}
+
+	if( to_host && alo_command == 0 ) {  // do not forward ALO operation message
+		rskb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
+		if ( rskb ) {
+			void *msg_head = genlmsg_put(rskb, 0, 0, &nl_ecnd_fam, 0, NL_ECNL_CMD_RETRIEVE_AIT_MESSAGE);
+			rc = nla_put_u32(rskb, NL_ECNL_ATTR_MODULE_ID, encl_id) ;
+			if( rc ) return rc ;
+			rc = nla_put_u32(rskb, NL_ECNL_ATTR_PORT_ID, drv_index) ;
+			if( rc ) return rc ;
+			rc = nla_put_u32(rskb, NL_ECNL_ATTR_MESSAGE_LENGTH, skb->len ) ;
+			if( rc ) return rc ;
+		
+			rc = nla_put(rskb, NL_ECNL_ATTR_MESSAGE, skb->len, skb->data) ;
+			if( rc == 0 ) {
+				rc = genlmsg_multicast_allns( &nl_ecnd_fam, rskb, 0, NL_ECNL_MCGRP_AIT, GFP_KERNEL );
+			}
+		}
+	}
+	return rc ; 
+
+}
+
+static void ecnl_got_ait_massage( int encl_id, int drv_index, int num_message ) 
 {
 	int rc = -1 ;
 	unsigned long flags ;
 	struct sk_buff *rskb;
 	//struct ethhdr *eth = (struct ethhdr *)skb->data ;
 	struct ecnl_device *dev = (struct ecnl_device*)netdev_priv(ecnl_devices[encl_id]) ;
+	struct entl_driver *port = &dev->drivers[drv_index] ;
 	rskb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
 	if ( rskb ) {
-		void *msg_head = genlmsg_put(rskb, 0, 0, &nl_ecnd_fam, 0, NL_ECNL_CMD_RETRIEVE_AIT_MESSAGE);
+		void *msg_head = genlmsg_put(rskb, 0, 0, &nl_ecnd_fam, 0, NL_ECNL_CMD_SIGNAL_AIT_MESSAGE);
 		rc = nla_put_u32(rskb, NL_ECNL_ATTR_MODULE_ID, encl_id) ;
 		if( rc ) return rc ;
-		rc = nla_put_u32(rskb, NL_ECNL_ATTR_PORT_ID, index) ;
+		rc = nla_put_u32(rskb, NL_ECNL_ATTR_PORT_ID, drv_index) ;
 		if( rc ) return rc ;
-		rc = nla_put_u32(rskb, NL_ECNL_ATTR_MESSAGE_LENGTH, ait_data->message_len ) ;
-		if( rc ) return rc ;
-		
-		rc = nla_put(rskb, NL_ECNL_ATTR_MESSAGE, sizeof(struct ec_ait_data), ait_data->data) ;
+		rc = nla_put_u32(rskb, NL_ECNL_ATTR_NUM_AIT_MESSAGES, num_message ) ;
 		if( rc == 0 ) {
 			rc = genlmsg_multicast_allns( &nl_ecnd_fam, rskb, 0, NL_ECNL_MCGRP_AIT, GFP_KERNEL );
 		}
 	}
-	return rc ; 
-
+	return rc ;  
 }
+
 
 static void encl_got_alo_update( int encl_id, int index ) 
 {
@@ -1366,7 +1468,8 @@ static struct ecnl_device_funcs ecnl_api_funcs =
 	.receive_skb = ecnl_receive_skb,
 	//.receive_dsc = ecnl_receive_dsc,
 	.link_status_update = encl_link_status_update,
-	.got_ait_message = encl_got_ait_message, 
+	.forward_ait_message = encl_forward_ait_message, 
+	.got_ait_massage = ecnl_got_ait_massage,
 	.got_alo_update = encl_got_alo_update, 
 	.deregister_ports = encl_deregister_ports
 } ;
