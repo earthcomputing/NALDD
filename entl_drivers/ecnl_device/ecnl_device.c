@@ -16,6 +16,7 @@
 #include <linux/rtnetlink.h>
 #include <linux/netlink.h>
 #include <linux/etherdevice.h>
+#include <linux/kernel.h>
 #include <net/net_namespace.h>
 #include <net/genetlink.h>
 #include <net/cfg80211.h>
@@ -170,6 +171,7 @@ static int nl_ecnl_alloc_driver(struct sk_buff *skb, struct genl_info *info)
 // 	NL_ECNL_CMD_GET_MODULE_INFO:  get module info. name, index, num_ports
 static int nl_ecnl_get_module_info(struct sk_buff *skb, struct genl_info *info)
 {
+        printk(KERN_CRIT, "made it into the command processor\n");
 	int rc = -1 ;
 	struct nlattr *na;
 	struct ecnl_device *dev = NULL ;
@@ -184,7 +186,7 @@ static int nl_ecnl_get_module_info(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -255,7 +257,7 @@ static int nl_ecnl_get_port_state(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -265,7 +267,7 @@ static int nl_ecnl_get_port_state(struct sk_buff *skb, struct genl_info *info)
 		int i ;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if (na) {
-			port_id = (int)nla_data(na);
+			port_id = *(int *)nla_data(na);
 			if( port_id < dev->num_ports ) {
 				struct ec_state state ;
 				struct entl_driver *driver = &dev->drivers[port_id] ;
@@ -304,7 +306,7 @@ static int nl_ecnl_alloc_table(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -315,7 +317,7 @@ static int nl_ecnl_alloc_table(struct sk_buff *skb, struct genl_info *info)
 		na = info->attrs[NL_ECNL_ATTR_TABLE_SIZE];
 		if( !na ) return rc ;
 
-		size = (u32)nla_data(na);
+		size = *(u32 *)nla_data(na);
 		for( id = 0 ; id < ENTL_TABLE_MAX ; id++ ) {
 			if( dev->ecnl_tables[id] == NULL ) {
 				ecnl_table_entry_t *ecnl_table = kzalloc( sizeof(struct ecnl_table_entry) * size , GFP_ATOMIC );
@@ -357,7 +359,7 @@ static int nl_ecnl_fill_table(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -369,15 +371,15 @@ static int nl_ecnl_fill_table(struct sk_buff *skb, struct genl_info *info)
 		char *cp ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ID];
 		if( !na ) return rc ;
-		id = (u32)nla_data(na);
+		id = *(u32 *)nla_data(na);
 		ecnl_table = dev->ecnl_tables[id] ;
 		t_size = dev->ecnl_tables_size[id] ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_LOCATION];
 		if( !na ) return rc ;
-		location = (u32)nla_data(na);
+		location = *(u32 *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_TABLE_CONTENT_SIZE];
 		if( !na ) return rc ;
-		size = (u32)nla_data(na);
+		size = *(u32 *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_TABLE_CONTENT];
 		if( !na ) return rc ;
 		if( location + size > t_size ) return rc ;
@@ -413,7 +415,7 @@ static int nl_ecnl_fill_table_entry(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -425,12 +427,12 @@ static int nl_ecnl_fill_table_entry(struct sk_buff *skb, struct genl_info *info)
 		char *entry ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ID];
 		if( !na ) return rc ;
-		id = (u32)nla_data(na);
+		id = *(u32 *)nla_data(na);
 		ecnl_table = dev->ecnl_tables[id] ;
 		t_size = dev->ecnl_tables_size[id] ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ENTRY_LOCATION];
 		if( !na ) return rc ;
-		location = (u32)nla_data(na);
+		location = *(u32 *)nla_data(na);
 		if( location > t_size ) return rc ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ENTRY];
 		if( !na ) return rc ;
@@ -466,7 +468,7 @@ static int nl_ecnl_select_table(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -478,7 +480,7 @@ static int nl_ecnl_select_table(struct sk_buff *skb, struct genl_info *info)
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ID];
 		if( !na ) return rc ;
-		id = (u32)nla_data(na);
+		id = *(u32 *)nla_data(na);
 		ecnl_table = dev->ecnl_tables[id] ;
 		if( ecnl_table ) {
 			spin_lock_irqsave( &dev->drivers_lock, flags ) ;
@@ -515,7 +517,7 @@ static int nl_ecnl_dealloc_table(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -526,7 +528,7 @@ static int nl_ecnl_dealloc_table(struct sk_buff *skb, struct genl_info *info)
 		char *cp ;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_ID];
 		if( !na ) return rc ;
-		id = (u32)nla_data(na);
+		id = *(u32 *)nla_data(na);
 		if( dev->ecnl_tables[id] ) {
 			if( dev->current_table == dev->ecnl_tables[id]) {
 				dev->fw_enable = 0 ;
@@ -567,7 +569,7 @@ static int nl_ecnl_map_ports(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -579,7 +581,7 @@ static int nl_ecnl_map_ports(struct sk_buff *skb, struct genl_info *info)
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_TABLE_MAP];
 		if( na ) {
-			mp = (int*)nla_data(na);
+			mp = (int *)nla_data(na);
 			for( i = 0 ; i < ENCL_FW_TABLE_ENTRY_ARRAY ; i++ ) {
 				dev->fw_map[i] = mp[i] ;
 			}
@@ -622,7 +624,7 @@ static int nl_ecnl_start_forwarding(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -658,7 +660,7 @@ static int nl_ecnl_stop_forwarding(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -695,7 +697,7 @@ static int nl_ecnl_send_ait_message(struct sk_buff *skb, struct genl_info *info)
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -707,14 +709,14 @@ static int nl_ecnl_send_ait_message(struct sk_buff *skb, struct genl_info *info)
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if( !na ) return rc ;
-		port_id = (u32)nla_data(na);
+		port_id = *(u32 *)nla_data(na);
 		driver = &dev->drivers[port_id] ;
 		na = info->attrs[NL_ECNL_ATTR_MESSAGE_LENGTH];
 		if( !na ) return rc ;
-		ait_data.message_len = (u32)nla_data(na);
+		ait_data.message_len = *(u32 *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_MESSAGE];
 		if( !na ) return rc ;
-		memcpy( ait_data.data, (char*)nla_data(na), ait_data.message_len ) ;
+		memcpy( ait_data.data, (char *)nla_data(na), ait_data.message_len ) ;
 		if( driver->funcs ) {
 			driver->funcs->send_AIT_message( driver->device, &ait_data ) ;
 		}
@@ -751,7 +753,7 @@ static int nl_ecnl_retrieve_ait_message(struct sk_buff *skb, struct genl_info *i
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -764,12 +766,12 @@ static int nl_ecnl_retrieve_ait_message(struct sk_buff *skb, struct genl_info *i
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if( !na ) return rc ;
-		port_id = (u32)nla_data(na);
+		port_id = *(u32 *)nla_data(na);
 		driver = &dev->drivers[port_id] ;
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_DATA] ;
-		alo_reg.reg = (uint64_t)nla_data(na);
+		alo_reg.reg = *(uint64_t *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_NO] ;
-		alo_reg.index = (u32)nla_data(na);
+		alo_reg.index = *(u32 *)nla_data(na);
 		if( driver != NULL && driver->funcs ) {
 			driver->funcs->retrieve_AIT_message( driver->device, &ait_data ) ;
 		}
@@ -809,7 +811,7 @@ static int nl_ecnl_write_alo_register(struct sk_buff *skb, struct genl_info *inf
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -822,12 +824,12 @@ static int nl_ecnl_write_alo_register(struct sk_buff *skb, struct genl_info *inf
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if( !na ) return rc ;
-		port_id = (u32)nla_data(na);
+		port_id = *(u32 *)nla_data(na);
 		driver = &dev->drivers[port_id] ;
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_DATA] ;
-		alo_reg.reg = (uint64_t)nla_data(na);
+		alo_reg.reg = *(uint64_t *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_NO] ;
-		alo_reg.index = (u32)nla_data(na);
+		alo_reg.index = *(u32 *)nla_data(na);
 		if( driver != NULL && driver->funcs ) {
 			driver->funcs->write_alo_reg( driver->device, &alo_reg ) ;
 		}
@@ -863,7 +865,7 @@ static int nl_ecnl_read_alo_registers(struct sk_buff *skb, struct genl_info *inf
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -876,12 +878,12 @@ static int nl_ecnl_read_alo_registers(struct sk_buff *skb, struct genl_info *inf
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if( !na ) return rc ;
-		port_id = (u32)nla_data(na);
+		port_id = *(u32 *)nla_data(na);
 		driver = &dev->drivers[port_id] ;
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_DATA] ;
-		alo_reg.reg = (uint64_t)nla_data(na);
+		alo_reg.reg = *(uint64_t *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_ALO_REG_NO] ;
-		alo_reg.index = (u32)nla_data(na);
+		alo_reg.index = *(u32 *)nla_data(na);
 		if( driver != NULL && driver->funcs ) {
 			driver->funcs->read_alo_regs( driver->device, &alo_regs ) ;
 		}
@@ -920,7 +922,7 @@ static int nl_ecnl_send_discover_message(struct sk_buff *skb, struct genl_info *
 	else {
 		na = info->attrs[NL_ECNL_ATTR_MODULE_ID];
 		if( na ) {
-			int id = (int)nla_data(na);
+			int id = *(int *)nla_data(na);
 			n_dev = ecnl_devices[id] ;
 			dev =  (struct ecnl_device*)netdev_priv(n_dev) ;
 		}
@@ -933,7 +935,7 @@ static int nl_ecnl_send_discover_message(struct sk_buff *skb, struct genl_info *
 		struct sk_buff *rskb;
 		na = info->attrs[NL_ECNL_ATTR_PORT_ID];
 		if( !na ) return rc ;
-		port_id = (u32)nla_data(na);
+		port_id = *(u32 *)nla_data(na);
 		driver = &dev->drivers[port_id] ;
 		if( driver == NULL || driver->funcs == NULL ) {
 			return rc ;
@@ -943,7 +945,7 @@ static int nl_ecnl_send_discover_message(struct sk_buff *skb, struct genl_info *
 		data = (char *)nla_data(na);
 		na = info->attrs[NL_ECNL_ATTR_MESSAGE_LENGTH];
 		if( !na ) return rc ;
-		len = (u32)nla_data(na) ;
+		len = *(u32 *)nla_data(na) ;
 		rskb = alloc_skb(len,  GFP_ATOMIC) ;
 		if( rskb == NULL ) return rc ;
 		rskb->len = len ;
