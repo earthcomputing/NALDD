@@ -7,8 +7,8 @@
  */
 // #include <linux/time.h>
 
-#ifndef _ENTL_USER_API_H_
-#define _ENTL_USER_API_H_
+#ifndef _EC_USER_API_H_
+#define _EC_USER_API_H_
 
 #define ETH_P_ECLP  0xEAC0    /* Earth Computing Link Protocol [ NOT AN OFFICIALLY REGISTERED ID ] */
 #define ETH_P_ECLD  0xEAC1    /* Earth Computing Link Discovery [ NOT AN OFFICIALLY REGISTERED ID ] */

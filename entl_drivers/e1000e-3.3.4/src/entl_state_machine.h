@@ -119,7 +119,7 @@ int entl_next_send( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 int entl_next_send_tx( entl_state_machine_t *mcn, __u16 *u_addr, __u32 *l_addr ) ;
 
 // On receiving error (link down, timeout), this functon should be called to report to the state machine
-void ``````````````( entl_state_machine_t *mcn, __u32 error_flag ) ;
+void entl_state_error( entl_state_machine_t *mcn, __u32 error_flag ) ;
 
 // quick refrence to get the current state. It will return error when error is reported until the error state is read via entl_read_error_state
 __u32 get_entl_state(entl_state_machine_t *mcn) ;
