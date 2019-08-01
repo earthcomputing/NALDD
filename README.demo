@@ -1,0 +1,22 @@
+For Alice:
+1- Be sure 'blacklist e1000e' is commented in the following file:
+   /etc/modprobe.d/e1000e.conf
+   If not, comment it (using sudo)
+2- sudo depmod -ae && sudo update-initramfs -u
+3- shutdown the computer (don't restart, use shutdown)
+4- turn on Alice
+5- ./do_demo
+
+
+
+
+
+For Bob:
+1- Be sure 'blacklist e1000e' is UNcommented in the following file:
+   /etc/modprobe.d/e1000e.conf
+   If not, uncomment it (using sudo)
+2- sudo depmod -ae && sudo update-initramfs -u
+3- shutdown the computer (don't restart, use shutdown)
+4- turn on Bob
+5- sudo insmod ~/earthcomputing/NALDD/entl_drivers/e1000e-3.3.4/src/e1000e.ko
+6- ./do_demo
