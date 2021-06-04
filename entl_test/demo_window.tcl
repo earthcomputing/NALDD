@@ -1,5 +1,8 @@
 #!/usr/local/bin/wish
-#   Copyright (C) 2016 Earth Computing
+#---------------------------------------------------------------------------------------------
+ #  Copyright © 2016-present Earth Computing Corporation. All rights reserved.
+ #  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+#---------------------------------------------------------------------------------------------
 
 # first arg is Socket port number, 2nd arg is the device name
 set DeviceName [lindex $argv 0]
