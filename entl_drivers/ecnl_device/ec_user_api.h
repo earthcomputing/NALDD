@@ -1,10 +1,7 @@
-/* 
- * ENTL User API 
- * Copyright(c) 2016 Earth Computing.
- *
- *  Author: Atsushi Kasuya
- *
- */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright © 2016-present Earth Computing Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 // #include <linux/time.h>
 
 #ifndef _EC_USER_API_H_

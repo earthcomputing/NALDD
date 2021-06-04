@@ -1,10 +1,7 @@
-/* 
- * ENTL Device Demo Client
- * Copyright(c) 2016 Earth Computing.
- *
- *  Author: Atsushi Kasuya
- *
- */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright © 2016-present Earth Computing Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <sys/ioctl.h>

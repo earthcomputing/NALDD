@@ -1,10 +1,7 @@
-/* 
- * Earth Computing Network Link Device 
- * Copyright(c) 2016, 2018 Earth Computing.
- *
- *  Author: Atsushi Kasuya
- *
- */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright © 2016-present Earth Computing Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 #ifndef _ECNL_DEVICE_H_
 #define _ECNL_DEVICE_H_
